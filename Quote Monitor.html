@@ -2,192 +2,208 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Quote Monitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradingView Market Quotes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Source Code Pro', monospace;
-            background-color: #000;
-            color: #f0f0f0;
+        /* Basic reset and full viewport setup */
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            overflow: hidden; /* Prevent scrollbars on the body */
+            background-color: #000000; /* Ensure body background matches */
         }
-
-        .table-container {
-            width: 100%;
-            height: 100vh;
-            padding: 0;
-            box-sizing: border-box;
-            background-color: #000;
-            border-radius: 0;
-            border: 1px solid #222;
+        /* Styles for the main container, mimicking the provided structure */
+        .main-container {
             display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 0;
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
             flex-direction: column;
             overflow: hidden;
-            margin-bottom: 5px;
+            font-family: 'Source Code Pro', monospace;
+            box-sizing: border-box;
         }
-
-        .title-bar {
-            background-color: #1a1a1a;
-            color: #fff;
+        .inner-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .header {
+            background-color: #111111;
+            color: #ffffff;
             padding: 12px;
             font-size: 16px;
             font-weight: bold;
             border-radius: 0;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: Left; /* Center the title */
+            align-items: Left;
             flex-shrink: 0;
-            border-bottom: 1px solid #222;
-        }
-
-        .table-wrapper {
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-
-        table {
             width: 100%;
-            border-collapse: collapse;
-            background-color: #000;
-            font-size: 12px;
+            height: 50px; /* Fixed height for the header */
+            box-sizing: border-box;
+            border-bottom: 1px solid #2a2a2a;
         }
-
-        th, td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #333;
-            text-align: center;
-            width: 150px;
+        .content-area {
+            flex-grow: 1;
+            width: 100%;
+            height: calc(100% - 50px); /* Adjust height based on header */
+            overflow: auto; /* Allow scrolling if widget content overflows, though it should fit */
+            box-sizing: border-box;
+            padding: 0 !important; /* Ensure no padding interferes with the widget */
+            background-color: #000000; /* Match the overall theme */
         }
-
-        td:first-child {
-            text-align: left;
-            width: 200px;
-        }
-
-        th {
-            background-color: #2a2a2a;
-            color: #eee;
-        }
-
-        td {
-            color: #ddd;
-        }
-
-        .price-up {
-            color: #00ff5b;
-            font-weight: bold;
-        }
-
-        .price-down {
-            color: #ff4e4e;
-            font-weight: bold;
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background-color: rgba(255,255,255,0.1);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(255,255,255,0.2);
-        }
-
-        html {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        /* TradingView's blue-text class for copyright, typically injected by their script */
+        .blue-text {
+            color: #2962FF;
         }
     </style>
 </head>
 <body>
-<div class="table-container">
-    <div class="title-bar">
-        Quote Monitor
+    <div class="main-container">
+        <div class="inner-container">
+            <div class="header">
+                <span>Market Overview</span>
+            </div>
+
+            <div class="content-area">
+                <div class="tradingview-widget-container" style="width: 100%; height: 100%;">
+                  <div class="tradingview-widget-container__widget" style="width: 100%; height: 100%;"></div>
+                  <div class="tradingview-widget-copyright">
+                    <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                      <span class="blue-text">Track all markets on TradingView</span>
+                    </a>
+                  </div>
+                  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
+                  {
+                  "width": "100%",
+                  "height": "100%",
+                  "symbolsGroups": [
+                    {
+                      "name": "Indices",
+                      "originalName": "Indices",
+                      "symbols": [
+                        {
+                          "name": "FOREXCOM:SPXUSD",
+                          "displayName": "S&P 500 Index"
+                        },
+                        {
+                          "name": "FOREXCOM:NSXUSD",
+                          "displayName": "US 100 Cash CFD"
+                        },
+                        {
+                          "name": "FOREXCOM:DJI",
+                          "displayName": "Dow Jones Industrial Average Index"
+                        },
+                        {
+                          "name": "INDEX:NKY",
+                          "displayName": "Japan 225"
+                        },
+                        {
+                          "name": "INDEX:DEU40",
+                          "displayName": "DAX Index"
+                        },
+                        {
+                          "name": "FOREXCOM:UKXGBP",
+                          "displayName": "FTSE 100 Index"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Forex",
+                      "originalName": "Forex",
+                      "symbols": [
+                        {
+                          "name": "FX:EURUSD",
+                          "displayName": "EUR to USD"
+                        },
+                        {
+                          "name": "FX:GBPUSD",
+                          "displayName": "GBP to USD"
+                        },
+                        {
+                          "name": "FX:USDJPY",
+                          "displayName": "USD to JPY"
+                        },
+                        {
+                          "name": "FX:USDCHF",
+                          "displayName": "USD to CHF"
+                        },
+                        {
+                          "name": "FX:AUDUSD",
+                          "displayName": "AUD to USD"
+                        },
+                        {
+                          "name": "FX:USDCAD",
+                          "displayName": "USD to CAD"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Futures",
+                      "originalName": "Futures",
+                      "symbols": [
+                        {
+                          "name": "BMFBOVESPA:ISP1!",
+                          "displayName": "S&P 500 Index Futures"
+                        },
+                        {
+                          "name": "BMFBOVESPA:EUR1!",
+                          "displayName": "Euro Futures"
+                        },
+                        {
+                          "name": "PYTH:WTI3!",
+                          "displayName": "WTI CRUDE OIL"
+                        },
+                        {
+                          "name": "BMFBOVESPA:ETH1!",
+                          "displayName": "Hydrous ethanol"
+                        },
+                        {
+                          "name": "BMFBOVESPA:CCM1!",
+                          "displayName": "Corn"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Bonds",
+                      "originalName": "Bonds",
+                      "symbols": [
+                        {
+                          "name": "EUREX:FGBL1!",
+                          "displayName": "Euro Bund"
+                        },
+                        {
+                          "name": "EUREX:FBTP1!",
+                          "displayName": "Euro BTP"
+                        },
+                        {
+                          "name": "EUREX:FGBM1!",
+                          "displayName": "Euro BOBL"
+                        }
+                      ]
+                    }
+                  ],
+                  "showSymbolLogo": false,
+                  "isTransparent": false,
+                  "colorTheme": "dark",
+                  "locale": "en",
+                  "backgroundColor": "rgba(0, 0, 0, 1)"
+                }
+                  </script>
+                </div>
+                </div>
+        </div>
     </div>
-    <div class="table-wrapper">
-        <table id="marketTable">
-            <thead>
-            <tr>
-                <th>Symbol</th>
-                <th>Bid</th>
-                <th>Ask</th>
-                <th>Time</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    const sheetID = '1gh56pS72YsHVXbLzCrkad-aGZFTVsCZZg-HZpe3uROA';
-    const sheetName = 'Sheet1';
-    const tableBody = document.querySelector('#marketTable tbody');
-    const previousPrices = {};
-
-    async function fetchSheetData() {
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetID}/values/${sheetName}?key=AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4`;
-
-        try {
-            const res = await fetch(url);
-            const data = await res.json();
-            const rows = data.values;
-
-            if (rows && rows.length > 1) {
-                const [header, ...values] = rows;
-                tableBody.innerHTML = '';
-
-                values.forEach(row => {
-                    const [symbol, bidStr, askStr, timeStr] = row;
-                    const bid = parseFloat(bidStr);
-                    const ask = parseFloat(askStr);
-
-                    const prev = previousPrices[symbol] || {};
-                    previousPrices[symbol] = { bid, ask };
-
-                    const tr = document.createElement('tr');
-
-                    const symbolCell = cell(symbol);
-                    symbolCell.style.textAlign = 'left';
-                    tr.appendChild(symbolCell);
-
-                    tr.appendChild(cell(bidStr, getColorClass(bid, prev.bid)));
-                    tr.appendChild(cell(askStr, getColorClass(ask, prev.ask)));
-                    tr.appendChild(cell(timeStr));
-
-                    tableBody.appendChild(tr);
-                });
-            }
-        } catch (err) {
-            console.error('Failed to fetch data:', err);
-        }
-    }
-
-    function cell(value, className = '') {
-        const td = document.createElement('td');
-        td.textContent = value;
-        if (className) td.classList.add(className);
-        return td;
-    }
-
-    function getColorClass(current, previous) {
-        if (previous === undefined) return '';
-        if (current > previous) return 'price-up';
-        if (current < previous) return 'price-down';
-        return '';
-    }
-
-    fetchSheetData();
-    setInterval(fetchSheetData, 1000);
-</script>
-</body>
+    </body>
 </html>
