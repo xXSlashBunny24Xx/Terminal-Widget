@@ -1,0 +1,182 @@
+<div style="
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Source Code Pro', monospace;
+    box-sizing: border-box;
+">
+    <div style="
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        ">
+        <div style="
+            background-color: #111111;
+            color: #ffffff;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            width: 100%;
+            box-sizing: border-box;
+            border-bottom: 1px solid #2a2a2a;
+            ">
+            <span style="margin-right: 10px;">Ticker Symbol</span>
+            <select
+                id="exchangeSelect"
+                style="
+                    padding: 8px 10px;
+                    border: 1px solid #2a2a2a;
+                    border-radius: 4px;
+                    margin-right: 10px;
+                    background-color: #1a1a1a;
+                    color: #ffffff;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+                    transition: all 0.3s ease;
+                    font-family: 'Source Code Pro', monospace;
+                    font-size: 12px;
+                    box-sizing: border-box;
+                    "
+                >
+                <option value="CMCMARKETS">CFD</option>
+                <option value="IDX">IDX</option>
+                <option value="NASDAQ">NASDAQ</option>
+                <option value="NYSE">NYSE</option>
+                <option value="BINANCE">BINANCE</option>
+            </select>
+            <input
+                type="text"
+                id="symbolInput"
+                placeholder="Enter Symbol..."
+                style="
+                    padding: 8px 10px;
+                    border: 1px solid #2a2a2a;
+                    border-radius: 4px;
+                    margin-right: 10px;
+                    background-color: #1a1a1a;
+                    color: #ffffff;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+                    transition: all 0.3s ease;
+                    font-family: 'Source Code Pro', monospace;
+                    font-size: 12px;
+                    width: 200px;
+                    box-sizing: border-box;
+                    "
+            >
+            <span id="currentSymbolTitle" style="font-weight: bold; margin-right: 10px; color: #ffffff; font-size: 16px;">EURUSD</span>
+            <select
+                id="timeframeSelect"
+                style="
+                    padding: 8px 10px;
+                    border: 1px solid #2a2a2a;
+                    border-radius: 4px;
+                    background-color: #1a1a1a;
+                    color: #ffffff;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+                    transition: all 0.3s ease;
+                    font-family: 'Source Code Pro', monospace;
+                    font-size: 12px;
+                    box-sizing: border-box;
+                    "
+            >
+                <option value="W">Weekly</option>
+                <option value="D">Daily</option>
+                <option value="240">H4</option>
+                <option value="60">H1</option>
+                <option value="30">M30</option>
+                <option value="15">M15</option>
+                <option value="5">M5</option>
+                <option value="1">M1</option>
+            </select>
+        </div>
+
+        <div class="tradingview-widget-container" style="flex-grow: 1; width: 100%; height: calc(100% - 50px); overflow: auto; box-sizing: border-box; padding: 0 !important;">
+            <div class="tradingview-widget-container__widget" id="tradingViewChart" style="height:100%;width:100%; box-sizing: border-box;"></div>
+            <div class="tradingview-widget-copyright">
+                <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"></a>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        let currentExchange = "CMCMARKETS";
+        let currentSymbol = "EURUSD";
+
+        function loadTradingViewChart(symbol) {
+            const timeframeSelect = document.getElementById("timeframeSelect");
+            const selectedTimeframe = timeframeSelect.value;
+            const tradingViewContainer = document.getElementById("tradingViewChart");
+            const symbolTitleElement = document.getElementById("currentSymbolTitle");
+
+            tradingViewContainer.innerHTML = '';
+
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.async = true;
+            script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+            script.innerHTML = `
+                {
+                    "autosize": true,
+                    "symbol": "${symbol}",
+                    "interval": "${selectedTimeframe}",
+                    "timezone": "Etc/UTC",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "en",
+                    "backgroundColor": "rgba(0, 0, 0, 1)",
+                    "hide_top_toolbar": true,
+                    "hide_legend": true,
+                    "allow_symbol_change": true,
+                    "save_image": false,
+                    "hide_volume": true,
+                    "support_host": "https://www.tradingview.com"
+                }
+            `;
+            tradingViewContainer.appendChild(script);
+
+            const displaySymbol = symbol.replace(currentExchange + ":", "");
+            symbolTitleElement.textContent = displaySymbol;
+        }
+
+        window.onload = function () {
+            loadTradingViewChart(currentExchange + ":" + currentSymbol);
+        }
+
+        const symbolInput = document.getElementById("symbolInput");
+        symbolInput.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                const symbolInputValue = document.getElementById("symbolInput").value;
+                currentSymbol = symbolInputValue.toUpperCase();
+                loadTradingViewChart(currentExchange + ":" + currentSymbol);
+            }
+        });
+
+        const timeframeSelect = document.getElementById("timeframeSelect");
+        timeframeSelect.addEventListener("change", function () {
+            loadTradingViewChart(currentExchange + ":" + currentSymbol);
+        });
+
+        const exchangeSelect = document.getElementById("exchangeSelect");
+        exchangeSelect.addEventListener("change", function() {
+            currentExchange = exchangeSelect.value;
+            const symbolInputValue = document.getElementById("symbolInput").value;
+            currentSymbol = symbolInputValue.toUpperCase();
+            loadTradingViewChart(currentExchange + ":" + currentSymbol);
+        });
+    </script>
+</div>
