@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quote Monitor</title>
+    <style>
+        body {
+            font-family: 'Source Code Pro', monospace;
+            background-color: #000;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .table-container {
+            width: 100%;
+            height: 100vh;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #000;
+            border-radius: 0;
+            border: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .title-bar {
+            background-color: #1a1a1a;
+            color: #fff;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            border-bottom: 1px solid #222;
+        }
+
+        .table-wrapper {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #000;
+            font-size: 12px;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #333;
+            text-align: center;
+            width: 150px;
+        }
+
+        td:first-child {
+            text-align: left;
+            width: 200px;
+        }
+
+        th {
+            background-color: #2a2a2a;
+            color: #eee;
+        }
+
+        td {
+            color: #ddd;
+        }
+
+        .price-up {
+            color: #00ff5b;
+            font-weight: bold;
+        }
+
+        .price-down {
+            color: #ff4e4e;
+            font-weight: bold;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+    </style>
+</head>
+<body>
+<div class="table-container">
+    <div class="title-bar">
+        Quote Monitor
+    </div>
+    <div class="table-wrapper">
+        <table id="marketTable">
+            <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Bid</th>
+                <th>Ask</th>
+                <th>Time</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const sheetID = '1gh56pS72YsHVXbLzCrkad-aGZFTVsCZZg-HZpe3uROA';
+    const sheetName = 'Sheet1';
+    const tableBody = document.querySelector('#marketTable tbody');
+    const previousPrices = {};
+
+    async function fetchSheetData() {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetID}/values/${sheetName}?key=AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            const rows = data.values;
+
+            if (rows && rows.length > 1) {
+                const [header, ...values] = rows;
+                tableBody.innerHTML = '';
+
+                values.forEach(row => {
+                    const [symbol, bidStr, askStr, timeStr] = row;
+                    const bid = parseFloat(bidStr);
+                    const ask = parseFloat(askStr);
+
+                    const prev = previousPrices[symbol] || {};
+                    previousPrices[symbol] = { bid, ask };
+
+                    const tr = document.createElement('tr');
+
+                    const symbolCell = cell(symbol);
+                    symbolCell.style.textAlign = 'left';
+                    tr.appendChild(symbolCell);
+
+                    tr.appendChild(cell(bidStr, getColorClass(bid, prev.bid)));
+                    tr.appendChild(cell(askStr, getColorClass(ask, prev.ask)));
+                    tr.appendChild(cell(timeStr));
+
+                    tableBody.appendChild(tr);
+                });
+            }
+        } catch (err) {
+            console.error('Failed to fetch data:', err);
+        }
+    }
+
+    function cell(value, className = '') {
+        const td = document.createElement('td');
+        td.textContent = value;
+        if (className) td.classList.add(className);
+        return td;
+    }
+
+    function getColorClass(current, previous) {
+        if (previous === undefined) return '';
+        if (current > previous) return 'price-up';
+        if (current < previous) return 'price-down';
+        return '';
+    }
+
+    fetchSheetData();
+    setInterval(fetchSheetData, 1000);
+</script>
+</body>
+</html>
