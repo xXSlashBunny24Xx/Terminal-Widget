@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Country Macroeconomic Data</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Global Minimalist macOS–Style Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Source Code Pro', monospace;
+            background-color: #000;
+            color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; 
+            box-sizing: border-box; 
+            overflow: hidden; /* Prevent body scroll, panes will scroll */
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit; 
+        }
+
+        .page-header {
+            background-color: #111111;
+            color: #f0f0f0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a2a2a;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+            color: #f0f0f0;
+        }
+
+        .country-select {
+            padding: 8px 12px;
+            border: 1px solid #2a2a2a;
+            border-radius: 5px;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            font-family: 'Source Code Pro', monospace;
+            font-size: 14px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23f0f0f0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.4-5.4-13z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 10px 10px;
+            padding-right: 30px;
+        }
+
+        .country-select:hover {
+            border-color: #555;
+        }
+
+        .country-select option {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+
+        .content-container {
+            display: flex;
+            flex-direction: row; 
+            flex: 1; 
+            overflow: hidden; 
+        }
+
+        .left-pane {
+            width: 57%; 
+            min-width: 200px; 
+            padding: 20px;
+            overflow-y: auto;
+            position: relative; 
+        }
+
+        .resizer-x {
+            width: 8px; 
+            background-color: #2a2a2a; 
+            cursor: col-resize;
+            flex-shrink: 0; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none; 
+        }
+        .resizer-x::before {
+            content: '';
+            width: 2px;
+            height: 25px;
+            background-color: #555;
+            border-radius: 1px;
+        }
+
+
+        .right-pane {
+            width: calc(43% - 8px); 
+            min-width: 200px; 
+            padding: 20px;
+            display: flex;
+            flex-direction: column; 
+            height: 100%; 
+            position: relative; /* Needed for absolute positioning of pane-loading-overlay */
+        }
+       
+        #historical-data-title {
+            font-size: 18px; 
+            font-weight: bold;
+            color: #f0f0f0;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            flex-shrink: 0; 
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #1a1a1a;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #222;
+        }
+
+        .data-table thead th {
+            background-color: #222;
+            color: #fff;
+            padding: 10px 12px; 
+            text-align: left;
+            font-size: 13px; 
+            font-weight: 600;
+            border-bottom: 1px solid #333;
+            position: sticky; 
+            top: 0;
+            z-index: 2; 
+        }
+
+        .data-table tbody td {
+            padding: 10px 12px; 
+            text-align: left;
+            border-bottom: 1px solid #333;
+            font-size: 13px; 
+            white-space: nowrap; 
+        }
+       
+        .data-table tbody tr {
+            cursor: pointer; 
+            transition: background-color 0.2s ease;
+        }
+        .data-table tbody tr:hover td {
+            background-color: #2a2a2a;
+        }
+        .data-table tbody tr.active-indicator td {
+            background-color: #333; 
+            color: #fff;
+        }
+        .data-table tbody tr.active-indicator .data-value,
+        .data-table tbody tr.active-indicator .data-unit {
+            color: #fff;
+        }
+
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:nth-child(odd):not(.active-indicator) td { 
+            background-color: #202020;
+        }
+
+
+        .data-value {
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .data-unit {
+            color: #aaa;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+       
+        .custom-legend-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center; 
+            flex-wrap: wrap; 
+            justify-content: flex-start; 
+            flex-shrink: 0; 
+        }
+
+        .legend-toggle-button, .control-button, .stepper-button {
+            background-color: #1a1a1a;
+            color: #f0f0f0; 
+            border: 1px solid #333;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-family: 'Source Code Pro', monospace;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+            white-space: nowrap; 
+        }
+
+        .legend-toggle-button:hover, .control-button:hover, .stepper-button:hover {
+            background-color: #2a2a2a;
+            border-color: #555;
+        }
+
+        .legend-toggle-button.active {
+            background-color: #2c2c2c; 
+            border-color: #f0f0f0; 
+        }
+       
+        .data-points-control {
+            display: flex;
+            align-items: center;
+            gap: 8px; 
+            margin-left: auto; 
+        }
+
+        .input-group-combined {
+            display: flex;
+            align-items: center;
+        }
+
+        .stepper-button {
+            padding: 6px 8px; 
+        }
+       
+        #decreaseDataPoints {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right-width: 0px; 
+        }
+
+        #dataPointsInput {
+            padding: 6px 10px;
+            border: 1px solid #333;
+            border-radius: 0; 
+            background-color: #101010;
+            color: #f0f0f0;
+            font-family: 'Source Code Pro', monospace;
+            font-size: 13px;
+            width: 70px; 
+            text-align: center;
+            -moz-appearance: textfield; 
+        }
+        #dataPointsInput::-webkit-inner-spin-button,
+        #dataPointsInput::-webkit-outer-spin-button {
+            -webkit-appearance: none; 
+            margin: 0;
+        }
+        #dataPointsInput:focus {
+            border-color: #555; 
+            outline: none;
+            position: relative; 
+            z-index: 1;
+        }
+       
+        #increaseDataPoints {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-left-width: 0px; 
+        }
+       
+
+        .chart-outer-container { 
+            width: 100%;
+            height: 300px; 
+            margin-bottom: 20px; 
+            background-color: #1a1a1a;
+            padding:10px;
+            border-radius: 5px;
+            position: relative; 
+            flex-shrink: 0; 
+        }
+        .chart-scroll-wrapper { 
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden; 
+            overflow-y: hidden;
+        }
+
+        #historical-chart { 
+             /* Height and width will be set by JS */
+        }
+
+        .historical-table-wrapper {
+            flex-grow: 1; 
+            overflow-y: auto; 
+            position: relative; 
+            border: 1px solid #222; 
+            border-radius: 5px; 
+            background-color: #1a1a1a; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        .historical-data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .historical-data-table thead th {
+            background-color: #222; 
+            color: #fff;
+            padding: 10px; 
+            text-align: left;
+            font-size: 13px; 
+            font-weight: 600;
+            border-bottom: 1px solid #333;
+            position: sticky; 
+            top: 0; 
+            z-index: 1; 
+        }
+
+        .historical-data-table tbody td {
+            padding: 10px; 
+            text-align: left;
+            border-bottom: 1px solid #333;
+            font-size: 13px; 
+        }
+
+        .historical-data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .historical-data-table tbody tr:nth-child(odd) td {
+            background-color: #202020;
+        }
+
+        .historical-data-table tbody tr:hover td {
+            background-color: #2a2a2a;
+        }
+        
+        /* Full screen loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); /* Darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001; /* Higher z-index for full screen */
+            display: none; 
+        }
+
+        /* Pane-specific loading overlay */
+        .pane-loading-overlay {
+            position: absolute; /* Relative to its parent (.right-pane) */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.65); /* Slightly less dark or different color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10; /* Lower than full-screen, but above pane content */
+            border-radius: 5px; /* Optional: match parent's border-radius */
+            display: none; /* Initially hidden */
+        }
+
+
+        .loading-spinner {
+            border: 5px solid #ccc;
+            border-top: 5px solid #4CAF50; 
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite; 
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="page-header">
+        <h1 class="header-title">Macroeconomic Data</h1>
+        <select id="countrySelect" class="country-select">
+            <option value="USD">United States</option>
+            <option value="EUR">Euro Area</option>
+            <option value="GBP">United Kingdom</option>
+            <option value="JPY">Japan</option>
+            <option value="AUD">Australia</option>
+            <option value="CAD">Canada</option>
+            <option value="CHF">Switzerland</option>
+            <option value="NZD">New Zealand</option>
+            <option value="CNY">China</option>
+        </select>
+    </div>
+
+    <div class="content-container">
+        <div class="left-pane">
+            <table class="data-table" id="mainDataTable">
+                <thead>
+                    <tr>
+                        <th>Indicator</th>
+                        <th>Latest</th>
+                        <th>Previous</th>
+                        <th>Forecast</th>
+                        <th>Surprise Index</th>
+                        <th>Unit</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-indicator="gdp-sales-qq">
+                        <td>GDP Sales q/q</td>
+                        <td><span class="data-value" id="gdp-sales-qq-value"></span></td>
+                        <td id="gdp-sales-qq-previous"></td>
+                        <td id="gdp-sales-qq-forecast"></td>
+                        <td id="gdp-sales-qq-surprise"></td>
+                        <td><span class="data-unit">q/q</span></td>
+                        <td id="gdp-sales-qq-date"></td>
+                    </tr>
+                    <tr data-indicator="gdp-qq">
+                        <td>GDP q/q</td>
+                        <td><span class="data-value" id="gdp-qq-value"></span></td>
+                        <td id="gdp-qq-previous"></td>
+                        <td id="gdp-qq-forecast"></td>
+                        <td id="gdp-qq-surprise"></td>
+                        <td><span class="data-unit">q/q</span></td>
+                        <td id="gdp-qq-date"></td>
+                    </tr>
+                    <tr data-indicator="adp-nonfarm-employment-change">
+                        <td>ADP Nonfarm Employment Change</td>
+                        <td><span class="data-value" id="adp-nonfarm-employment-change-value"></span></td>
+                        <td id="adp-nonfarm-employment-change-previous"></td>
+                        <td id="adp-nonfarm-employment-change-forecast"></td>
+                        <td id="adp-nonfarm-employment-change-surprise"></td>
+                        <td><span class="data-unit">K</span></td>
+                        <td id="adp-nonfarm-employment-change-date"></td>
+                    </tr>
+                    <tr data-indicator="avg-hourly-earnings-mm">
+                        <td>Average Hourly Earnings m/m</td>
+                        <td><span class="data-value" id="avg-hourly-earnings-mm-value"></span></td>
+                        <td id="avg-hourly-earnings-mm-previous"></td>
+                        <td id="avg-hourly-earnings-mm-forecast"></td>
+                        <td id="avg-hourly-earnings-mm-surprise"></td>
+                        <td><span class="data-unit">% m/m</span></td>
+                        <td id="avg-hourly-earnings-mm-date"></td>
+                    </tr>
+                    <tr data-indicator="avg-hourly-earnings-yy">
+                        <td>Average Hourly Earnings y/y</td>
+                        <td><span class="data-value" id="avg-hourly-earnings-yy-value"></span></td>
+                        <td id="avg-hourly-earnings-yy-previous"></td>
+                        <td id="avg-hourly-earnings-yy-forecast"></td>
+                        <td id="avg-hourly-earnings-yy-surprise"></td>
+                        <td><span class="data-unit">% y/y</span></td>
+                        <td id="avg-hourly-earnings-yy-date"></td>
+                    </tr>
+                    <tr data-indicator="initial-jobless-claims">
+                        <td>Initial Jobless Claims</td>
+                        <td><span class="data-value" id="initial-jobless-claims-value"></span></td>
+                        <td id="initial-jobless-claims-previous"></td>
+                        <td id="initial-jobless-claims-forecast"></td>
+                        <td id="initial-jobless-claims-surprise"></td>
+                        <td><span class="data-unit">K</span></td>
+                        <td id="initial-jobless-claims-date"></td>
+                    </tr>
+                    <tr data-indicator="jolts-job-openings">
+                        <td>JOLTS Job Openings</td>
+                        <td><span class="data-value" id="jolts-job-openings-value"></span></td>
+                        <td id="jolts-job-openings-previous"></td>
+                        <td id="jolts-job-openings-forecast"></td>
+                        <td id="jolts-job-openings-surprise"></td>
+                        <td><span class="data-unit">M</span></td>
+                        <td id="jolts-job-openings-date"></td>
+                    </tr>
+                    <tr data-indicator="nonfarm-payrolls">
+                        <td>Nonfarm Payrolls</td>
+                        <td><span class="data-value" id="nonfarm-payrolls-value"></span></td>
+                        <td id="nonfarm-payrolls-previous"></td>
+                        <td id="nonfarm-payrolls-forecast"></td>
+                        <td id="nonfarm-payrolls-surprise"></td>
+                        <td><span class="data-unit">K</span></td>
+                        <td id="nonfarm-payrolls-date"></td>
+                    </tr>
+                    <tr data-indicator="unemployment-rate">
+                        <td>Unemployment Rate</td>
+                        <td><span class="data-value" id="unemployment-rate-value"></span></td>
+                        <td id="unemployment-rate-previous"></td>
+                        <td id="unemployment-rate-forecast"></td>
+                        <td id="unemployment-rate-surprise"></td>
+                        <td><span class="data-unit">%</span></td>
+                        <td id="unemployment-rate-date"></td>
+                    </tr>
+                    <tr data-indicator="cpi-yy">
+                        <td>CPI y/y</td>
+                        <td><span class="data-value" id="cpi-yy-value"></span></td>
+                        <td id="cpi-yy-previous"></td>
+                        <td id="cpi-yy-forecast"></td>
+                        <td id="cpi-yy-surprise"></td>
+                        <td><span class="data-unit">% y/y</span></td>
+                        <td id="cpi-yy-date"></td>
+                    </tr>
+                    <tr data-indicator="core-cpi-yy">
+                        <td>Core CPI y/y</td>
+                        <td><span class="data-value" id="core-cpi-yy-value"></span></td>
+                        <td id="core-cpi-yy-previous"></td>
+                        <td id="core-cpi-yy-forecast"></td>
+                        <td id="core-cpi-yy-surprise"></td>
+                        <td><span class="data-unit">% y/y</span></td>
+                        <td id="core-cpi-yy-date"></td>
+                    </tr>
+                    <tr data-indicator="cpi-mm">
+                        <td>CPI m/m</td>
+                        <td><span class="data-value" id="cpi-mm-value"></span></td>
+                        <td id="cpi-mm-previous"></td>
+                        <td id="cpi-mm-forecast"></td>
+                        <td id="cpi-mm-surprise"></td>
+                        <td><span class="data-unit">% m/m</span></td>
+                        <td id="cpi-mm-date"></td>
+                    </tr>
+                    <tr data-indicator="core-cpi-mm">
+                        <td>Core CPI m/m</td>
+                        <td><span class="data-value" id="core-cpi-mm-value"></span></td>
+                        <td id="core-cpi-mm-previous"></td>
+                        <td id="core-cpi-mm-forecast"></td>
+                        <td id="core-cpi-mm-surprise"></td>
+                        <td><span class="data-unit">% m/m</span></td>
+                        <td id="core-cpi-mm-date"></td>
+                    </tr>
+                    <tr data-indicator="core-pce-price-index-yy">
+                        <td>Core PCE Price Index y/y</td>
+                        <td><span class="data-value" id="core-pce-price-index-yy-value"></span></td>
+                        <td id="core-pce-price-index-yy-previous"></td>
+                        <td id="core-pce-price-index-yy-forecast"></td>
+                        <td id="core-pce-price-index-yy-surprise"></td>
+                        <td><span class="data-unit">% y/y</span></td>
+                        <td id="core-pce-price-index-yy-date"></td>
+                    </tr>
+                    <tr data-indicator="core-ppi-mm">
+                        <td>Core PPI m/m</td>
+                        <td><span class="data-value" id="core-ppi-mm-value"></span></td>
+                        <td id="core-ppi-mm-previous"></td>
+                        <td id="core-ppi-mm-forecast"></td>
+                        <td id="core-ppi-mm-surprise"></td>
+                        <td><span class="data-unit">% m/m</span></td>
+                        <td id="core-ppi-mm-date"></td>
+                    </tr>
+                    <tr data-indicator="core-ppi-yy">
+                        <td>Core PPI y/y</td>
+                        <td><span class="data-value" id="core-ppi-yy-value"></span></td>
+                        <td id="core-ppi-yy-previous"></td>
+                        <td id="core-ppi-yy-forecast"></td>
+                        <td id="core-ppi-yy-surprise"></td>
+                        <td><span class="data-unit">% y/y</span></td>
+                        <td id="core-ppi-yy-date"></td>
+                    </tr>
+                    <tr data-indicator="michigan-5y-inflation-expectations">
+                        <td>Michigan 5-Year Inflation Expectations</td>
+                        <td><span class="data-value" id="michigan-5y-inflation-expectations-value"></span></td>
+                        <td id="michigan-5y-inflation-expectations-previous"></td>
+                        <td id="michigan-5y-inflation-expectations-forecast"></td>
+                        <td id="michigan-5y-inflation-expectations-surprise"></td>
+                        <td><span class="data-unit">%</span></td>
+                        <td id="michigan-5y-inflation-expectations-date"></td>
+                    </tr>
+                    <tr data-indicator="michigan-inflation-expectations">
+                        <td>Michigan Inflation Expectations</td>
+                        <td><span class="data-value" id="michigan-inflation-expectations-value"></span></td>
+                        <td id="michigan-inflation-expectations-previous"></td>
+                        <td id="michigan-inflation-expectations-forecast"></td>
+                        <td id="michigan-inflation-expectations-surprise"></td>
+                        <td><span class="data-unit">%</span></td>
+                        <td id="michigan-inflation-expectations-date"></td>
+                    </tr>
+                    <tr data-indicator="pce-price-index-yy">
+                        <td>PCE Price Index y/y</td>
+                        <td><span class="data-value" id="pce-price-index-yy-value"></span></td>
+                        <td id="pce-price-index-yy-previous"></td>
+                        <td id="pce-price-index-yy-forecast"></td>
+                        <td id="pce-price-index-yy-surprise"></td>
+                        <td><span class="data-unit">% y/y</span></td>
+                        <td id="pce-price-index-yy-date"></td>
+                    </tr>
+                    <tr data-indicator="ppi-mm">
+                        <td>PPI m/m</td>
+                        <td><span class="data-value" id="ppi-mm-value"></span></td>
+                        <td id="ppi-mm-previous"></td>
+                        <td id="ppi-mm-forecast"></td>
+                        <td id="ppi-mm-surprise"></td>
+                        <td><span class="data-unit">% m/m</span></td>
+                        <td id="ppi-mm-date"></td>
+                    </tr>
+                    <tr data-indicator="ppi-yy">
+                        <td>PPI y/y</td>
+                        <td><span class="data-value" id="ppi-yy-value"></span></td>
+                        <td id="ppi-yy-previous"></td>
+                        <td id="ppi-yy-forecast"></td>
+                        <td id="ppi-yy-surprise"></td>
+                        <td><span class="data-unit">% y/y</span></td>
+                        <td id="ppi-yy-date"></td>
+                    </tr>
+                    <tr data-indicator="fed-interest-rate-decision">
+                        <td>Fed Interest Rate Decision</td>
+                        <td><span class="data-value" id="fed-interest-rate-decision-value"></span></td>
+                        <td id="fed-interest-rate-decision-previous"></td>
+                        <td id="fed-interest-rate-decision-forecast"></td>
+                        <td id="fed-interest-rate-decision-surprise"></td>
+                        <td><span class="data-unit">%</span></td>
+                        <td id="fed-interest-rate-decision-date"></td>
+                    </tr>
+                    <tr data-indicator="current-account">
+                        <td>Current Account</td>
+                        <td><span class="data-value" id="current-account-value"></span></td>
+                        <td id="current-account-previous"></td>
+                        <td id="current-account-forecast"></td>
+                        <td id="current-account-surprise"></td>
+                        <td><span class="data-unit">Billion</span></td>
+                        <td id="current-account-date"></td>
+                    </tr>
+                    <tr data-indicator="ism-manufacturing-pmi">
+                        <td>ISM Manufacturing PMI</td>
+                        <td><span class="data-value" id="ism-manufacturing-pmi-value"></span></td>
+                        <td id="ism-manufacturing-pmi-previous"></td>
+                        <td id="ism-manufacturing-pmi-forecast"></td>
+                        <td id="ism-manufacturing-pmi-surprise"></td>
+                        <td><span class="data-unit">Index</span></td>
+                        <td id="ism-manufacturing-pmi-date"></td>
+                    </tr>
+                    <tr data-indicator="ism-non-manufacturing-pmi">
+                        <td>ISM Non-Manufacturing PMI</td>
+                        <td><span class="data-value" id="ism-non-manufacturing-pmi-value"></span></td>
+                        <td id="ism-non-manufacturing-pmi-previous"></td>
+                        <td id="ism-non-manufacturing-pmi-forecast"></td>
+                        <td id="ism-non-manufacturing-pmi-surprise"></td>
+                        <td><span class="data-unit">Index</span></td>
+                        <td id="ism-non-manufacturing-pmi-date"></td>
+                    </tr>
+                    <tr data-indicator="sp-global-composite-pmi">
+                        <td>S&P Global Composite PMI</td>
+                        <td><span class="data-value" id="sp-global-composite-pmi-value"></span></td>
+                        <td id="sp-global-composite-pmi-previous"></td>
+                        <td id="sp-global-composite-pmi-forecast"></td>
+                        <td id="sp-global-composite-pmi-surprise"></td>
+                        <td><span class="data-unit">Index</span></td>
+                        <td id="sp-global-composite-pmi-date"></td>
+                    </tr>
+                    <tr data-indicator="sp-global-manufacturing-pmi">
+                        <td>S&P Global Manufacturing PMI</td>
+                        <td><span class="data-value" id="sp-global-manufacturing-pmi-value"></span></td>
+                        <td id="sp-global-manufacturing-pmi-previous"></td>
+                        <td id="sp-global-manufacturing-pmi-forecast"></td>
+                        <td id="sp-global-manufacturing-pmi-surprise"></td>
+                        <td><span class="data-unit">Index</span></td>
+                        <td id="sp-global-manufacturing-pmi-date"></td>
+                    </tr>
+                    <tr data-indicator="sp-global-services-pmi">
+                        <td>S&P Global Services PMI</td>
+                        <td><span class="data-value" id="sp-global-services-pmi-value"></span></td>
+                        <td id="sp-global-services-pmi-previous"></td>
+                        <td id="sp-global-services-pmi-forecast"></td>
+                        <td id="sp-global-services-pmi-surprise"></td>
+                        <td><span class="data-unit">Index</span></td>
+                        <td id="sp-global-services-pmi-date"></td>
+                    </tr>
+                    <tr data-indicator="cb-consumer-confidence-index">
+                        <td>CB Consumer Confidence Index</td>
+                        <td><span class="data-value" id="cb-consumer-confidence-index-value"></span></td>
+                        <td id="cb-consumer-confidence-index-previous"></td>
+                        <td id="cb-consumer-confidence-index-forecast"></td>
+                        <td id="cb-consumer-confidence-index-surprise"></td>
+                        <td><span class="data-unit">Index</span></td>
+                        <td id="cb-consumer-confidence-index-date"></td>
+                    </tr>
+                    <tr data-indicator="core-retail-sales-mm">
+                        <td>Core Retail Sales m/m</td>
+                        <td><span class="data-value" id="core-retail-sales-mm-value"></span></td>
+                        <td id="core-retail-sales-mm-previous"></td>
+                        <td id="core-retail-sales-mm-forecast"></td>
+                        <td id="core-retail-sales-mm-surprise"></td>
+                        <td><span class="data-unit">% m/m</span></td>
+                        <td id="core-retail-sales-mm-date"></td>
+                    </tr>
+                    <tr data-indicator="retail-sales-mm">
+                        <td>Retail Sales m/m</td>
+                        <td><span class="data-value" id="retail-sales-mm-value"></span></td>
+                        <td id="retail-sales-mm-previous"></td>
+                        <td id="retail-sales-mm-forecast"></td>
+                        <td id="retail-sales-mm-surprise"></td>
+                        <td><span class="data-unit">% m/m</span></td>
+                        <td id="retail-sales-mm-date"></td>
+                    </tr>
+                    <tr data-indicator="retail-sales-yy">
+                        <td>Retail Sales y/y</td>
+                        <td><span class="data-value" id="retail-sales-yy-value"></span></td>
+                        <td id="retail-sales-yy-previous"></td>
+                        <td id="retail-sales-yy-forecast"></td>
+                        <td id="retail-sales-yy-surprise"></td>
+                        <td><span class="data-unit">% y/y</span></td>
+                        <td id="retail-sales-yy-date"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="right-pane">
+            <div class="pane-loading-overlay" id="rightPaneLoadingOverlay">
+                <div class="loading-spinner"></div>
+            </div>
+            <h2 id="historical-data-title">Historical Data</h2>
+            <div class="custom-legend-controls">
+                <button class="legend-toggle-button" data-dataset-index="0">Actual</button>
+                <button class="legend-toggle-button" data-dataset-index="1">Forecast</button>
+                <button class="legend-toggle-button" data-dataset-index="2">Surprise Index</button>
+               
+                <div class="data-points-control">
+                    <div class="input-group-combined">
+                        <button id="decreaseDataPoints" class="stepper-button" title="Decrease data points">-</button>
+                        <input type="number" id="dataPointsInput" placeholder="# Data" min="1" title="Enter number of data points">
+                        <button id="increaseDataPoints" class="stepper-button" title="Increase data points">+</button>
+                        </div>
+                    <button id="showAllDataButton" class="control-button" title="Show all historical data points">Reset</button>
+                </div>
+            </div>
+            <div class="chart-outer-container">
+                <div class="chart-scroll-wrapper">
+                    <canvas id="historical-chart"></canvas>
+                </div>
+            </div>
+            <div class="historical-table-wrapper"> 
+                <table class="historical-data-table">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Actual</th>
+                            <th>Forecast</th>
+                            <th>Surprise Index</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historical-data-table-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Google Sheet Configuration ---
+        const GOOGLE_SHEET_ID = '1NSRaFuf5fNwbaZvgXgVKTr97v6aSp8-EXwSgM0ZXKcc';
+        const GOOGLE_API_KEY = 'AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4';
+
+        // --- DOM Elements ---
+        const fullScreenLoadingOverlay = document.querySelector('.loading-overlay'); 
+        const rightPaneLoadingOverlay = document.getElementById('rightPaneLoadingOverlay');
+        const historicalChartCanvasEl = document.getElementById('historical-chart'); 
+        const historicalChartScrollWrapper = historicalChartCanvasEl.parentNode; 
+        const historicalDataTableBody = document.getElementById('historical-data-table-body');
+        const countrySelect = document.getElementById('countrySelect');
+        const mainDataTableBody = document.getElementById('mainDataTable').querySelector('tbody');
+        const historicalDataTitleEl = document.getElementById('historical-data-title');
+       
+        const leftPane = document.querySelector('.left-pane');
+        const rightPane = document.querySelector('.right-pane');
+        const contentContainer = document.querySelector('.content-container');
+
+        // Elements for data points control
+        const dataPointsInput = document.getElementById('dataPointsInput');
+        const showAllDataButton = document.getElementById('showAllDataButton');
+        const decreaseDataPointsButton = document.getElementById('decreaseDataPoints');
+        const increaseDataPointsButton = document.getElementById('increaseDataPoints');
+
+
+        // --- State Variables ---
+        let selectedCountry = 'USD'; 
+        let historicalChartInstance = null; 
+        let activeIndicatorId = 'gdp-sales-qq'; 
+        let currentDataPointsToShow = 15; 
+        let forecastMarkerImage = null; 
+
+        // --- Data ---
+        const createIndicatorDataObject = (unit) => ({
+            latestActual: '',
+            previousActual: '',
+            latestForecast: '',
+            latestSurprise: '',
+            latestDate: '',
+            unit: unit,
+            historicalDates: [],
+            historicalValues: [],
+            historicalForecasts: [],
+            historicalSurprises: [],
+            hasFetchedHistorical: false 
+        });
+        
+        const indicatorList = [
+            { id: 'gdp-sales-qq', name: 'GDP Sales q/q', dataKey: 'gdpSalesQq', unit: 'q/q', historicalSheet: 'US Source', historicalRanges: { date: 'A3:A', actual: 'B3:B', forecast: 'C3:C', surprise: 'E3:E' } },
+            { id: 'gdp-qq', name: 'GDP q/q', dataKey: 'gdpQq', unit: 'q/q', historicalSheet: 'US Source', historicalRanges: { date: 'G3:G', actual: 'H3:H', forecast: 'I3:I', surprise: 'K3:K' } },
+            { id: 'adp-nonfarm-employment-change', name: 'ADP Nonfarm Employment Change', dataKey: 'adpNonfarmEmploymentChange', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'M3:M', actual: 'N3:N', forecast: 'O3:O', surprise: 'Q3:Q' } },
+            { id: 'avg-hourly-earnings-mm', name: 'Average Hourly Earnings m/m', dataKey: 'avgHourlyEarningsMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'S3:S', actual: 'T3:T', forecast: 'U3:U', surprise: 'W3:W' } },
+            { id: 'avg-hourly-earnings-yy', name: 'Average Hourly Earnings y/y', dataKey: 'avgHourlyEarningsYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'Y3:Y', actual: 'Z3:Z', forecast: 'AA3:AA', surprise: 'AC3:AC' } },
+            { id: 'initial-jobless-claims', name: 'Initial Jobless Claims', dataKey: 'initialJoblessClaims', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'AE3:AE', actual: 'AF3:AF', forecast: 'AG3:AG', surprise: 'AI3:AI' } },
+            { id: 'jolts-job-openings', name: 'JOLTS Job Openings', dataKey: 'joltsJobOpenings', unit: 'M', historicalSheet: 'US Source', historicalRanges: { date: 'AK3:AK', actual: 'AL3:AL', forecast: 'AM3:AM', surprise: 'AO3:AO' } },
+            { id: 'nonfarm-payrolls', name: 'Nonfarm Payrolls', dataKey: 'nonfarmPayrolls', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'AQ3:AQ', actual: 'AR3:AR', forecast: 'AS3:AS', surprise: 'AU3:AU' } }, 
+            { id: 'unemployment-rate', name: 'Unemployment Rate', dataKey: 'unemploymentRate', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'AW3:AW', actual: 'AX3:AX', forecast: 'AY3:AY', surprise: 'BA3:BA' } },
+            { id: 'cpi-yy', name: 'CPI y/y', dataKey: 'cpiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'BC3:BC', actual: 'BD3:BD', forecast: 'BE3:BE', surprise: 'BG3:BG' } },
+            { id: 'core-cpi-yy', name: 'Core CPI y/y', dataKey: 'coreCpiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'BI3:BI', actual: 'BJ3:BJ', forecast: 'BK3:BK', surprise: 'BM3:BM' } },
+            { id: 'cpi-mm', name: 'CPI m/m', dataKey: 'cpiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'BO3:BO', actual: 'BP3:BP', forecast: 'BQ3:BQ', surprise: 'BS3:BS' } },
+            { id: 'core-cpi-mm', name: 'Core CPI m/m', dataKey: 'coreCpiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'BU3:BU', actual: 'BV3:BV', forecast: 'BW3:BW', surprise: 'BY3:BY' } },
+            { id: 'core-pce-price-index-yy', name: 'Core PCE Price Index y/y', dataKey: 'corePcePriceIndexYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'CA3:CA', actual: 'CB3:CB', forecast: 'CC3:CC', surprise: 'CE3:CE' } },
+            { id: 'core-ppi-mm', name: 'Core PPI m/m', dataKey: 'corePpiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'CG3:CG', actual: 'CH3:CH', forecast: 'CI3:CI', surprise: 'CK3:CK' } },
+            { id: 'core-ppi-yy', name: 'Core PPI y/y', dataKey: 'corePpiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'CM3:CM', actual: 'CN3:CN', forecast: 'CO3:CO', surprise: 'CQ3:CQ' } },
+            { id: 'michigan-5y-inflation-expectations', name: 'Michigan 5-Year Inflation Expectations', dataKey: 'michigan5yInflationExpectations', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'CS3:CS', actual: 'CT3:CT', forecast: 'CU3:CU', surprise: 'CW3:CW' } },
+            { id: 'michigan-inflation-expectations', name: 'Michigan Inflation Expectations', dataKey: 'michiganInflationExpectations', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'CY3:CY', actual: 'CZ3:CZ', forecast: 'DA3:DA', surprise: 'DC3:DC' } },
+            { id: 'pce-price-index-yy', name: 'PCE Price Index y/y', dataKey: 'pcePriceIndexYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'DE3:DE', actual: 'DF3:DF', forecast: 'DG3:DG', surprise: 'DI3:DI' } },
+            { id: 'ppi-mm', name: 'PPI m/m', dataKey: 'ppiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'DK3:DK', actual: 'DL3:DL', forecast: 'DM3:DM', surprise: 'DO3:DO' } },
+            { id: 'ppi-yy', name: 'PPI y/y', dataKey: 'ppiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'DQ3:DQ', actual: 'DR3:DR', forecast: 'DS3:DS', surprise: 'DU3:DU' } },
+            { id: 'fed-interest-rate-decision', name: 'Fed Interest Rate Decision', dataKey: 'fedInterestRateDecision', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'DW3:DW', actual: 'DX3:DX', forecast: '', surprise: '' } }, 
+            { id: 'current-account', name: 'Current Account', dataKey: 'currentAccount', unit: 'Billion', historicalSheet: 'US Source', historicalRanges: { date: 'EC3:EC', actual: 'ED3:ED', forecast: 'EE3:EE', surprise: 'EG3:EG' } },
+            { id: 'ism-manufacturing-pmi', name: 'ISM Manufacturing PMI', dataKey: 'ismManufacturingPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'EI3:EI', actual: 'EJ3:EJ', forecast: 'EK3:EK', surprise: 'EM3:EM' } },
+            { id: 'ism-non-manufacturing-pmi', name: 'ISM Non-Manufacturing PMI', dataKey: 'ismNonManufacturingPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'EO3:EO', actual: 'EP3:EP', forecast: 'EQ3:EQ', surprise: 'ES3:ES' } },
+            { id: 'sp-global-composite-pmi', name: 'S&P Global Composite PMI', dataKey: 'spGlobalCompositePmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'EU3:EU', actual: 'EV3:EV', forecast: 'EW3:EW', surprise: 'EY3:EY' } },
+            { id: 'sp-global-manufacturing-pmi', name: 'S&P Global Manufacturing PMI', dataKey: 'spGlobalManufacturingPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'FG3:FG', actual: 'FH3:FH', forecast: 'FI3:FI', surprise: 'FK3:FK' } },
+            { id: 'sp-global-services-pmi', name: 'S&P Global Services PMI', dataKey: 'spGlobalServicesPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'FA3:FA', actual: 'FB3:FB', forecast: 'FC3:FC', surprise: 'FE3:FE' } },
+            { id: 'cb-consumer-confidence-index', name: 'CB Consumer Confidence Index', dataKey: 'cbConsumerConfidenceIndex', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'FM3:FM', actual: 'FN3:FN', forecast: 'FO3:FO', surprise: 'FQ3:FQ' } },
+            { id: 'core-retail-sales-mm', name: 'Core Retail Sales m/m', dataKey: 'coreRetailSalesMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'FS3:FS', actual: 'FT3:FT', forecast: 'FU3:FU', surprise: 'FV3:FV' } },
+            { id: 'retail-sales-mm', name: 'Retail Sales m/m', dataKey: 'retailSalesMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'FY3:FY', actual: 'FZ3:FZ', forecast: 'GA3:GA', surprise: 'GC3:GC' } },
+            { id: 'retail-sales-yy', name: 'Retail Sales y/y', dataKey: 'retailSalesYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'GE3:GE', actual: 'GF3:GF', forecast: 'GG3:GG', surprise: 'GI3:GI' } }
+        ];
+
+        const indicatorMapping = {};
+        indicatorList.forEach(ind => {
+            indicatorMapping[ind.id] = { 
+                dataKey: ind.dataKey, 
+                title: ind.name, 
+                unitSuffix: ind.unit,
+                historicalSheet: ind.historicalSheet, 
+                historicalRanges: ind.historicalRanges 
+            };
+        });
+
+        const countryCodes = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "NZD", "CNY"];
+        const macroeconomicData = {};
+
+        countryCodes.forEach(countryCode => {
+            macroeconomicData[countryCode] = {}; 
+            indicatorList.forEach(ind => {
+                let unitValue = ind.unit;
+                if (ind.unit.toLowerCase() === 'billion' && countryCode !== '') {
+                     unitValue = `${ind.unit} ${countryCode}`;
+                }
+                macroeconomicData[countryCode][ind.dataKey] = createIndicatorDataObject(unitValue);
+            });
+        });
+       
+        // --- Loading Functions ---
+        function showFullScreenLoading() { if (fullScreenLoadingOverlay) fullScreenLoadingOverlay.style.display = 'flex'; }
+        function hideFullScreenLoading() { if (fullScreenLoadingOverlay) fullScreenLoadingOverlay.style.display = 'none'; }
+        function showRightPaneLoading() { if (rightPaneLoadingOverlay) rightPaneLoadingOverlay.style.display = 'flex'; }
+        function hideRightPaneLoading() { if (rightPaneLoadingOverlay) rightPaneLoadingOverlay.style.display = 'none'; }
+
+
+        // --- Data Fetching Functions ---
+        async function fetchLatestDataFromSheet(countryCode, sheetName) { 
+            if (countryCode !== 'USD') { 
+                console.log(`Latest data fetching for ${countryCode} is not implemented yet.`);
+                return;
+            }
+            const range = `${sheetName}!B2:G33`; // Corrected: B2:G33 for 32 indicators
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${range}?key=${GOOGLE_API_KEY}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Google Sheets API request failed for latest data with status ${response.status}`);
+                }
+                const data = await response.json();
+                const rows = data.values;
+
+                if (rows && rows.length > 0) {
+                    indicatorList.forEach((indicator, index) => {
+                        if (rows[index]) { // Check if row exists for the indicator
+                            const rowData = rows[index];
+                            const targetIndicatorData = macroeconomicData[countryCode][indicator.dataKey];
+                            if (targetIndicatorData) {
+                                targetIndicatorData.latestActual = rowData[0] || '';    
+                                targetIndicatorData.previousActual = rowData[1] || ''; 
+                                targetIndicatorData.latestForecast = rowData[2] || ''; 
+                                targetIndicatorData.latestSurprise = rowData[3] || ''; 
+                                // Assuming date is in the 6th column (index 5) if G is the 6th letter from B
+                                targetIndicatorData.latestDate = rowData[5] || '';     
+                            }
+                        } else {
+                             // console.warn(`No latest data in sheet for indicator: ${indicator.name} (row index ${index})`);
+                        }
+                    });
+                } else {
+                    console.warn('No latest data returned from Google Sheet or sheet is empty for the specified range.');
+                }
+            } catch (error) {
+                console.error('Error fetching latest data from Google Sheet:', error);
+            }
+        }
+
+        async function fetchAndProcessHistoricalData(countryCode, indicatorId) {
+            const indicatorConfig = indicatorList.find(ind => ind.id === indicatorId);
+            if (!indicatorConfig || !indicatorConfig.historicalSheet || !indicatorConfig.historicalRanges) {
+                const targetDataKey = indicatorMapping[indicatorId]?.dataKey;
+                if (targetDataKey && macroeconomicData[countryCode] && macroeconomicData[countryCode][targetDataKey]) {
+                     macroeconomicData[countryCode][targetDataKey].hasFetchedHistorical = true;
+                }
+                return;
+            }
+
+            const targetIndicatorData = macroeconomicData[countryCode][indicatorConfig.dataKey];
+            if (targetIndicatorData.hasFetchedHistorical) {
+                return; 
+            }
+
+            const sheetName = indicatorConfig.historicalSheet;
+            const rangesToFetch = [];
+            // Only add range if it's defined and not an empty string
+            if (indicatorConfig.historicalRanges.date && indicatorConfig.historicalRanges.date.trim() !== '') rangesToFetch.push(`${sheetName}!${indicatorConfig.historicalRanges.date}`);
+            if (indicatorConfig.historicalRanges.actual && indicatorConfig.historicalRanges.actual.trim() !== '') rangesToFetch.push(`${sheetName}!${indicatorConfig.historicalRanges.actual}`);
+            if (indicatorConfig.historicalRanges.forecast && indicatorConfig.historicalRanges.forecast.trim() !== '') rangesToFetch.push(`${sheetName}!${indicatorConfig.historicalRanges.forecast}`);
+            if (indicatorConfig.historicalRanges.surprise && indicatorConfig.historicalRanges.surprise.trim() !== '') rangesToFetch.push(`${sheetName}!${indicatorConfig.historicalRanges.surprise}`);
+
+
+            if (rangesToFetch.length === 0) {
+                console.warn(`No valid historical ranges defined for ${indicatorId}`);
+                targetIndicatorData.hasFetchedHistorical = true;
+                return;
+            }
+            
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values:batchGet?ranges=${rangesToFetch.map(r => encodeURIComponent(r)).join('&ranges=')}&key=${GOOGLE_API_KEY}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Google Sheets API request failed for historical data (indicator: ${indicatorId}) with status ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.valueRanges && data.valueRanges.length > 0) {
+                    let rangeIndex = 0;
+                    const datesRaw = (indicatorConfig.historicalRanges.date && indicatorConfig.historicalRanges.date.trim() !== '' && data.valueRanges[rangeIndex]) ? (data.valueRanges[rangeIndex++]?.values || []) : [];
+                    const actualsRaw = (indicatorConfig.historicalRanges.actual && indicatorConfig.historicalRanges.actual.trim() !== '' && data.valueRanges[rangeIndex]) ? (data.valueRanges[rangeIndex++]?.values || []) : [];
+                    const forecastsRaw = (indicatorConfig.historicalRanges.forecast && indicatorConfig.historicalRanges.forecast.trim() !== '' && data.valueRanges[rangeIndex]) ? (data.valueRanges[rangeIndex++]?.values || []) : [];
+                    const surprisesRaw = (indicatorConfig.historicalRanges.surprise && indicatorConfig.historicalRanges.surprise.trim() !== '' && data.valueRanges[rangeIndex]) ? (data.valueRanges[rangeIndex++]?.values || []) : [];
+
+
+                    targetIndicatorData.historicalDates = datesRaw.map(row => row[0] || '').filter(date => date && date.trim() !== '');
+                    
+                    const dataLength = targetIndicatorData.historicalDates.length;
+                    if (dataLength > 0) {
+                        targetIndicatorData.historicalValues = actualsRaw.slice(0, dataLength).map(row => row ? (row[0] || null) : null);
+                        targetIndicatorData.historicalForecasts = forecastsRaw.slice(0, dataLength).map(row => row ? (row[0] || null) : null);
+                        targetIndicatorData.historicalSurprises = surprisesRaw.slice(0, dataLength).map(row => row ? (row[0] || null) : null);
+                    } else {
+                        targetIndicatorData.historicalValues = [];
+                        targetIndicatorData.historicalForecasts = [];
+                        targetIndicatorData.historicalSurprises = [];
+                    }
+                } else {
+                    console.warn(`No valueRanges returned from Google Sheet for historical data of ${indicatorId}.`);
+                }
+            } catch (error) {
+                console.error(`Error fetching historical data for ${indicatorId}:`, error);
+            } finally {
+                targetIndicatorData.hasFetchedHistorical = true;
+            }
+        }
+
+        // --- UI Update Functions ---
+        function createHorizontalLineMarker(color, width = 20, height = 3) {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = color;
+            ctx.fillRect(0, (height - 2) / 2, width, 2); 
+            const image = new Image();
+            image.src = canvas.toDataURL();
+            return image;
+        }
+
+        function updateMainDataTable(country) {
+            const currentCountryData = macroeconomicData[country];
+            if (!currentCountryData) {
+                console.error(`Data for country ${country} not found.`);
+                return;
+            }
+           
+            Object.entries(indicatorMapping).forEach(([indicatorId, mappingEntry]) => {
+                const indicatorData = currentCountryData[mappingEntry.dataKey];
+                
+                const valueEl = document.getElementById(`${indicatorId}-value`);
+                const previousEl = document.getElementById(`${indicatorId}-previous`);
+                const forecastEl = document.getElementById(`${indicatorId}-forecast`);
+                const surpriseEl = document.getElementById(`${indicatorId}-surprise`);
+                const dateEl = document.getElementById(`${indicatorId}-date`);
+
+                if (indicatorData) {
+                    if(valueEl) valueEl.textContent = indicatorData.latestActual !== undefined ? indicatorData.latestActual : '';
+                    if(previousEl) previousEl.textContent = indicatorData.previousActual !== undefined ? indicatorData.previousActual : '';
+                    if(forecastEl) forecastEl.textContent = indicatorData.latestForecast !== undefined ? indicatorData.latestForecast : '';
+                    if(surpriseEl) surpriseEl.textContent = indicatorData.latestSurprise !== undefined ? indicatorData.latestSurprise : '';
+                    if(dateEl) dateEl.textContent = indicatorData.latestDate !== undefined ? indicatorData.latestDate : '';
+                } else {
+                    if(valueEl) valueEl.textContent = '';
+                    if(previousEl) previousEl.textContent = '';
+                    if(forecastEl) forecastEl.textContent = '';
+                    if(surpriseEl) surpriseEl.textContent = '';
+                    if(dateEl) dateEl.textContent = '';
+                }
+            });
+           
+            setActiveIndicatorRow(activeIndicatorId); 
+        }
+
+        async function displayHistoricalData(indicatorId, country) { 
+            showRightPaneLoading();
+            try {
+                const mapping = indicatorMapping[indicatorId];
+                if (!mapping) {
+                    console.error(`Mapping for indicator ${indicatorId} not found.`);
+                    historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Error: Indicator mapping not found.</td></tr>';
+                    if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                    return;
+                }
+
+                historicalDataTitleEl.textContent = `Historical Data - ${mapping.title}`;
+            
+                const countryData = macroeconomicData[country];
+                const indicatorData = countryData ? countryData[mapping.dataKey] : null;
+
+                if (!indicatorData) {
+                    console.warn(`No data structure for ${mapping.title} in ${country}. Displaying empty state.`);
+                    historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">No historical data available.</td></tr>';
+                    if (historicalChartInstance) {
+                        historicalChartInstance.data.labels = [];
+                        historicalChartInstance.data.datasets.forEach(dataset => { dataset.data = []; });
+                        historicalChartInstance.update();
+                    }
+                    setupLegendButtons();
+                    return;
+                }
+
+                if (country === 'USD' && mapping && mapping.historicalSheet && !indicatorData.hasFetchedHistorical) {
+                    await fetchAndProcessHistoricalData(country, indicatorId);
+                }
+
+                const fullHistoricalDates = indicatorData.historicalDates || [];
+                const fullHistoricalActuals = indicatorData.historicalValues || [];
+                const fullHistoricalForecasts = indicatorData.historicalForecasts || [];
+                const fullHistoricalSurprises = indicatorData.historicalSurprises || [];
+
+                let chartDates, chartActuals, chartForecasts, chartSurprises;
+                let tableDates, tableActuals, tableForecasts, tableSurprises;
+
+                if (currentDataPointsToShow !== null && currentDataPointsToShow > 0 && fullHistoricalDates.length > 0) {
+                    const numPoints = Math.min(currentDataPointsToShow, fullHistoricalDates.length);
+                    
+                    chartDates = fullHistoricalDates.slice(0, numPoints).reverse();
+                    chartActuals = fullHistoricalActuals.slice(0, numPoints).reverse();
+                    chartForecasts = fullHistoricalForecasts.slice(0, numPoints).reverse();
+                    chartSurprises = fullHistoricalSurprises.slice(0, numPoints).reverse();
+
+                    tableDates = fullHistoricalDates.slice(0, numPoints);
+                    tableActuals = fullHistoricalActuals.slice(0, numPoints);
+                    tableForecasts = fullHistoricalForecasts.slice(0, numPoints);
+                    tableSurprises = fullHistoricalSurprises.slice(0, numPoints);
+
+                } else { 
+                    chartDates = [...fullHistoricalDates].reverse();
+                    chartActuals = [...fullHistoricalActuals].reverse();
+                    chartForecasts = [...fullHistoricalForecasts].reverse();
+                    chartSurprises = [...fullHistoricalSurprises].reverse();
+
+                    tableDates = fullHistoricalDates; 
+                    tableActuals = fullHistoricalActuals;
+                    tableForecasts = fullHistoricalForecasts;
+                    tableSurprises = fullHistoricalSurprises;
+                }
+                
+                const unitForChartAndTable = indicatorData.unit || mapping.unitSuffix || '';
+
+                historicalDataTableBody.innerHTML = ''; 
+                if (tableDates.length === 0) {
+                    historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">No historical data available.</td></tr>';
+                } else {
+                    tableDates.forEach((year, index) => { 
+                        const row = historicalDataTableBody.insertRow();
+                        row.insertCell().textContent = year; 
+                        const actualText = `${tableActuals[index] !== null ? tableActuals[index] : ''}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
+                        const forecastText = `${tableForecasts[index] !== null ? tableForecasts[index] : ''}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
+                        row.insertCell().textContent = actualText;
+                        row.insertCell().textContent = forecastText;
+                        row.insertCell().textContent = tableSurprises[index] !== null ? tableSurprises[index] : ''; 
+                    });
+                }
+
+                const scrollWrapperWidth = historicalChartScrollWrapper.offsetWidth;
+                const finalCanvasWidth = scrollWrapperWidth;
+
+                historicalChartCanvasEl.style.width = finalCanvasWidth + 'px';
+                historicalChartCanvasEl.width = finalCanvasWidth * window.devicePixelRatio; 
+                historicalChartCanvasEl.style.height = historicalChartScrollWrapper.offsetHeight + 'px'; 
+                historicalChartCanvasEl.height = historicalChartScrollWrapper.offsetHeight * window.devicePixelRatio;
+
+                if (historicalChartInstance) {
+                    historicalChartInstance.destroy(); 
+                }
+            
+                if (!forecastMarkerImage) {
+                    forecastMarkerImage = createHorizontalLineMarker('rgba(255, 255, 255, 1)', 20, 4); 
+                }
+
+                const datasets = [
+                    { 
+                        label: `Actual${unitForChartAndTable ? ` (${unitForChartAndTable.trim()})` : ''}`, 
+                        data: chartActuals, 
+                        backgroundColor: 'rgba(170, 170, 170, 0.7)', 
+                        borderColor: 'rgba(170, 170, 170, 1)', 
+                        borderWidth: 1, 
+                        type: 'bar', 
+                        yAxisID: 'yPrimary',
+                        order: 3, 
+                        hidden: false 
+                    },
+                    { 
+                        label: `Forecast${unitForChartAndTable ? ` (${unitForChartAndTable.trim()})` : ''}`, 
+                        data: chartForecasts, 
+                        type: 'line', 
+                        showLine: false, 
+                        pointStyle: forecastMarkerImage, 
+                        pointRadius: 10, 
+                        pointBackgroundColor: 'rgba(100, 100, 100, 1)', 
+                        pointBorderColor: 'rgba(100, 100, 100, 1)',   
+                        yAxisID: 'yPrimary',
+                        order: 2, 
+                        hidden: false 
+                    },
+                    { 
+                        label: 'Surprise Index', 
+                        data: chartSurprises, 
+                        borderColor: 'rgba(255, 128, 0, 1)', 
+                        backgroundColor: 'rgba(255, 128, 0, 0.5)', 
+                        borderWidth: 2, 
+                        pointRadius: 3, 
+                        pointHoverRadius: 5, 
+                        yAxisID: 'ySurprise', 
+                        type: 'line', 
+                        fill: false, 
+                        tension: 0.4,
+                        order: 1, 
+                        hidden: true 
+                    }
+                ];
+
+                const ctx = historicalChartCanvasEl.getContext('2d');
+                historicalChartInstance = new Chart(ctx, {
+                    data: {
+                        labels: chartDates, 
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false},
+                        scales: {
+                            yPrimary: { type: 'linear', display: true, position: 'left', beginAtZero: false, ticks: { color: '#f0f0f0', callback: function(value) { return value + (unitForChartAndTable || ''); }}, grid: { color: 'rgba(255, 255, 255, 0.1)' }, title: { display: true, text: `Value (${unitForChartAndTable.trim() || 'Unit'})`, color: '#f0f0f0'}},
+                            ySurprise: { type: 'linear', display: true, position: 'right', beginAtZero: true, ticks: { color: '#f0f0f0' }, grid: { drawOnChartArea: false, }, title: { display: true, text: 'Surprise Index', color: '#f0f0f0'}},
+                            x: { ticks: { color: '#f0f0f0', autoSkip: chartDates.length > 15, maxRotation: chartDates.length > 10 ? 70 : 0, minRotation: chartDates.length > 10 ? 70 : 0 }, grid: { display: false }}
+                        },
+                        plugins: {
+                            legend: { display: false }, 
+                            tooltip: { 
+                                callbacks: { 
+                                    label: function(context) { 
+                                        let label = context.dataset.label || ''; 
+                                        if (label) label += ': '; 
+                                        if (context.parsed.y !== null) { 
+                                            label += context.parsed.y; 
+                                        } 
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        barPercentage: 0.9, 
+                        categoryPercentage: 0.8,  
+                    }
+                });
+            
+                const surpriseDataset = historicalChartInstance.data.datasets.find(ds => ds.label === 'Surprise Index');
+                if (surpriseDataset) {
+                    historicalChartInstance.options.scales.ySurprise.display = !surpriseDataset.hidden;
+                }
+                historicalChartInstance.update(); 
+
+                setupLegendButtons(); 
+            } finally {
+                hideRightPaneLoading();
+            }
+        }
+       
+        function setActiveIndicatorRow(indicatorId) {
+            mainDataTableBody.querySelectorAll('tr').forEach(row => {
+                row.classList.remove('active-indicator');
+                if (row.dataset.indicator === indicatorId) {
+                    row.classList.add('active-indicator');
+                }
+            });
+        }
+
+        function setupLegendButtons() {
+            const currentLegendButtons = document.querySelectorAll('.right-pane .legend-toggle-button');
+            if (!historicalChartInstance || !historicalChartInstance.data || !historicalChartInstance.data.datasets) {
+                console.warn("Historical chart instance or its data is not available for legend setup. Buttons might not reflect current state.");
+                 currentLegendButtons.forEach(button => button.classList.remove('active')); 
+                return;
+            }
+           
+            currentLegendButtons.forEach(button => {
+                const datasetIndex = parseInt(button.dataset.datasetIndex);
+                if (datasetIndex < 0 || datasetIndex >= historicalChartInstance.data.datasets.length) {
+                    console.warn(`Invalid datasetIndex ${datasetIndex} for legend button.`);
+                    button.classList.remove('active'); 
+                    return;
+                }
+
+                const isInitiallyVisible = !historicalChartInstance.data.datasets[datasetIndex].hidden;
+                button.classList.toggle('active', isInitiallyVisible);
+                                           
+                const newButton = button.cloneNode(true); 
+                if (button.parentNode) { 
+                    button.parentNode.replaceChild(newButton, button);
+                } else {
+                    console.error("Button parentNode is null during legend setup.", button);
+                    return; 
+                }
+
+                newButton.addEventListener('click', () => {
+                    if (!historicalChartInstance) return; 
+                    const currentVisibility = historicalChartInstance.isDatasetVisible(datasetIndex);
+                    historicalChartInstance.setDatasetVisibility(datasetIndex, !currentVisibility);
+                    newButton.classList.toggle('active', !currentVisibility);
+
+                    if (historicalChartInstance.data.datasets[datasetIndex].label === 'Surprise Index') { 
+                        historicalChartInstance.options.scales.ySurprise.display = !currentVisibility;
+                    }
+                    historicalChartInstance.update();
+                });
+            });
+        }
+       
+        // --- Resizer Logic ---
+        const resizer = document.createElement('div');
+        resizer.className = 'resizer-x';
+        if (rightPane && rightPane.parentNode === contentContainer) { 
+            contentContainer.insertBefore(resizer, rightPane); 
+        } else {
+            console.error("Right pane or content container not found for resizer insertion.");
+        }
+
+
+        let isResizing = false;
+        let startX, startLeftWidth;
+        const minPaneWidth = 150; 
+
+        resizer.addEventListener('mousedown', function(e) {
+            e.preventDefault(); 
+            isResizing = true;
+            startX = e.clientX;
+            startLeftWidth = leftPane.offsetWidth;
+            document.body.style.cursor = 'col-resize'; 
+
+            document.addEventListener('mousemove', handleResizerMouseMove);
+            document.addEventListener('mouseup', handleResizerMouseUp);
+        });
+
+        function handleResizerMouseMove(e) {
+            if (!isResizing) return;
+            const deltaX = e.clientX - startX;
+            let newLeftWidth = startLeftWidth + deltaX;
+           
+            const containerWidth = contentContainer.offsetWidth;
+            const resizerWidth = resizer.offsetWidth;
+
+            if (newLeftWidth < minPaneWidth) {
+                newLeftWidth = minPaneWidth;
+            }
+            if (containerWidth - newLeftWidth - resizerWidth < minPaneWidth) {
+                newLeftWidth = containerWidth - minPaneWidth - resizerWidth;
+            }
+
+            leftPane.style.width = newLeftWidth + 'px';
+            rightPane.style.width = (containerWidth - newLeftWidth - resizerWidth) + 'px';
+        }
+
+        function handleResizerMouseUp() {
+            if (!isResizing) return;
+            isResizing = false;
+            document.body.style.cursor = 'default'; 
+
+            document.removeEventListener('mousemove', handleResizerMouseMove);
+            document.removeEventListener('mouseup', handleResizerMouseUp);
+
+            handlePanesResized();
+        }
+
+        async function handlePanesResized() { 
+            showFullScreenLoading();
+            try {
+                if (macroeconomicData && macroeconomicData[selectedCountry]) { 
+                    updateMainDataTable(selectedCountry); 
+                    if (historicalChartInstance) { 
+                        await displayHistoricalData(activeIndicatorId, selectedCountry); 
+                    }
+                } else {
+                    console.warn(`Data for ${selectedCountry} not found during resize. Displaying empty.`);
+                    updateMainDataTable(selectedCountry); 
+                    await displayHistoricalData(activeIndicatorId, selectedCountry); 
+                }
+            } finally {
+                hideFullScreenLoading();
+            }
+        }
+
+
+        // --- Event Listeners ---
+       
+        countrySelect.addEventListener('change', async (event) => { 
+            showFullScreenLoading();
+            selectedCountry = event.target.value;
+            currentDataPointsToShow = 15; 
+            dataPointsInput.value = '15';
+            
+            if (macroeconomicData[selectedCountry]) {
+                Object.values(macroeconomicData[selectedCountry]).forEach(indicatorData => {
+                    if (typeof indicatorData === 'object' && indicatorData !== null && indicatorData.hasOwnProperty('hasFetchedHistorical')) {
+                        indicatorData.hasFetchedHistorical = false;
+                        indicatorData.historicalDates = [];
+                        indicatorData.historicalValues = [];
+                        indicatorData.historicalForecasts = [];
+                        indicatorData.historicalSurprises = [];
+                        if (selectedCountry !== 'USD') {
+                            indicatorData.latestActual = '';   
+                            indicatorData.previousActual = ''; 
+                            indicatorData.latestForecast = ''; 
+                            indicatorData.latestSurprise = '';
+                            indicatorData.latestDate = '';  
+                        }
+                    }
+                });
+            }
+
+            updateMainDataTable(selectedCountry); 
+            if (selectedCountry === 'USD') {
+                await fetchLatestDataFromSheet(selectedCountry, 'United States');
+            }
+            await displayHistoricalData(activeIndicatorId, selectedCountry); 
+            updateMainDataTable(selectedCountry); 
+            hideFullScreenLoading();
+        });
+
+        mainDataTableBody.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', async () => { 
+                const newIndicatorId = row.dataset.indicator;
+                if (newIndicatorId && newIndicatorId !== activeIndicatorId) {
+                    activeIndicatorId = newIndicatorId;
+                    currentDataPointsToShow = 15; 
+                    dataPointsInput.value = '15'; 
+                }
+                setActiveIndicatorRow(activeIndicatorId); 
+                await displayHistoricalData(activeIndicatorId, selectedCountry); 
+            });
+        });
+       
+        async function applyDataPointsFilter() { 
+            const numPoints = parseInt(dataPointsInput.value);
+            if (!isNaN(numPoints) && numPoints >= (parseInt(dataPointsInput.min) || 1)) {
+                currentDataPointsToShow = numPoints;
+            } else if (dataPointsInput.value === '') { 
+                 currentDataPointsToShow = 15; 
+                 dataPointsInput.value = '15';
+            } else { 
+                currentDataPointsToShow = 15; 
+                dataPointsInput.value = '15'; 
+            }
+            await displayHistoricalData(activeIndicatorId, selectedCountry); 
+        }
+
+        dataPointsInput.addEventListener('input', applyDataPointsFilter);
+
+        dataPointsInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                applyDataPointsFilter();
+            }
+        });
+
+        showAllDataButton.addEventListener('click', async () => { 
+            currentDataPointsToShow = null; 
+            const indicatorData = macroeconomicData[selectedCountry]?.[indicatorMapping[activeIndicatorId]?.dataKey];
+            dataPointsInput.value = indicatorData?.historicalDates?.length > 0 ? indicatorData.historicalDates.length : '15'; 
+            await displayHistoricalData(activeIndicatorId, selectedCountry); 
+        });
+
+        decreaseDataPointsButton.addEventListener('click', () => { 
+            let currentValue = parseInt(dataPointsInput.value) || 15; 
+            const minValue = parseInt(dataPointsInput.min) || 1;
+            if (currentValue > minValue) {
+                dataPointsInput.value = currentValue - 1;
+            } else {
+                dataPointsInput.value = minValue;
+            }
+            applyDataPointsFilter(); 
+        });
+
+        increaseDataPointsButton.addEventListener('click', () => { 
+            let currentValue = parseInt(dataPointsInput.value) || 15; 
+            const countryData = macroeconomicData[selectedCountry];
+            const indicatorDataObj = countryData ? countryData[indicatorMapping[activeIndicatorId]?.dataKey] : null;
+            const maxPoints = (indicatorDataObj && indicatorDataObj.historicalDates && indicatorDataObj.historicalDates.length > 0) 
+                              ? indicatorDataObj.historicalDates.length 
+                              : (currentValue + 10); 
+
+            if (currentValue < maxPoints) { 
+                 dataPointsInput.value = currentValue + 1;
+            } else if (indicatorDataObj && indicatorDataObj.historicalDates.length > 0) { 
+                 dataPointsInput.value = indicatorDataObj.historicalDates.length;
+            }
+            applyDataPointsFilter(); 
+        });
+
+
+        document.addEventListener('DOMContentLoaded', async () => { 
+            showFullScreenLoading();
+            countrySelect.value = selectedCountry; 
+            dataPointsInput.value = '15'; 
+
+            if (!forecastMarkerImage) {
+                forecastMarkerImage = createHorizontalLineMarker('rgba(255, 255, 255, 1)', 20, 4); 
+            }
+            
+            if (selectedCountry === 'USD') { 
+                await fetchLatestDataFromSheet(selectedCountry, 'United States');
+            }
+            
+            updateMainDataTable(selectedCountry); 
+            await displayHistoricalData(activeIndicatorId, selectedCountry); 
+            setActiveIndicatorRow(activeIndicatorId);
+            hideFullScreenLoading();
+        });
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(async () => { 
+                showFullScreenLoading();
+                await handlePanesResized(); 
+                hideFullScreenLoading();
+            }, 250); 
+        });
+
+    </script>
+</body>
+</html>
