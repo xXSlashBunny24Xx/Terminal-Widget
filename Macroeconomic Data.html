@@ -192,7 +192,7 @@
             color: #fff;
         }
         .data-table tbody tr.active-indicator .data-value,
-        .data-table tbody tr.active-indicator .data-unit {
+        .data-table tbody tr.active-indicator .data-unit-main { 
             color: #fff;
         }
 
@@ -211,7 +211,7 @@
             color: #fff;
         }
 
-        .data-unit {
+        .data-unit-main { 
             color: #aaa;
             font-size: 12px;
             margin-left: 5px;
@@ -455,295 +455,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr data-indicator="gdp-sales-qq">
-                        <td>GDP Sales q/q</td>
-                        <td><span class="data-value" id="gdp-sales-qq-value"></span></td>
-                        <td id="gdp-sales-qq-previous"></td>
-                        <td id="gdp-sales-qq-forecast"></td>
-                        <td id="gdp-sales-qq-surprise"></td>
-                        <td><span class="data-unit">q/q</span></td>
-                        <td id="gdp-sales-qq-date"></td>
-                    </tr>
-                    <tr data-indicator="gdp-qq">
-                        <td>GDP q/q</td>
-                        <td><span class="data-value" id="gdp-qq-value"></span></td>
-                        <td id="gdp-qq-previous"></td>
-                        <td id="gdp-qq-forecast"></td>
-                        <td id="gdp-qq-surprise"></td>
-                        <td><span class="data-unit">q/q</span></td>
-                        <td id="gdp-qq-date"></td>
-                    </tr>
-                    <tr data-indicator="adp-nonfarm-employment-change">
-                        <td>ADP Nonfarm Employment Change</td>
-                        <td><span class="data-value" id="adp-nonfarm-employment-change-value"></span></td>
-                        <td id="adp-nonfarm-employment-change-previous"></td>
-                        <td id="adp-nonfarm-employment-change-forecast"></td>
-                        <td id="adp-nonfarm-employment-change-surprise"></td>
-                        <td><span class="data-unit">K</span></td>
-                        <td id="adp-nonfarm-employment-change-date"></td>
-                    </tr>
-                    <tr data-indicator="avg-hourly-earnings-mm">
-                        <td>Average Hourly Earnings m/m</td>
-                        <td><span class="data-value" id="avg-hourly-earnings-mm-value"></span></td>
-                        <td id="avg-hourly-earnings-mm-previous"></td>
-                        <td id="avg-hourly-earnings-mm-forecast"></td>
-                        <td id="avg-hourly-earnings-mm-surprise"></td>
-                        <td><span class="data-unit">% m/m</span></td>
-                        <td id="avg-hourly-earnings-mm-date"></td>
-                    </tr>
-                    <tr data-indicator="avg-hourly-earnings-yy">
-                        <td>Average Hourly Earnings y/y</td>
-                        <td><span class="data-value" id="avg-hourly-earnings-yy-value"></span></td>
-                        <td id="avg-hourly-earnings-yy-previous"></td>
-                        <td id="avg-hourly-earnings-yy-forecast"></td>
-                        <td id="avg-hourly-earnings-yy-surprise"></td>
-                        <td><span class="data-unit">% y/y</span></td>
-                        <td id="avg-hourly-earnings-yy-date"></td>
-                    </tr>
-                    <tr data-indicator="initial-jobless-claims">
-                        <td>Initial Jobless Claims</td>
-                        <td><span class="data-value" id="initial-jobless-claims-value"></span></td>
-                        <td id="initial-jobless-claims-previous"></td>
-                        <td id="initial-jobless-claims-forecast"></td>
-                        <td id="initial-jobless-claims-surprise"></td>
-                        <td><span class="data-unit">K</span></td>
-                        <td id="initial-jobless-claims-date"></td>
-                    </tr>
-                    <tr data-indicator="jolts-job-openings">
-                        <td>JOLTS Job Openings</td>
-                        <td><span class="data-value" id="jolts-job-openings-value"></span></td>
-                        <td id="jolts-job-openings-previous"></td>
-                        <td id="jolts-job-openings-forecast"></td>
-                        <td id="jolts-job-openings-surprise"></td>
-                        <td><span class="data-unit">M</span></td>
-                        <td id="jolts-job-openings-date"></td>
-                    </tr>
-                    <tr data-indicator="nonfarm-payrolls">
-                        <td>Nonfarm Payrolls</td>
-                        <td><span class="data-value" id="nonfarm-payrolls-value"></span></td>
-                        <td id="nonfarm-payrolls-previous"></td>
-                        <td id="nonfarm-payrolls-forecast"></td>
-                        <td id="nonfarm-payrolls-surprise"></td>
-                        <td><span class="data-unit">K</span></td>
-                        <td id="nonfarm-payrolls-date"></td>
-                    </tr>
-                    <tr data-indicator="unemployment-rate">
-                        <td>Unemployment Rate</td>
-                        <td><span class="data-value" id="unemployment-rate-value"></span></td>
-                        <td id="unemployment-rate-previous"></td>
-                        <td id="unemployment-rate-forecast"></td>
-                        <td id="unemployment-rate-surprise"></td>
-                        <td><span class="data-unit">%</span></td>
-                        <td id="unemployment-rate-date"></td>
-                    </tr>
-                    <tr data-indicator="cpi-yy">
-                        <td>CPI y/y</td>
-                        <td><span class="data-value" id="cpi-yy-value"></span></td>
-                        <td id="cpi-yy-previous"></td>
-                        <td id="cpi-yy-forecast"></td>
-                        <td id="cpi-yy-surprise"></td>
-                        <td><span class="data-unit">% y/y</span></td>
-                        <td id="cpi-yy-date"></td>
-                    </tr>
-                    <tr data-indicator="core-cpi-yy">
-                        <td>Core CPI y/y</td>
-                        <td><span class="data-value" id="core-cpi-yy-value"></span></td>
-                        <td id="core-cpi-yy-previous"></td>
-                        <td id="core-cpi-yy-forecast"></td>
-                        <td id="core-cpi-yy-surprise"></td>
-                        <td><span class="data-unit">% y/y</span></td>
-                        <td id="core-cpi-yy-date"></td>
-                    </tr>
-                    <tr data-indicator="cpi-mm">
-                        <td>CPI m/m</td>
-                        <td><span class="data-value" id="cpi-mm-value"></span></td>
-                        <td id="cpi-mm-previous"></td>
-                        <td id="cpi-mm-forecast"></td>
-                        <td id="cpi-mm-surprise"></td>
-                        <td><span class="data-unit">% m/m</span></td>
-                        <td id="cpi-mm-date"></td>
-                    </tr>
-                    <tr data-indicator="core-cpi-mm">
-                        <td>Core CPI m/m</td>
-                        <td><span class="data-value" id="core-cpi-mm-value"></span></td>
-                        <td id="core-cpi-mm-previous"></td>
-                        <td id="core-cpi-mm-forecast"></td>
-                        <td id="core-cpi-mm-surprise"></td>
-                        <td><span class="data-unit">% m/m</span></td>
-                        <td id="core-cpi-mm-date"></td>
-                    </tr>
-                    <tr data-indicator="core-pce-price-index-yy">
-                        <td>Core PCE Price Index y/y</td>
-                        <td><span class="data-value" id="core-pce-price-index-yy-value"></span></td>
-                        <td id="core-pce-price-index-yy-previous"></td>
-                        <td id="core-pce-price-index-yy-forecast"></td>
-                        <td id="core-pce-price-index-yy-surprise"></td>
-                        <td><span class="data-unit">% y/y</span></td>
-                        <td id="core-pce-price-index-yy-date"></td>
-                    </tr>
-                    <tr data-indicator="core-ppi-mm">
-                        <td>Core PPI m/m</td>
-                        <td><span class="data-value" id="core-ppi-mm-value"></span></td>
-                        <td id="core-ppi-mm-previous"></td>
-                        <td id="core-ppi-mm-forecast"></td>
-                        <td id="core-ppi-mm-surprise"></td>
-                        <td><span class="data-unit">% m/m</span></td>
-                        <td id="core-ppi-mm-date"></td>
-                    </tr>
-                    <tr data-indicator="core-ppi-yy">
-                        <td>Core PPI y/y</td>
-                        <td><span class="data-value" id="core-ppi-yy-value"></span></td>
-                        <td id="core-ppi-yy-previous"></td>
-                        <td id="core-ppi-yy-forecast"></td>
-                        <td id="core-ppi-yy-surprise"></td>
-                        <td><span class="data-unit">% y/y</span></td>
-                        <td id="core-ppi-yy-date"></td>
-                    </tr>
-                    <tr data-indicator="michigan-5y-inflation-expectations">
-                        <td>Michigan 5-Year Inflation Expectations</td>
-                        <td><span class="data-value" id="michigan-5y-inflation-expectations-value"></span></td>
-                        <td id="michigan-5y-inflation-expectations-previous"></td>
-                        <td id="michigan-5y-inflation-expectations-forecast"></td>
-                        <td id="michigan-5y-inflation-expectations-surprise"></td>
-                        <td><span class="data-unit">%</span></td>
-                        <td id="michigan-5y-inflation-expectations-date"></td>
-                    </tr>
-                    <tr data-indicator="michigan-inflation-expectations">
-                        <td>Michigan Inflation Expectations</td>
-                        <td><span class="data-value" id="michigan-inflation-expectations-value"></span></td>
-                        <td id="michigan-inflation-expectations-previous"></td>
-                        <td id="michigan-inflation-expectations-forecast"></td>
-                        <td id="michigan-inflation-expectations-surprise"></td>
-                        <td><span class="data-unit">%</span></td>
-                        <td id="michigan-inflation-expectations-date"></td>
-                    </tr>
-                    <tr data-indicator="pce-price-index-yy">
-                        <td>PCE Price Index y/y</td>
-                        <td><span class="data-value" id="pce-price-index-yy-value"></span></td>
-                        <td id="pce-price-index-yy-previous"></td>
-                        <td id="pce-price-index-yy-forecast"></td>
-                        <td id="pce-price-index-yy-surprise"></td>
-                        <td><span class="data-unit">% y/y</span></td>
-                        <td id="pce-price-index-yy-date"></td>
-                    </tr>
-                    <tr data-indicator="ppi-mm">
-                        <td>PPI m/m</td>
-                        <td><span class="data-value" id="ppi-mm-value"></span></td>
-                        <td id="ppi-mm-previous"></td>
-                        <td id="ppi-mm-forecast"></td>
-                        <td id="ppi-mm-surprise"></td>
-                        <td><span class="data-unit">% m/m</span></td>
-                        <td id="ppi-mm-date"></td>
-                    </tr>
-                    <tr data-indicator="ppi-yy">
-                        <td>PPI y/y</td>
-                        <td><span class="data-value" id="ppi-yy-value"></span></td>
-                        <td id="ppi-yy-previous"></td>
-                        <td id="ppi-yy-forecast"></td>
-                        <td id="ppi-yy-surprise"></td>
-                        <td><span class="data-unit">% y/y</span></td>
-                        <td id="ppi-yy-date"></td>
-                    </tr>
-                    <tr data-indicator="fed-interest-rate-decision">
-                        <td>Fed Interest Rate Decision</td>
-                        <td><span class="data-value" id="fed-interest-rate-decision-value"></span></td>
-                        <td id="fed-interest-rate-decision-previous"></td>
-                        <td id="fed-interest-rate-decision-forecast"></td>
-                        <td id="fed-interest-rate-decision-surprise"></td>
-                        <td><span class="data-unit">%</span></td>
-                        <td id="fed-interest-rate-decision-date"></td>
-                    </tr>
-                    <tr data-indicator="current-account">
-                        <td>Current Account</td>
-                        <td><span class="data-value" id="current-account-value"></span></td>
-                        <td id="current-account-previous"></td>
-                        <td id="current-account-forecast"></td>
-                        <td id="current-account-surprise"></td>
-                        <td><span class="data-unit">Billion</span></td>
-                        <td id="current-account-date"></td>
-                    </tr>
-                    <tr data-indicator="ism-manufacturing-pmi">
-                        <td>ISM Manufacturing PMI</td>
-                        <td><span class="data-value" id="ism-manufacturing-pmi-value"></span></td>
-                        <td id="ism-manufacturing-pmi-previous"></td>
-                        <td id="ism-manufacturing-pmi-forecast"></td>
-                        <td id="ism-manufacturing-pmi-surprise"></td>
-                        <td><span class="data-unit">Index</span></td>
-                        <td id="ism-manufacturing-pmi-date"></td>
-                    </tr>
-                    <tr data-indicator="ism-non-manufacturing-pmi">
-                        <td>ISM Non-Manufacturing PMI</td>
-                        <td><span class="data-value" id="ism-non-manufacturing-pmi-value"></span></td>
-                        <td id="ism-non-manufacturing-pmi-previous"></td>
-                        <td id="ism-non-manufacturing-pmi-forecast"></td>
-                        <td id="ism-non-manufacturing-pmi-surprise"></td>
-                        <td><span class="data-unit">Index</span></td>
-                        <td id="ism-non-manufacturing-pmi-date"></td>
-                    </tr>
-                    <tr data-indicator="sp-global-composite-pmi">
-                        <td>S&P Global Composite PMI</td>
-                        <td><span class="data-value" id="sp-global-composite-pmi-value"></span></td>
-                        <td id="sp-global-composite-pmi-previous"></td>
-                        <td id="sp-global-composite-pmi-forecast"></td>
-                        <td id="sp-global-composite-pmi-surprise"></td>
-                        <td><span class="data-unit">Index</span></td>
-                        <td id="sp-global-composite-pmi-date"></td>
-                    </tr>
-                    <tr data-indicator="sp-global-manufacturing-pmi">
-                        <td>S&P Global Manufacturing PMI</td>
-                        <td><span class="data-value" id="sp-global-manufacturing-pmi-value"></span></td>
-                        <td id="sp-global-manufacturing-pmi-previous"></td>
-                        <td id="sp-global-manufacturing-pmi-forecast"></td>
-                        <td id="sp-global-manufacturing-pmi-surprise"></td>
-                        <td><span class="data-unit">Index</span></td>
-                        <td id="sp-global-manufacturing-pmi-date"></td>
-                    </tr>
-                    <tr data-indicator="sp-global-services-pmi">
-                        <td>S&P Global Services PMI</td>
-                        <td><span class="data-value" id="sp-global-services-pmi-value"></span></td>
-                        <td id="sp-global-services-pmi-previous"></td>
-                        <td id="sp-global-services-pmi-forecast"></td>
-                        <td id="sp-global-services-pmi-surprise"></td>
-                        <td><span class="data-unit">Index</span></td>
-                        <td id="sp-global-services-pmi-date"></td>
-                    </tr>
-                    <tr data-indicator="cb-consumer-confidence-index">
-                        <td>CB Consumer Confidence Index</td>
-                        <td><span class="data-value" id="cb-consumer-confidence-index-value"></span></td>
-                        <td id="cb-consumer-confidence-index-previous"></td>
-                        <td id="cb-consumer-confidence-index-forecast"></td>
-                        <td id="cb-consumer-confidence-index-surprise"></td>
-                        <td><span class="data-unit">Index</span></td>
-                        <td id="cb-consumer-confidence-index-date"></td>
-                    </tr>
-                    <tr data-indicator="core-retail-sales-mm">
-                        <td>Core Retail Sales m/m</td>
-                        <td><span class="data-value" id="core-retail-sales-mm-value"></span></td>
-                        <td id="core-retail-sales-mm-previous"></td>
-                        <td id="core-retail-sales-mm-forecast"></td>
-                        <td id="core-retail-sales-mm-surprise"></td>
-                        <td><span class="data-unit">% m/m</span></td>
-                        <td id="core-retail-sales-mm-date"></td>
-                    </tr>
-                    <tr data-indicator="retail-sales-mm">
-                        <td>Retail Sales m/m</td>
-                        <td><span class="data-value" id="retail-sales-mm-value"></span></td>
-                        <td id="retail-sales-mm-previous"></td>
-                        <td id="retail-sales-mm-forecast"></td>
-                        <td id="retail-sales-mm-surprise"></td>
-                        <td><span class="data-unit">% m/m</span></td>
-                        <td id="retail-sales-mm-date"></td>
-                    </tr>
-                    <tr data-indicator="retail-sales-yy">
-                        <td>Retail Sales y/y</td>
-                        <td><span class="data-value" id="retail-sales-yy-value"></span></td>
-                        <td id="retail-sales-yy-previous"></td>
-                        <td id="retail-sales-yy-forecast"></td>
-                        <td id="retail-sales-yy-surprise"></td>
-                        <td><span class="data-unit">% y/y</span></td>
-                        <td id="retail-sales-yy-date"></td>
-                    </tr>
-                </tbody>
+                    </tbody>
             </table>
         </div>
         <div class="right-pane">
@@ -789,8 +501,12 @@
 
     <script>
         // --- Google Sheet Configuration ---
-        const GOOGLE_SHEET_ID = '1NSRaFuf5fNwbaZvgXgVKTr97v6aSp8-EXwSgM0ZXKcc';
-        const GOOGLE_API_KEY = 'AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4';
+        const GOOGLE_SHEET_IDS = { 
+            USD: '1NSRaFuf5fNwbaZvgXgVKTr97v6aSp8-EXwSgM0ZXKcc',
+            EUR: '11SSoWwYCpe1oGJmgkxdsFyFWsHBV_xqhZKOOf6iQj4A',
+            GBP: '1kL2HimpF3llcFS5Pp0ZXY5dPK6GVwTWySuQ3lRdPzjk' // Added GBP Sheet ID
+        };
+        const GOOGLE_API_KEY = 'AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4'; 
 
         // --- DOM Elements ---
         const fullScreenLoadingOverlay = document.querySelector('.loading-overlay'); 
@@ -806,212 +522,417 @@
         const rightPane = document.querySelector('.right-pane');
         const contentContainer = document.querySelector('.content-container');
 
-        // Elements for data points control
         const dataPointsInput = document.getElementById('dataPointsInput');
         const showAllDataButton = document.getElementById('showAllDataButton');
         const decreaseDataPointsButton = document.getElementById('decreaseDataPoints');
         const increaseDataPointsButton = document.getElementById('increaseDataPoints');
 
-
         // --- State Variables ---
         let selectedCountry = 'USD'; 
         let historicalChartInstance = null; 
-        let activeIndicatorId = 'gdp-sales-qq'; 
+        let activeIndicatorId = ''; 
         let currentDataPointsToShow = 15; 
         let forecastMarkerImage = null; 
 
-        // --- Data ---
-        const createIndicatorDataObject = (unit) => ({
-            latestActual: '',
-            previousActual: '',
-            latestForecast: '',
-            latestSurprise: '',
-            latestDate: '',
-            unit: unit,
-            historicalDates: [],
-            historicalValues: [],
-            historicalForecasts: [],
-            historicalSurprises: [],
-            hasFetchedHistorical: false 
-        });
+        // --- Helper Function for Column Letters ---
+        function colToExcel(col) { 
+            let s = '', t;
+            while (col >= 0) {
+                t = col % 26;
+                s = String.fromCharCode(t + 65) + s;
+                col = Math.floor(col / 26) - 1;
+            }
+            return s;
+        }
+
+        // --- Data Structures ---
+        const countrySpecificConfig = {
+            USD: {
+                sheetIdKey: 'USD',
+                latestSheetName: 'United States',
+                latestSheetRange: 'B2:G33', 
+                latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
+                indicatorSetup: [
+                    { id: 'gdp-sales-qq', name: 'GDP Sales q/q', dataKey: 'gdpSalesQq', unit: 'q/q', historicalSheet: 'US Source', historicalRanges: { date: 'A3:A', actual: 'B3:B', forecast: 'C3:C', surprise: 'E3:E' } },
+                    { id: 'gdp-qq', name: 'GDP q/q', dataKey: 'gdpQq', unit: 'q/q', historicalSheet: 'US Source', historicalRanges: { date: 'G3:G', actual: 'H3:H', forecast: 'I3:I', surprise: 'K3:K' } },
+                    { id: 'adp-nonfarm-employment-change', name: 'ADP Nonfarm Employment Change', dataKey: 'adpNonfarmEmploymentChange', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'M3:M', actual: 'N3:N', forecast: 'O3:O', surprise: 'Q3:Q' } },
+                    { id: 'avg-hourly-earnings-mm', name: 'Average Hourly Earnings m/m', dataKey: 'avgHourlyEarningsMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'S3:S', actual: 'T3:T', forecast: 'U3:U', surprise: 'W3:W' } },
+                    { id: 'avg-hourly-earnings-yy', name: 'Average Hourly Earnings y/y', dataKey: 'avgHourlyEarningsYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'Y3:Y', actual: 'Z3:Z', forecast: 'AA3:AA', surprise: 'AC3:AC' } },
+                    { id: 'initial-jobless-claims', name: 'Initial Jobless Claims', dataKey: 'initialJoblessClaims', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'AE3:AE', actual: 'AF3:AF', forecast: 'AG3:AG', surprise: 'AI3:AI' } },
+                    { id: 'jolts-job-openings', name: 'JOLTS Job Openings', dataKey: 'joltsJobOpenings', unit: 'M', historicalSheet: 'US Source', historicalRanges: { date: 'AK3:AK', actual: 'AL3:AL', forecast: 'AM3:AM', surprise: 'AO3:AO' } },
+                    { id: 'nonfarm-payrolls', name: 'Nonfarm Payrolls', dataKey: 'nonfarmPayrolls', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'AQ3:AQ', actual: 'AR3:AR', forecast: 'AS3:AS', surprise: 'AU3:AU' } }, 
+                    { id: 'unemployment-rate', name: 'Unemployment Rate', dataKey: 'unemploymentRate', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'AW3:AW', actual: 'AX3:AX', forecast: 'AY3:AY', surprise: 'BA3:BA' } },
+                    { id: 'cpi-yy', name: 'CPI y/y', dataKey: 'cpiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'BC3:BC', actual: 'BD3:BD', forecast: 'BE3:BE', surprise: 'BG3:BG' } },
+                    { id: 'core-cpi-yy', name: 'Core CPI y/y', dataKey: 'coreCpiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'BI3:BI', actual: 'BJ3:BJ', forecast: 'BK3:BK', surprise: 'BM3:BM' } },
+                    { id: 'cpi-mm', name: 'CPI m/m', dataKey: 'cpiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'BO3:BO', actual: 'BP3:BP', forecast: 'BQ3:BQ', surprise: 'BS3:BS' } },
+                    { id: 'core-cpi-mm', name: 'Core CPI m/m', dataKey: 'coreCpiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'BU3:BU', actual: 'BV3:BV', forecast: 'BW3:BW', surprise: 'BY3:BY' } },
+                    { id: 'core-pce-price-index-yy', name: 'Core PCE Price Index y/y', dataKey: 'corePcePriceIndexYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'CA3:CA', actual: 'CB3:CB', forecast: 'CC3:CC', surprise: 'CE3:CE' } },
+                    { id: 'core-ppi-mm', name: 'Core PPI m/m', dataKey: 'corePpiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'CG3:CG', actual: 'CH3:CH', forecast: 'CI3:CI', surprise: 'CK3:CK' } },
+                    { id: 'core-ppi-yy', name: 'Core PPI y/y', dataKey: 'corePpiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'CM3:CM', actual: 'CN3:CN', forecast: 'CO3:CO', surprise: 'CQ3:CQ' } },
+                    { id: 'michigan-5y-inflation-expectations', name: 'Michigan 5-Year Inflation Expectations', dataKey: 'michigan5yInflationExpectations', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'CS3:CS', actual: 'CT3:CT', forecast: 'CU3:CU', surprise: 'CW3:CW' } },
+                    { id: 'michigan-inflation-expectations', name: 'Michigan Inflation Expectations', dataKey: 'michiganInflationExpectations', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'CY3:CY', actual: 'CZ3:CZ', forecast: 'DA3:DA', surprise: 'DC3:DC' } },
+                    { id: 'pce-price-index-yy', name: 'PCE Price Index y/y', dataKey: 'pcePriceIndexYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'DE3:DE', actual: 'DF3:DF', forecast: 'DG3:DG', surprise: 'DI3:DI' } },
+                    { id: 'ppi-mm', name: 'PPI m/m', dataKey: 'ppiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'DK3:DK', actual: 'DL3:DL', forecast: 'DM3:DM', surprise: 'DO3:DO' } },
+                    { id: 'ppi-yy', name: 'PPI y/y', dataKey: 'ppiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'DQ3:DQ', actual: 'DR3:DR', forecast: 'DS3:DS', surprise: 'DU3:DU' } },
+                    { id: 'fed-interest-rate-decision', name: 'Fed Interest Rate Decision', dataKey: 'fedInterestRateDecision', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'DW3:DW', actual: 'DX3:DX', forecast: '', surprise: '' } }, 
+                    { id: 'current-account', name: 'Current Account', dataKey: 'currentAccount', unit: 'Billion', historicalSheet: 'US Source', historicalRanges: { date: 'EC3:EC', actual: 'ED3:ED', forecast: 'EE3:EE', surprise: 'EG3:EG' } },
+                    { id: 'ism-manufacturing-pmi', name: 'ISM Manufacturing PMI', dataKey: 'ismManufacturingPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'EI3:EI', actual: 'EJ3:EJ', forecast: 'EK3:EK', surprise: 'EM3:EM' } },
+                    { id: 'ism-non-manufacturing-pmi', name: 'ISM Non-Manufacturing PMI', dataKey: 'ismNonManufacturingPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'EO3:EO', actual: 'EP3:EP', forecast: 'EQ3:EQ', surprise: 'ES3:ES' } },
+                    { id: 'sp-global-composite-pmi', name: 'S&P Global Composite PMI', dataKey: 'spGlobalCompositePmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'EU3:EU', actual: 'EV3:EV', forecast: 'EW3:EW', surprise: 'EY3:EY' } },
+                    { id: 'sp-global-manufacturing-pmi', name: 'S&P Global Manufacturing PMI', dataKey: 'spGlobalManufacturingPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'FG3:FG', actual: 'FH3:FH', forecast: 'FI3:FI', surprise: 'FK3:FK' } },
+                    { id: 'sp-global-services-pmi', name: 'S&P Global Services PMI', dataKey: 'spGlobalServicesPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'FA3:FA', actual: 'FB3:FB', forecast: 'FC3:FC', surprise: 'FE3:FE' } },
+                    { id: 'cb-consumer-confidence-index', name: 'CB Consumer Confidence Index', dataKey: 'cbConsumerConfidenceIndex', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'FM3:FM', actual: 'FN3:FN', forecast: 'FO3:FO', surprise: 'FQ3:FQ' } },
+                    { id: 'core-retail-sales-mm', name: 'Core Retail Sales m/m', dataKey: 'coreRetailSalesMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'FS3:FS', actual: 'FT3:FT', forecast: 'FU3:FU', surprise: 'FV3:FV' } },
+                    { id: 'retail-sales-mm', name: 'Retail Sales m/m', dataKey: 'retailSalesMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'FY3:FY', actual: 'FZ3:FZ', forecast: 'GA3:GA', surprise: 'GC3:GC' } },
+                    { id: 'retail-sales-yy', name: 'Retail Sales y/y', dataKey: 'retailSalesYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'GE3:GE', actual: 'GF3:GF', forecast: 'GG3:GG', surprise: 'GI3:GI' } }
+                ]
+            },
+            EUR: {
+                sheetIdKey: 'EUR',
+                latestSheetName: 'Overview',
+                latestSheetRange: 'B2:G28', 
+                latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
+                indicatorSetup: [] 
+            },
+            GBP: { // Added GBP configuration
+                sheetIdKey: 'GBP',
+                latestSheetName: 'Overview',
+                latestSheetRange: 'B2:G30', // 29 indicators
+                latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, // Date from Col G (index 5), Col F (Unit from sheet) is skipped
+                indicatorSetup: [] // Will be populated by generateGbpHistoricalConfig
+            }
+        };
         
-        const indicatorList = [
-            { id: 'gdp-sales-qq', name: 'GDP Sales q/q', dataKey: 'gdpSalesQq', unit: 'q/q', historicalSheet: 'US Source', historicalRanges: { date: 'A3:A', actual: 'B3:B', forecast: 'C3:C', surprise: 'E3:E' } },
-            { id: 'gdp-qq', name: 'GDP q/q', dataKey: 'gdpQq', unit: 'q/q', historicalSheet: 'US Source', historicalRanges: { date: 'G3:G', actual: 'H3:H', forecast: 'I3:I', surprise: 'K3:K' } },
-            { id: 'adp-nonfarm-employment-change', name: 'ADP Nonfarm Employment Change', dataKey: 'adpNonfarmEmploymentChange', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'M3:M', actual: 'N3:N', forecast: 'O3:O', surprise: 'Q3:Q' } },
-            { id: 'avg-hourly-earnings-mm', name: 'Average Hourly Earnings m/m', dataKey: 'avgHourlyEarningsMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'S3:S', actual: 'T3:T', forecast: 'U3:U', surprise: 'W3:W' } },
-            { id: 'avg-hourly-earnings-yy', name: 'Average Hourly Earnings y/y', dataKey: 'avgHourlyEarningsYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'Y3:Y', actual: 'Z3:Z', forecast: 'AA3:AA', surprise: 'AC3:AC' } },
-            { id: 'initial-jobless-claims', name: 'Initial Jobless Claims', dataKey: 'initialJoblessClaims', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'AE3:AE', actual: 'AF3:AF', forecast: 'AG3:AG', surprise: 'AI3:AI' } },
-            { id: 'jolts-job-openings', name: 'JOLTS Job Openings', dataKey: 'joltsJobOpenings', unit: 'M', historicalSheet: 'US Source', historicalRanges: { date: 'AK3:AK', actual: 'AL3:AL', forecast: 'AM3:AM', surprise: 'AO3:AO' } },
-            { id: 'nonfarm-payrolls', name: 'Nonfarm Payrolls', dataKey: 'nonfarmPayrolls', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'AQ3:AQ', actual: 'AR3:AR', forecast: 'AS3:AS', surprise: 'AU3:AU' } }, 
-            { id: 'unemployment-rate', name: 'Unemployment Rate', dataKey: 'unemploymentRate', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'AW3:AW', actual: 'AX3:AX', forecast: 'AY3:AY', surprise: 'BA3:BA' } },
-            { id: 'cpi-yy', name: 'CPI y/y', dataKey: 'cpiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'BC3:BC', actual: 'BD3:BD', forecast: 'BE3:BE', surprise: 'BG3:BG' } },
-            { id: 'core-cpi-yy', name: 'Core CPI y/y', dataKey: 'coreCpiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'BI3:BI', actual: 'BJ3:BJ', forecast: 'BK3:BK', surprise: 'BM3:BM' } },
-            { id: 'cpi-mm', name: 'CPI m/m', dataKey: 'cpiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'BO3:BO', actual: 'BP3:BP', forecast: 'BQ3:BQ', surprise: 'BS3:BS' } },
-            { id: 'core-cpi-mm', name: 'Core CPI m/m', dataKey: 'coreCpiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'BU3:BU', actual: 'BV3:BV', forecast: 'BW3:BW', surprise: 'BY3:BY' } },
-            { id: 'core-pce-price-index-yy', name: 'Core PCE Price Index y/y', dataKey: 'corePcePriceIndexYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'CA3:CA', actual: 'CB3:CB', forecast: 'CC3:CC', surprise: 'CE3:CE' } },
-            { id: 'core-ppi-mm', name: 'Core PPI m/m', dataKey: 'corePpiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'CG3:CG', actual: 'CH3:CH', forecast: 'CI3:CI', surprise: 'CK3:CK' } },
-            { id: 'core-ppi-yy', name: 'Core PPI y/y', dataKey: 'corePpiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'CM3:CM', actual: 'CN3:CN', forecast: 'CO3:CO', surprise: 'CQ3:CQ' } },
-            { id: 'michigan-5y-inflation-expectations', name: 'Michigan 5-Year Inflation Expectations', dataKey: 'michigan5yInflationExpectations', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'CS3:CS', actual: 'CT3:CT', forecast: 'CU3:CU', surprise: 'CW3:CW' } },
-            { id: 'michigan-inflation-expectations', name: 'Michigan Inflation Expectations', dataKey: 'michiganInflationExpectations', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'CY3:CY', actual: 'CZ3:CZ', forecast: 'DA3:DA', surprise: 'DC3:DC' } },
-            { id: 'pce-price-index-yy', name: 'PCE Price Index y/y', dataKey: 'pcePriceIndexYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'DE3:DE', actual: 'DF3:DF', forecast: 'DG3:DG', surprise: 'DI3:DI' } },
-            { id: 'ppi-mm', name: 'PPI m/m', dataKey: 'ppiMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'DK3:DK', actual: 'DL3:DL', forecast: 'DM3:DM', surprise: 'DO3:DO' } },
-            { id: 'ppi-yy', name: 'PPI y/y', dataKey: 'ppiYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'DQ3:DQ', actual: 'DR3:DR', forecast: 'DS3:DS', surprise: 'DU3:DU' } },
-            { id: 'fed-interest-rate-decision', name: 'Fed Interest Rate Decision', dataKey: 'fedInterestRateDecision', unit: '%', historicalSheet: 'US Source', historicalRanges: { date: 'DW3:DW', actual: 'DX3:DX', forecast: '', surprise: '' } }, 
-            { id: 'current-account', name: 'Current Account', dataKey: 'currentAccount', unit: 'Billion', historicalSheet: 'US Source', historicalRanges: { date: 'EC3:EC', actual: 'ED3:ED', forecast: 'EE3:EE', surprise: 'EG3:EG' } },
-            { id: 'ism-manufacturing-pmi', name: 'ISM Manufacturing PMI', dataKey: 'ismManufacturingPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'EI3:EI', actual: 'EJ3:EJ', forecast: 'EK3:EK', surprise: 'EM3:EM' } },
-            { id: 'ism-non-manufacturing-pmi', name: 'ISM Non-Manufacturing PMI', dataKey: 'ismNonManufacturingPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'EO3:EO', actual: 'EP3:EP', forecast: 'EQ3:EQ', surprise: 'ES3:ES' } },
-            { id: 'sp-global-composite-pmi', name: 'S&P Global Composite PMI', dataKey: 'spGlobalCompositePmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'EU3:EU', actual: 'EV3:EV', forecast: 'EW3:EW', surprise: 'EY3:EY' } },
-            { id: 'sp-global-manufacturing-pmi', name: 'S&P Global Manufacturing PMI', dataKey: 'spGlobalManufacturingPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'FG3:FG', actual: 'FH3:FH', forecast: 'FI3:FI', surprise: 'FK3:FK' } },
-            { id: 'sp-global-services-pmi', name: 'S&P Global Services PMI', dataKey: 'spGlobalServicesPmi', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'FA3:FA', actual: 'FB3:FB', forecast: 'FC3:FC', surprise: 'FE3:FE' } },
-            { id: 'cb-consumer-confidence-index', name: 'CB Consumer Confidence Index', dataKey: 'cbConsumerConfidenceIndex', unit: 'Index', historicalSheet: 'US Source', historicalRanges: { date: 'FM3:FM', actual: 'FN3:FN', forecast: 'FO3:FO', surprise: 'FQ3:FQ' } },
-            { id: 'core-retail-sales-mm', name: 'Core Retail Sales m/m', dataKey: 'coreRetailSalesMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'FS3:FS', actual: 'FT3:FT', forecast: 'FU3:FU', surprise: 'FV3:FV' } },
-            { id: 'retail-sales-mm', name: 'Retail Sales m/m', dataKey: 'retailSalesMm', unit: '% m/m', historicalSheet: 'US Source', historicalRanges: { date: 'FY3:FY', actual: 'FZ3:FZ', forecast: 'GA3:GA', surprise: 'GC3:GC' } },
-            { id: 'retail-sales-yy', name: 'Retail Sales y/y', dataKey: 'retailSalesYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'GE3:GE', actual: 'GF3:GF', forecast: 'GG3:GG', surprise: 'GI3:GI' } }
-        ];
+        function generateEurHistoricalConfig() {
+            const eurIndicatorsBase = [
+                { id: 'gdp-qq-eur', name: 'GDP q/q', dataKey: 'gdpQqEur', unit: 'q/q' },
+                { id: 'gdp-yy-eur', name: 'GDP y/y', dataKey: 'gdpYyEur', unit: '% y/y' },
+                { id: 'unemployment-rate-eur', name: 'Unemployment Rate', dataKey: 'unemploymentRateEur', unit: '%' },
+                { id: 'wage-costs-yy-eur', name: 'Wage Costs y/y', dataKey: 'wageCostsYyEur', unit: '% y/y' },
+                { id: 'labour-cost-index-eur', name: 'Labour Cost Index', dataKey: 'labourCostIndexEur', unit: 'Index' },
+                { id: 'employment-level-eur', name: 'Employment Level', dataKey: 'employmentLevelEur', unit: 'K' },
+                { id: 'cpi-eur', name: 'CPI', dataKey: 'cpiEur', unit: '% y/y' },
+                { id: 'cpi-mm-eur', name: 'CPI m/m', dataKey: 'cpiMmEur', unit: '% m/m' },
+                { id: 'cpi-yy-eur', name: 'CPI y/y', dataKey: 'cpiYyEur', unit: '% y/y' },
+                { id: 'core-cpi-eur', name: 'Core CPI', dataKey: 'coreCpiEur', unit: '% y/y' },
+                { id: 'core-cpi-mm-eur', name: 'Core CPI m/m', dataKey: 'coreCpiMmEur', unit: '% m/m' },
+                { id: 'core-cpi-yy-eur', name: 'Core CPI y/y', dataKey: 'coreCpiYyEur', unit: '% y/y' },
+                { id: 'ppi-mm-eur', name: 'PPI m/m', dataKey: 'ppiMmEur', unit: '% m/m' },
+                { id: 'ppi-yy-eur', name: 'PPI y/y', dataKey: 'ppiYyEur', unit: '% y/y' },
+                { id: 'ecb-interest-rate-decision-eur', name: 'ECB Interest Rate Decision', dataKey: 'ecbInterestRateDecisionEur', unit: '%' },
+                { id: 'current-account-eur', name: 'Current Account', dataKey: 'currentAccountEur', unit: 'Billion' }, // Assuming Billion EUR, adjust if needed
+                { id: 'trade-balance-eur', name: 'Trade Balance', dataKey: 'tradeBalanceEur', unit: 'Billion' }, // Assuming Billion EUR
+                { id: 'business-climate-indicator-eur', name: 'Business Climate Indicator', dataKey: 'businessClimateIndicatorEur', unit: 'Index' },
+                { id: 'economic-sentiment-indicator-eur', name: 'Economic Sentiment Indicator', dataKey: 'economicSentimentIndicatorEur', unit: 'Index' },
+                { id: 'sp-global-composite-pmi-eur', name: 'S&P Global Composite PMI', dataKey: 'spGlobalCompositePmiEur', unit: 'Index' },
+                { id: 'sp-global-construction-pmi-eur', name: 'S&P Global Construction PMI', dataKey: 'spGlobalConstructionPmiEur', unit: 'Index' },
+                { id: 'sp-global-manufacturing-pmi-eur', name: 'S&P Global Manufacturing PMI', dataKey: 'spGlobalManufacturingPmiEur', unit: 'Index' },
+                { id: 'sp-global-services-pmi-eur', name: 'S&P Global Services PMI', dataKey: 'spGlobalServicesPmiEur', unit: 'Index' },
+                { id: 'zew-economic-sentiment-indicator-eur', name: 'ZEW Economic Sentiment Indicator', dataKey: 'zewEconomicSentimentIndicatorEur', unit: 'Index' },
+                { id: 'consumer-confidence-index-eur', name: 'Consumer Confidence Index', dataKey: 'consumerConfidenceIndexEur', unit: 'Index' },
+                { id: 'retail-sales-mm-eur', name: 'Retail Sales m/m', dataKey: 'retailSalesMmEur', unit: '% m/m' },
+                { id: 'retail-sales-yy-eur', name: 'Retail Sales y/y', dataKey: 'retailSalesYyEur', unit: '% y/y' },
+            ];
 
-        const indicatorMapping = {};
-        indicatorList.forEach(ind => {
-            indicatorMapping[ind.id] = { 
-                dataKey: ind.dataKey, 
-                title: ind.name, 
-                unitSuffix: ind.unit,
-                historicalSheet: ind.historicalSheet, 
-                historicalRanges: ind.historicalRanges 
-            };
-        });
+            countrySpecificConfig.EUR.indicatorSetup = eurIndicatorsBase.map((indicator, index) => {
+                const baseColIndex = index * 6; 
+                const dateCol = colToExcel(baseColIndex + 0);
+                const actualCol = colToExcel(baseColIndex + 1);
+                const forecastCol = colToExcel(baseColIndex + 2);
+                const surpriseCol = colToExcel(baseColIndex + 4);
+                const startRow = 4; 
 
-        const countryCodes = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "NZD", "CNY"];
-        const macroeconomicData = {};
-
-        countryCodes.forEach(countryCode => {
-            macroeconomicData[countryCode] = {}; 
-            indicatorList.forEach(ind => {
-                let unitValue = ind.unit;
-                if (ind.unit.toLowerCase() === 'billion' && countryCode !== '') {
-                     unitValue = `${ind.unit} ${countryCode}`;
-                }
-                macroeconomicData[countryCode][ind.dataKey] = createIndicatorDataObject(unitValue);
+                return {
+                    ...indicator,
+                    historicalSheet: 'Historical Data',
+                    historicalRanges: {
+                        date: `${dateCol}${startRow}:${dateCol}`,
+                        actual: `${actualCol}${startRow}:${actualCol}`,
+                        forecast: `${forecastCol}${startRow}:${forecastCol}`,
+                        surprise: `${surpriseCol}${startRow}:${surpriseCol}`
+                    }
+                };
             });
-        });
-       
+        }
+        generateEurHistoricalConfig(); 
+
+        function generateGbpHistoricalConfig() {
+            const gbpIndicatorsBase = [
+                { id: 'gdp-qq-gbp', name: 'GDP q/q', dataKey: 'gdpQqGbp', unit: '% q/q' },
+                { id: 'gdp-yy-gbp', name: 'GDP y/y', dataKey: 'gdpYyGbp', unit: '% y/y' },
+                { id: 'claimant-count-change-gbp', name: 'Claimant Count Change', dataKey: 'claimantCountChangeGbp', unit: 'K' },
+                { id: 'employment-change-3m-gbp', name: 'Employment Change 3-months', dataKey: 'employmentChange3mGbp', unit: 'K' },
+                { id: 'unemployment-rate-gbp', name: 'Unemployment Rate', dataKey: 'unemploymentRateGbp', unit: '%' },
+                { id: 'cpi-gbp', name: 'CPI', dataKey: 'cpiGbp', unit: '% y/y' }, // Assuming main CPI is y/y
+                { id: 'cpi-mm-gbp', name: 'CPI m/m', dataKey: 'cpiMmGbp', unit: '% m/m' },
+                { id: 'cpi-yy-gbp', name: 'CPI y/y', dataKey: 'cpiYyGbp', unit: '% y/y' },
+                { id: 'core-cpi-mm-gbp', name: 'Core CPI m/m', dataKey: 'coreCpiMmGbp', unit: '% m/m' },
+                { id: 'core-cpi-yy-gbp', name: 'Core CPI y/y', dataKey: 'coreCpiYyGbp', unit: '% y/y' },
+                { id: 'ppi-input-mm-gbp', name: 'PPI Input m/m', dataKey: 'ppiInputMmGbp', unit: '% m/m' },
+                { id: 'ppi-input-yy-gbp', name: 'PPI Input y/y', dataKey: 'ppiInputYyGbp', unit: '% y/y' },
+                { id: 'ppi-output-mm-gbp', name: 'PPI Output m/m', dataKey: 'ppiOutputMmGbp', unit: '% m/m' },
+                { id: 'ppi-output-yy-gbp', name: 'PPI Output y/y', dataKey: 'ppiOutputYyGbp', unit: '% y/y' },
+                { id: 'boe-interest-rate-decision-gbp', name: 'BoE Interest Rate Decision', dataKey: 'boeInterestRateDecisionGbp', unit: '%' },
+                { id: 'boe-mpc-vote-cut-gbp', name: 'BoE MPC Vote Cut', dataKey: 'boeMpcVoteCutGbp', unit: '' }, // No specific unit, just a number
+                { id: 'boe-mpc-vote-hike-gbp', name: 'BoE MPC Vote Hike', dataKey: 'boeMpcVoteHikeGbp', unit: '' },
+                { id: 'boe-mpc-vote-unchanged-gbp', name: 'BoE MPC Vote Unchanged', dataKey: 'boeMpcVoteUnchangedGbp', unit: '' },
+                { id: 'current-account-gbp', name: 'Current Account', dataKey: 'currentAccountGbp', unit: 'Billion' }, // Assuming Billion GBP
+                { id: 'trade-balance-gbp', name: 'Trade Balance', dataKey: 'tradeBalanceGbp', unit: 'Billion' }, // Assuming Billion GBP
+                { id: 'sp-cips-composite-pmi-gbp', name: 'S&P Global/CIPS Composite PMI', dataKey: 'spCipsCompositePmiGbp', unit: 'Index' },
+                { id: 'sp-cips-construction-pmi-gbp', name: 'S&P Global/CIPS Construction PMI', dataKey: 'spCipsConstructionPmiGbp', unit: 'Index' },
+                { id: 'sp-cips-manufacturing-pmi-gbp', name: 'S&P Global/CIPS Manufacturing PMI', dataKey: 'spCipsManufacturingPmiGbp', unit: 'Index' },
+                { id: 'sp-cips-services-pmi-gbp', name: 'S&P Global/CIPS Services PMI', dataKey: 'spCipsServicesPmiGbp', unit: 'Index' },
+                { id: 'core-retail-sales-mm-gbp', name: 'Core Retail Sales m/m', dataKey: 'coreRetailSalesMmGbp', unit: '% m/m' },
+                { id: 'core-retail-sales-yy-gbp', name: 'Core Retail Sales y/y', dataKey: 'coreRetailSalesYyGbp', unit: '% y/y' },
+                { id: 'gfk-consumer-confidence-gbp', name: 'GfK Consumer Confidence', dataKey: 'gfkConsumerConfidenceGbp', unit: 'Index' },
+                { id: 'retail-sales-mm-gbp', name: 'Retail Sales m/m', dataKey: 'retailSalesMmGbp', unit: '% m/m' },
+                { id: 'retail-sales-yy-gbp', name: 'Retail Sales y/y', dataKey: 'retailSalesYyGbp', unit: '% y/y' },
+            ];
+
+            countrySpecificConfig.GBP.indicatorSetup = gbpIndicatorsBase.map((indicator, index) => {
+                const baseColIndex = index * 6; 
+                const dateCol = colToExcel(baseColIndex + 0);
+                const actualCol = colToExcel(baseColIndex + 1);
+                const forecastCol = colToExcel(baseColIndex + 2);
+                const surpriseCol = colToExcel(baseColIndex + 4);
+                const startRow = 4; 
+
+                return {
+                    ...indicator,
+                    historicalSheet: 'Historical Data',
+                    historicalRanges: {
+                        date: `${dateCol}${startRow}:${dateCol}`,
+                        actual: `${actualCol}${startRow}:${actualCol}`,
+                        forecast: `${forecastCol}${startRow}:${forecastCol}`,
+                        surprise: `${surpriseCol}${startRow}:${surpriseCol}`
+                    }
+                };
+            });
+        }
+        generateGbpHistoricalConfig(); // Populate GBP historical configs
+
+
+        const macroeconomicData = {}; 
+        
+        function initializeMacroeconomicData() {
+            Object.keys(countrySpecificConfig).forEach(countryCode => {
+                macroeconomicData[countryCode] = {
+                    hasFetchedAllHistoricalData: false 
+                };
+                const indicators = countrySpecificConfig[countryCode].indicatorSetup;
+                if (indicators && indicators.length > 0) { // Check if indicators are defined
+                    indicators.forEach(indicator => {
+                        macroeconomicData[countryCode][indicator.dataKey] = {
+                            latestActual: '', previousActual: '', latestForecast: '',
+                            latestSurprise: '', latestDate: '', 
+                            unit: indicator.unit || '', 
+                            historicalDates: [], historicalValues: [], historicalForecasts: [],
+                            historicalSurprises: [] 
+                        };
+                    });
+                }
+            });
+        }
+        
         // --- Loading Functions ---
         function showFullScreenLoading() { if (fullScreenLoadingOverlay) fullScreenLoadingOverlay.style.display = 'flex'; }
         function hideFullScreenLoading() { if (fullScreenLoadingOverlay) fullScreenLoadingOverlay.style.display = 'none'; }
         function showRightPaneLoading() { if (rightPaneLoadingOverlay) rightPaneLoadingOverlay.style.display = 'flex'; }
         function hideRightPaneLoading() { if (rightPaneLoadingOverlay) rightPaneLoadingOverlay.style.display = 'none'; }
 
+        // --- Dynamic Table Population ---
+        function populateMainDataTableHTML(countryCode) {
+            mainDataTableBody.innerHTML = ''; 
+            const indicators = countrySpecificConfig[countryCode]?.indicatorSetup;
 
-        // --- Data Fetching Functions ---
-        async function fetchLatestDataFromSheet(countryCode, sheetName) { 
-            if (countryCode !== 'USD') { 
-                console.log(`Latest data fetching for ${countryCode} is not implemented yet.`);
+            if (!indicators || indicators.length === 0) {
+                const row = mainDataTableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 7; 
+                cell.textContent = `No indicators configured for ${countryCode}.`;
+                cell.style.textAlign = 'center';
+                activeIndicatorId = ''; 
                 return;
             }
-            const range = `${sheetName}!B2:G33`; // Corrected: B2:G33 for 32 indicators
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${range}?key=${GOOGLE_API_KEY}`;
 
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Google Sheets API request failed for latest data with status ${response.status}`);
-                }
-                const data = await response.json();
-                const rows = data.values;
+            indicators.forEach((indicator) => { 
+                const row = mainDataTableBody.insertRow();
+                row.dataset.indicator = indicator.id; 
 
-                if (rows && rows.length > 0) {
-                    indicatorList.forEach((indicator, index) => {
-                        if (rows[index]) { // Check if row exists for the indicator
-                            const rowData = rows[index];
-                            const targetIndicatorData = macroeconomicData[countryCode][indicator.dataKey];
-                            if (targetIndicatorData) {
-                                targetIndicatorData.latestActual = rowData[0] || '';    
-                                targetIndicatorData.previousActual = rowData[1] || ''; 
-                                targetIndicatorData.latestForecast = rowData[2] || ''; 
-                                targetIndicatorData.latestSurprise = rowData[3] || ''; 
-                                // Assuming date is in the 6th column (index 5) if G is the 6th letter from B
-                                targetIndicatorData.latestDate = rowData[5] || '';     
-                            }
-                        } else {
-                             // console.warn(`No latest data in sheet for indicator: ${indicator.name} (row index ${index})`);
-                        }
-                    });
-                } else {
-                    console.warn('No latest data returned from Google Sheet or sheet is empty for the specified range.');
-                }
-            } catch (error) {
-                console.error('Error fetching latest data from Google Sheet:', error);
+                row.insertCell().textContent = indicator.name;
+                row.insertCell().innerHTML = `<span class="data-value" id="${indicator.id}-value"></span>`;
+                row.insertCell().id = `${indicator.id}-previous`;
+                row.insertCell().id = `${indicator.id}-forecast`;
+                row.insertCell().id = `${indicator.id}-surprise`;
+                row.insertCell().innerHTML = `<span class="data-unit-main" id="${indicator.id}-unit"></span>`; 
+                row.insertCell().id = `${indicator.id}-date`;
+
+                row.addEventListener('click', async () => { 
+                    const newIndicatorId = row.dataset.indicator;
+                    if (newIndicatorId && newIndicatorId !== activeIndicatorId) {
+                        activeIndicatorId = newIndicatorId;
+                    }
+                    setActiveIndicatorRow(activeIndicatorId); 
+                    await displayHistoricalData(activeIndicatorId, selectedCountry); 
+                });
+            });
+            
+            if (indicators.length > 0) {
+                activeIndicatorId = indicators[0].id;
+                setActiveIndicatorRow(activeIndicatorId);
+            } else {
+                activeIndicatorId = '';
             }
         }
 
-        async function fetchAndProcessHistoricalData(countryCode, indicatorId) {
-            const indicatorConfig = indicatorList.find(ind => ind.id === indicatorId);
-            if (!indicatorConfig || !indicatorConfig.historicalSheet || !indicatorConfig.historicalRanges) {
-                const targetDataKey = indicatorMapping[indicatorId]?.dataKey;
-                if (targetDataKey && macroeconomicData[countryCode] && macroeconomicData[countryCode][targetDataKey]) {
-                     macroeconomicData[countryCode][targetDataKey].hasFetchedHistorical = true;
-                }
+
+        // --- Data Fetching Functions ---
+        async function fetchLatestDataFromSheet(countryCode) {
+            const config = countrySpecificConfig[countryCode];
+            if (!config) {
+                updateMainDataTable(countryCode); 
                 return;
             }
 
-            const targetIndicatorData = macroeconomicData[countryCode][indicatorConfig.dataKey];
-            if (targetIndicatorData.hasFetchedHistorical) {
-                return; 
-            }
-
-            const sheetName = indicatorConfig.historicalSheet;
-            const rangesToFetch = [];
-            // Only add range if it's defined and not an empty string
-            if (indicatorConfig.historicalRanges.date && indicatorConfig.historicalRanges.date.trim() !== '') rangesToFetch.push(`${sheetName}!${indicatorConfig.historicalRanges.date}`);
-            if (indicatorConfig.historicalRanges.actual && indicatorConfig.historicalRanges.actual.trim() !== '') rangesToFetch.push(`${sheetName}!${indicatorConfig.historicalRanges.actual}`);
-            if (indicatorConfig.historicalRanges.forecast && indicatorConfig.historicalRanges.forecast.trim() !== '') rangesToFetch.push(`${sheetName}!${indicatorConfig.historicalRanges.forecast}`);
-            if (indicatorConfig.historicalRanges.surprise && indicatorConfig.historicalRanges.surprise.trim() !== '') rangesToFetch.push(`${sheetName}!${indicatorConfig.historicalRanges.surprise}`);
-
-
-            if (rangesToFetch.length === 0) {
-                console.warn(`No valid historical ranges defined for ${indicatorId}`);
-                targetIndicatorData.hasFetchedHistorical = true;
+            const sheetId = GOOGLE_SHEET_IDS[config.sheetIdKey];
+            if (!sheetId) {
+                updateMainDataTable(countryCode);
                 return;
             }
-            
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values:batchGet?ranges=${rangesToFetch.map(r => encodeURIComponent(r)).join('&ranges=')}&key=${GOOGLE_API_KEY}`;
+
+            const range = `${config.latestSheetName}!${config.latestSheetRange}`;
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${GOOGLE_API_KEY}`;
 
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
-                    throw new Error(`Google Sheets API request failed for historical data (indicator: ${indicatorId}) with status ${response.status}`);
+                    throw new Error(`Google Sheets API request failed for latest data (${countryCode}) with status ${response.status}`);
+                }
+                const data = await response.json();
+                const rows = data.values;
+                const cols = config.latestDataColumns; 
+
+                if (rows && rows.length > 0) {
+                    config.indicatorSetup.forEach((indicator, index) => {
+                        if (rows[index] && macroeconomicData[countryCode] && macroeconomicData[countryCode][indicator.dataKey]) { 
+                            const rowData = rows[index]; 
+                            const targetIndicatorData = macroeconomicData[countryCode][indicator.dataKey];
+                            targetIndicatorData.latestActual = rowData[cols.latest] !== undefined ? rowData[cols.latest] : '';    
+                            targetIndicatorData.previousActual = rowData[cols.previous] !== undefined ? rowData[cols.previous] : ''; 
+                            targetIndicatorData.latestForecast = rowData[cols.forecast] !== undefined ? rowData[cols.forecast] : ''; 
+                            targetIndicatorData.latestSurprise = rowData[cols.surprise] !== undefined ? rowData[cols.surprise] : ''; 
+                            targetIndicatorData.latestDate = rowData[cols.date] !== undefined ? rowData[cols.date] : '';     
+                            targetIndicatorData.unit = indicator.unit || ''; 
+                        }
+                    });
+                } else {
+                    // console.warn(`No latest data returned from Google Sheet for ${countryCode} or sheet is empty for range ${range}.`);
+                }
+            } catch (error) {
+                console.error(`Error fetching latest data for ${countryCode} from Google Sheet:`, error);
+            }
+        }
+        
+        async function fetchAllHistoricalDataForCountry(countryCode) {
+            const countryConfig = countrySpecificConfig[countryCode];
+            if (!countryConfig || !macroeconomicData[countryCode] || macroeconomicData[countryCode].hasFetchedAllHistoricalData) {
+                return; 
+            }
+
+            const indicatorsWithHistoricalConfig = countryConfig.indicatorSetup.filter(
+                ind => ind.historicalSheet && ind.historicalRanges && ind.historicalRanges.date && ind.historicalRanges.actual
+            );
+
+            if (indicatorsWithHistoricalConfig.length === 0) {
+                macroeconomicData[countryCode].hasFetchedAllHistoricalData = true;
+                return; 
+            }
+
+            const allRangesToFetch = [];
+            indicatorsWithHistoricalConfig.forEach(indConfig => {
+                const hr = indConfig.historicalRanges;
+                const sheetName = indConfig.historicalSheet;
+                if (hr.date) allRangesToFetch.push(`${sheetName}!${hr.date}`);
+                if (hr.actual) allRangesToFetch.push(`${sheetName}!${hr.actual}`);
+                if (hr.forecast && hr.forecast.trim() !== '') allRangesToFetch.push(`${sheetName}!${hr.forecast}`);
+                if (hr.surprise && hr.surprise.trim() !== '') allRangesToFetch.push(`${sheetName}!${hr.surprise}`);
+            });
+
+            if (allRangesToFetch.length === 0) {
+                macroeconomicData[countryCode].hasFetchedAllHistoricalData = true;
+                return;
+            }
+
+            const historicalSheetIdKey = countryConfig.sheetIdKey; 
+            const sheetId = GOOGLE_SHEET_IDS[historicalSheetIdKey];
+
+            if (!sheetId) {
+                macroeconomicData[countryCode].hasFetchedAllHistoricalData = true; 
+                return;
+            }
+            
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchGet?ranges=${allRangesToFetch.map(r => encodeURIComponent(r)).join('&ranges=')}&key=${GOOGLE_API_KEY}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Google Sheets API batchGet request failed for historical data (${countryCode}) with status ${response.status}`);
                 }
                 const data = await response.json();
                 
                 if (data.valueRanges && data.valueRanges.length > 0) {
-                    let rangeIndex = 0;
-                    const datesRaw = (indicatorConfig.historicalRanges.date && indicatorConfig.historicalRanges.date.trim() !== '' && data.valueRanges[rangeIndex]) ? (data.valueRanges[rangeIndex++]?.values || []) : [];
-                    const actualsRaw = (indicatorConfig.historicalRanges.actual && indicatorConfig.historicalRanges.actual.trim() !== '' && data.valueRanges[rangeIndex]) ? (data.valueRanges[rangeIndex++]?.values || []) : [];
-                    const forecastsRaw = (indicatorConfig.historicalRanges.forecast && indicatorConfig.historicalRanges.forecast.trim() !== '' && data.valueRanges[rangeIndex]) ? (data.valueRanges[rangeIndex++]?.values || []) : [];
-                    const surprisesRaw = (indicatorConfig.historicalRanges.surprise && indicatorConfig.historicalRanges.surprise.trim() !== '' && data.valueRanges[rangeIndex]) ? (data.valueRanges[rangeIndex++]?.values || []) : [];
+                    let responseRangeIndex = 0;
+                    indicatorsWithHistoricalConfig.forEach(indConfig => {
+                         if (!macroeconomicData[countryCode][indConfig.dataKey]) { // Defensive check
+                            console.warn(`Data key ${indConfig.dataKey} not found in macroeconomicData for ${countryCode}. Skipping historical data processing for this indicator.`);
+                            // Adjust responseRangeIndex if ranges were added for this indicator
+                            if (indConfig.historicalRanges.date) responseRangeIndex++;
+                            if (indConfig.historicalRanges.actual) responseRangeIndex++;
+                            if (indConfig.historicalRanges.forecast && indConfig.historicalRanges.forecast.trim() !== '') responseRangeIndex++;
+                            if (indConfig.historicalRanges.surprise && indConfig.historicalRanges.surprise.trim() !== '') responseRangeIndex++;
+                            return; 
+                        }
+                        const targetIndicatorData = macroeconomicData[countryCode][indConfig.dataKey];
+                        const hr = indConfig.historicalRanges;
 
+                        const datesRaw = (hr.date && data.valueRanges[responseRangeIndex]) ? (data.valueRanges[responseRangeIndex++]?.values || []) : [];
+                        const actualsRaw = (hr.actual && data.valueRanges[responseRangeIndex]) ? (data.valueRanges[responseRangeIndex++]?.values || []) : [];
+                        
+                        let forecastsRaw = [];
+                        if (hr.forecast && hr.forecast.trim() !== '') {
+                            if (data.valueRanges[responseRangeIndex]) forecastsRaw = data.valueRanges[responseRangeIndex]?.values || [];
+                            responseRangeIndex++;
+                        }
+                        
+                        let surprisesRaw = [];
+                        if (hr.surprise && hr.surprise.trim() !== '') {
+                             if (data.valueRanges[responseRangeIndex]) surprisesRaw = data.valueRanges[responseRangeIndex]?.values || [];
+                             responseRangeIndex++;
+                        }
 
-                    targetIndicatorData.historicalDates = datesRaw.map(row => row[0] || '').filter(date => date && date.trim() !== '');
-                    
-                    const dataLength = targetIndicatorData.historicalDates.length;
-                    if (dataLength > 0) {
-                        targetIndicatorData.historicalValues = actualsRaw.slice(0, dataLength).map(row => row ? (row[0] || null) : null);
-                        targetIndicatorData.historicalForecasts = forecastsRaw.slice(0, dataLength).map(row => row ? (row[0] || null) : null);
-                        targetIndicatorData.historicalSurprises = surprisesRaw.slice(0, dataLength).map(row => row ? (row[0] || null) : null);
-                    } else {
-                        targetIndicatorData.historicalValues = [];
-                        targetIndicatorData.historicalForecasts = [];
-                        targetIndicatorData.historicalSurprises = [];
-                    }
+                        targetIndicatorData.historicalDates = datesRaw.map(row => row[0] || '').filter(date => date && date.toString().trim() !== '');
+                        const dataLength = targetIndicatorData.historicalDates.length;
+
+                        if (dataLength > 0) {
+                            targetIndicatorData.historicalValues = actualsRaw.slice(0, dataLength).map(row => (row && row[0] !== undefined && row[0] !== null) ? row[0] : null);
+                            targetIndicatorData.historicalForecasts = forecastsRaw.slice(0, dataLength).map(row => (row && row[0] !== undefined && row[0] !== null) ? row[0] : null);
+                            targetIndicatorData.historicalSurprises = surprisesRaw.slice(0, dataLength).map(row => (row && row[0] !== undefined && row[0] !== null) ? row[0] : null);
+                        } else {
+                            targetIndicatorData.historicalValues = [];
+                            targetIndicatorData.historicalForecasts = [];
+                            targetIndicatorData.historicalSurprises = [];
+                        }
+                    });
                 } else {
-                    console.warn(`No valueRanges returned from Google Sheet for historical data of ${indicatorId}.`);
+                    // console.warn(`No valueRanges returned from Google Sheet for batch historical data of ${countryCode}.`);
                 }
             } catch (error) {
-                console.error(`Error fetching historical data for ${indicatorId}:`, error);
+                console.error(`Error fetching batch historical data for ${countryCode}:`, error);
             } finally {
-                targetIndicatorData.hasFetchedHistorical = true;
+                macroeconomicData[countryCode].hasFetchedAllHistoricalData = true;
             }
         }
+
 
         // --- UI Update Functions ---
         function createHorizontalLineMarker(color, width = 20, height = 3) {
@@ -1028,69 +949,87 @@
 
         function updateMainDataTable(country) {
             const currentCountryData = macroeconomicData[country];
-            if (!currentCountryData) {
-                console.error(`Data for country ${country} not found.`);
+            const indicatorsConfig = countrySpecificConfig[country]?.indicatorSetup;
+
+            if (!currentCountryData || !indicatorsConfig) {
                 return;
             }
            
-            Object.entries(indicatorMapping).forEach(([indicatorId, mappingEntry]) => {
-                const indicatorData = currentCountryData[mappingEntry.dataKey];
+            indicatorsConfig.forEach(indicatorConf => {
+                const indicatorData = currentCountryData[indicatorConf.dataKey];
                 
-                const valueEl = document.getElementById(`${indicatorId}-value`);
-                const previousEl = document.getElementById(`${indicatorId}-previous`);
-                const forecastEl = document.getElementById(`${indicatorId}-forecast`);
-                const surpriseEl = document.getElementById(`${indicatorId}-surprise`);
-                const dateEl = document.getElementById(`${indicatorId}-date`);
+                const valueEl = document.getElementById(`${indicatorConf.id}-value`);
+                const previousEl = document.getElementById(`${indicatorConf.id}-previous`);
+                const forecastEl = document.getElementById(`${indicatorConf.id}-forecast`);
+                const surpriseEl = document.getElementById(`${indicatorConf.id}-surprise`);
+                const unitEl = document.getElementById(`${indicatorConf.id}-unit`); 
+                const dateEl = document.getElementById(`${indicatorConf.id}-date`);
 
                 if (indicatorData) {
                     if(valueEl) valueEl.textContent = indicatorData.latestActual !== undefined ? indicatorData.latestActual : '';
                     if(previousEl) previousEl.textContent = indicatorData.previousActual !== undefined ? indicatorData.previousActual : '';
                     if(forecastEl) forecastEl.textContent = indicatorData.latestForecast !== undefined ? indicatorData.latestForecast : '';
                     if(surpriseEl) surpriseEl.textContent = indicatorData.latestSurprise !== undefined ? indicatorData.latestSurprise : '';
+                    if(unitEl) unitEl.textContent = indicatorData.unit || ''; 
                     if(dateEl) dateEl.textContent = indicatorData.latestDate !== undefined ? indicatorData.latestDate : '';
-                } else {
+                } else { 
                     if(valueEl) valueEl.textContent = '';
                     if(previousEl) previousEl.textContent = '';
                     if(forecastEl) forecastEl.textContent = '';
                     if(surpriseEl) surpriseEl.textContent = '';
+                    if(unitEl) unitEl.textContent = (indicatorConf.unit || '');
                     if(dateEl) dateEl.textContent = '';
                 }
             });
            
             setActiveIndicatorRow(activeIndicatorId); 
         }
+        
+        function getCurrentIndicatorConfig(indicatorId, countryCode) {
+            const countryConfig = countrySpecificConfig[countryCode];
+            if (!countryConfig || !countryConfig.indicatorSetup) return null;
+            return countryConfig.indicatorSetup.find(ind => ind.id === indicatorId);
+        }
 
         async function displayHistoricalData(indicatorId, country) { 
             showRightPaneLoading();
             try {
-                const mapping = indicatorMapping[indicatorId];
-                if (!mapping) {
-                    console.error(`Mapping for indicator ${indicatorId} not found.`);
+                const currentIndConfig = getCurrentIndicatorConfig(indicatorId, country);
+
+                if (!currentIndConfig) {
                     historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Error: Indicator mapping not found.</td></tr>';
                     if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                    historicalDataTitleEl.textContent = `Historical Data`;
+                    setupLegendButtons(); 
+                    hideRightPaneLoading();
                     return;
                 }
 
-                historicalDataTitleEl.textContent = `Historical Data - ${mapping.title}`;
+                historicalDataTitleEl.textContent = `Historical Data - ${currentIndConfig.name}`;
             
-                const countryData = macroeconomicData[country];
-                const indicatorData = countryData ? countryData[mapping.dataKey] : null;
+                const countryDataStore = macroeconomicData[country];
+                const indicatorData = countryDataStore ? countryDataStore[currentIndConfig.dataKey] : null;
 
                 if (!indicatorData) {
-                    console.warn(`No data structure for ${mapping.title} in ${country}. Displaying empty state.`);
-                    historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">No historical data available.</td></tr>';
+                    historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">No data structure.</td></tr>';
                     if (historicalChartInstance) {
                         historicalChartInstance.data.labels = [];
                         historicalChartInstance.data.datasets.forEach(dataset => { dataset.data = []; });
                         historicalChartInstance.update();
                     }
-                    setupLegendButtons();
+                    setupLegendButtons(); 
+                    hideRightPaneLoading();
                     return;
                 }
-
-                if (country === 'USD' && mapping && mapping.historicalSheet && !indicatorData.hasFetchedHistorical) {
-                    await fetchAndProcessHistoricalData(country, indicatorId);
+                
+                if (!countryDataStore.hasFetchedAllHistoricalData && currentIndConfig.historicalSheet) {
+                     historicalDataTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Historical data is loading for ${country}...</td></tr>`;
+                     if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                     setupLegendButtons();
+                     hideRightPaneLoading();
+                     return;
                 }
+
 
                 const fullHistoricalDates = indicatorData.historicalDates || [];
                 const fullHistoricalActuals = indicatorData.historicalValues || [];
@@ -1125,28 +1064,36 @@
                     tableSurprises = fullHistoricalSurprises;
                 }
                 
-                const unitForChartAndTable = indicatorData.unit || mapping.unitSuffix || '';
+                const unitForChartAndTable = indicatorData.unit || currentIndConfig.unit || '';
 
                 historicalDataTableBody.innerHTML = ''; 
-                if (tableDates.length === 0) {
-                    historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">No historical data available.</td></tr>';
-                } else {
+                if (tableDates.length === 0 && !currentIndConfig.historicalSheet) { 
+                     historicalDataTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Historical data not configured for ${currentIndConfig.name}.</td></tr>`;
+                } else if (tableDates.length === 0) { 
+                    historicalDataTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">No historical data available for ${currentIndConfig.name}.</td></tr>`;
+                }
+                else {
                     tableDates.forEach((year, index) => { 
                         const row = historicalDataTableBody.insertRow();
                         row.insertCell().textContent = year; 
-                        const actualText = `${tableActuals[index] !== null ? tableActuals[index] : ''}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
-                        const forecastText = `${tableForecasts[index] !== null ? tableForecasts[index] : ''}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
-                        row.insertCell().textContent = actualText;
-                        row.insertCell().textContent = forecastText;
-                        row.insertCell().textContent = tableSurprises[index] !== null ? tableSurprises[index] : ''; 
+                        const actualVal = tableActuals[index];
+                        const forecastVal = tableForecasts[index];
+                        const surpriseVal = tableSurprises[index];
+
+                        const formatDisplayValue = (val) => (val !== null && val !== undefined) ? val : '';
+                        
+                        const actualText = `${formatDisplayValue(actualVal)}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
+                        const forecastText = `${formatDisplayValue(forecastVal)}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
+                        
+                        row.insertCell().textContent = actualVal !== null && actualVal !== undefined ? actualText : '';
+                        row.insertCell().textContent = forecastVal !== null && forecastVal !== undefined ? forecastText : '';
+                        row.insertCell().textContent = formatDisplayValue(surpriseVal); 
                     });
                 }
 
                 const scrollWrapperWidth = historicalChartScrollWrapper.offsetWidth;
-                const finalCanvasWidth = scrollWrapperWidth;
-
-                historicalChartCanvasEl.style.width = finalCanvasWidth + 'px';
-                historicalChartCanvasEl.width = finalCanvasWidth * window.devicePixelRatio; 
+                historicalChartCanvasEl.style.width = scrollWrapperWidth + 'px';
+                historicalChartCanvasEl.width = scrollWrapperWidth * window.devicePixelRatio; 
                 historicalChartCanvasEl.style.height = historicalChartScrollWrapper.offsetHeight + 'px'; 
                 historicalChartCanvasEl.height = historicalChartScrollWrapper.offsetHeight * window.devicePixelRatio;
 
@@ -1158,53 +1105,54 @@
                     forecastMarkerImage = createHorizontalLineMarker('rgba(255, 255, 255, 1)', 20, 4); 
                 }
 
-                const datasets = [
+                const datasetsTemplate = [ 
                     { 
                         label: `Actual${unitForChartAndTable ? ` (${unitForChartAndTable.trim()})` : ''}`, 
                         data: chartActuals, 
                         backgroundColor: 'rgba(170, 170, 170, 0.7)', 
                         borderColor: 'rgba(170, 170, 170, 1)', 
-                        borderWidth: 1, 
-                        type: 'bar', 
-                        yAxisID: 'yPrimary',
-                        order: 3, 
-                        hidden: false 
+                        borderWidth: 1, type: 'bar', yAxisID: 'yPrimary', order: 3, hidden: false 
                     },
                     { 
                         label: `Forecast${unitForChartAndTable ? ` (${unitForChartAndTable.trim()})` : ''}`, 
                         data: chartForecasts, 
-                        type: 'line', 
-                        showLine: false, 
-                        pointStyle: forecastMarkerImage, 
-                        pointRadius: 10, 
-                        pointBackgroundColor: 'rgba(100, 100, 100, 1)', 
-                        pointBorderColor: 'rgba(100, 100, 100, 1)',   
-                        yAxisID: 'yPrimary',
-                        order: 2, 
-                        hidden: false 
+                        type: 'line', showLine: false, pointStyle: forecastMarkerImage, pointRadius: 10, 
+                        pointBackgroundColor: 'rgba(100, 100, 100, 1)', pointBorderColor: 'rgba(100, 100, 100, 1)',   
+                        yAxisID: 'yPrimary', order: 2, hidden: false 
                     },
                     { 
-                        label: 'Surprise Index', 
-                        data: chartSurprises, 
-                        borderColor: 'rgba(255, 128, 0, 1)', 
-                        backgroundColor: 'rgba(255, 128, 0, 0.5)', 
-                        borderWidth: 2, 
-                        pointRadius: 3, 
-                        pointHoverRadius: 5, 
-                        yAxisID: 'ySurprise', 
-                        type: 'line', 
-                        fill: false, 
-                        tension: 0.4,
-                        order: 1, 
-                        hidden: true 
+                        label: 'Surprise Index', data: chartSurprises, 
+                        borderColor: 'rgba(255, 128, 0, 1)', backgroundColor: 'rgba(255, 128, 0, 0.5)', 
+                        borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, 
+                        yAxisID: 'ySurprise', type: 'line', fill: false, tension: 0.4, order: 1, hidden: true 
                     }
                 ];
+                
+                const activeDatasets = datasetsTemplate.filter(ds => {
+                    const hasData = (arr) => arr && arr.length > 0 && arr.some(d => d !== null && d !== undefined && d !== '');
+                    if (ds.label.startsWith('Actual')) return hasData(chartActuals) || chartDates.length > 0; 
+                    if (ds.label.startsWith('Forecast')) return hasData(chartForecasts);
+                    if (ds.label === 'Surprise Index') return hasData(chartSurprises);
+                    return false; 
+                });
+                
+                let finalDatasetsForChart = activeDatasets;
+                if (activeDatasets.length === 0 && chartDates.length > 0) {
+                    finalDatasetsForChart = [datasetsTemplate[0]]; 
+                } else if (activeDatasets.length === 0 && chartDates.length === 0) {
+                     if (!currentIndConfig.historicalSheet) { 
+                        finalDatasetsForChart = [];
+                    } else { 
+                        finalDatasetsForChart = datasetsTemplate;
+                    }
+                }
+
 
                 const ctx = historicalChartCanvasEl.getContext('2d');
                 historicalChartInstance = new Chart(ctx, {
                     data: {
                         labels: chartDates, 
-                        datasets: datasets
+                        datasets: finalDatasetsForChart 
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false},
@@ -1220,7 +1168,7 @@
                                     label: function(context) { 
                                         let label = context.dataset.label || ''; 
                                         if (label) label += ': '; 
-                                        if (context.parsed.y !== null) { 
+                                        if (context.parsed.y !== null && context.parsed.y !== undefined) { 
                                             label += context.parsed.y; 
                                         } 
                                         return label;
@@ -1234,21 +1182,19 @@
                 });
             
                 const surpriseDataset = historicalChartInstance.data.datasets.find(ds => ds.label === 'Surprise Index');
-                if (surpriseDataset) {
-                    historicalChartInstance.options.scales.ySurprise.display = !surpriseDataset.hidden;
-                }
+                historicalChartInstance.options.scales.ySurprise.display = !!(surpriseDataset && !surpriseDataset.hidden && (surpriseDataset.data?.some(d => d !== null)));
+                
                 historicalChartInstance.update(); 
-
                 setupLegendButtons(); 
             } finally {
                 hideRightPaneLoading();
             }
         }
        
-        function setActiveIndicatorRow(indicatorId) {
+        function setActiveIndicatorRow(indicatorIdToActivate) {
             mainDataTableBody.querySelectorAll('tr').forEach(row => {
                 row.classList.remove('active-indicator');
-                if (row.dataset.indicator === indicatorId) {
+                if (row.dataset.indicator === indicatorIdToActivate) {
                     row.classList.add('active-indicator');
                 }
             });
@@ -1257,38 +1203,54 @@
         function setupLegendButtons() {
             const currentLegendButtons = document.querySelectorAll('.right-pane .legend-toggle-button');
             if (!historicalChartInstance || !historicalChartInstance.data || !historicalChartInstance.data.datasets) {
-                console.warn("Historical chart instance or its data is not available for legend setup. Buttons might not reflect current state.");
-                 currentLegendButtons.forEach(button => button.classList.remove('active')); 
+                currentLegendButtons.forEach(button => {
+                    button.classList.remove('active');
+                    button.style.display = 'none'; 
+                });
                 return;
             }
            
             currentLegendButtons.forEach(button => {
                 const datasetIndex = parseInt(button.dataset.datasetIndex);
-                if (datasetIndex < 0 || datasetIndex >= historicalChartInstance.data.datasets.length) {
-                    console.warn(`Invalid datasetIndex ${datasetIndex} for legend button.`);
-                    button.classList.remove('active'); 
+                const originalDatasetTemplate = [ 
+                    `Actual`, `Forecast`, `Surprise Index`
+                ];
+                const targetLabelPart = originalDatasetTemplate[datasetIndex];
+                const dataset = historicalChartInstance.data.datasets.find(ds => ds.label.startsWith(targetLabelPart));
+
+
+                if (!dataset) { 
+                    button.classList.remove('active');
+                    button.style.display = 'none'; 
+                    const newButton = button.cloneNode(true); 
+                    if (button.parentNode) button.parentNode.replaceChild(newButton, button);
                     return;
                 }
+                button.style.display = ''; 
 
-                const isInitiallyVisible = !historicalChartInstance.data.datasets[datasetIndex].hidden;
+                const isInitiallyVisible = !dataset.hidden;
                 button.classList.toggle('active', isInitiallyVisible);
                                            
                 const newButton = button.cloneNode(true); 
                 if (button.parentNode) { 
                     button.parentNode.replaceChild(newButton, button);
                 } else {
-                    console.error("Button parentNode is null during legend setup.", button);
                     return; 
                 }
 
                 newButton.addEventListener('click', () => {
-                    if (!historicalChartInstance) return; 
-                    const currentVisibility = historicalChartInstance.isDatasetVisible(datasetIndex);
-                    historicalChartInstance.setDatasetVisibility(datasetIndex, !currentVisibility);
+                    const liveDataset = historicalChartInstance.data.datasets.find(ds => ds.label.startsWith(targetLabelPart));
+                    if (!historicalChartInstance || !liveDataset) return; 
+
+                    const datasetActualIndexInChart = historicalChartInstance.data.datasets.indexOf(liveDataset);
+                    if (datasetActualIndexInChart === -1) return; 
+
+                    const currentVisibility = historicalChartInstance.isDatasetVisible(datasetActualIndexInChart);
+                    historicalChartInstance.setDatasetVisibility(datasetActualIndexInChart, !currentVisibility);
                     newButton.classList.toggle('active', !currentVisibility);
 
-                    if (historicalChartInstance.data.datasets[datasetIndex].label === 'Surprise Index') { 
-                        historicalChartInstance.options.scales.ySurprise.display = !currentVisibility;
+                    if (liveDataset.label === 'Surprise Index') { 
+                        historicalChartInstance.options.scales.ySurprise.display = !currentVisibility && (liveDataset.data?.some(d => d !== null));
                     }
                     historicalChartInstance.update();
                 });
@@ -1303,7 +1265,6 @@
         } else {
             console.error("Right pane or content container not found for resizer insertion.");
         }
-
 
         let isResizing = false;
         let startX, startLeftWidth;
@@ -1351,71 +1312,56 @@
         }
 
         async function handlePanesResized() { 
-            showFullScreenLoading();
             try {
-                if (macroeconomicData && macroeconomicData[selectedCountry]) { 
-                    updateMainDataTable(selectedCountry); 
-                    if (historicalChartInstance) { 
-                        await displayHistoricalData(activeIndicatorId, selectedCountry); 
-                    }
-                } else {
-                    console.warn(`Data for ${selectedCountry} not found during resize. Displaying empty.`);
-                    updateMainDataTable(selectedCountry); 
+                if (historicalChartInstance && activeIndicatorId) { 
                     await displayHistoricalData(activeIndicatorId, selectedCountry); 
                 }
-            } finally {
-                hideFullScreenLoading();
+            } catch(e) {
+                console.error("Error during pane resize handling:", e);
             }
         }
 
-
         // --- Event Listeners ---
-       
         countrySelect.addEventListener('change', async (event) => { 
             showFullScreenLoading();
             selectedCountry = event.target.value;
             currentDataPointsToShow = 15; 
             dataPointsInput.value = '15';
             
-            if (macroeconomicData[selectedCountry]) {
-                Object.values(macroeconomicData[selectedCountry]).forEach(indicatorData => {
-                    if (typeof indicatorData === 'object' && indicatorData !== null && indicatorData.hasOwnProperty('hasFetchedHistorical')) {
-                        indicatorData.hasFetchedHistorical = false;
-                        indicatorData.historicalDates = [];
-                        indicatorData.historicalValues = [];
-                        indicatorData.historicalForecasts = [];
-                        indicatorData.historicalSurprises = [];
-                        if (selectedCountry !== 'USD') {
-                            indicatorData.latestActual = '';   
-                            indicatorData.previousActual = ''; 
-                            indicatorData.latestForecast = ''; 
-                            indicatorData.latestSurprise = '';
-                            indicatorData.latestDate = '';  
-                        }
-                    }
-                });
+            // Ensure data structure exists, if not, initialize it
+            if (!macroeconomicData[selectedCountry] && countrySpecificConfig[selectedCountry]) {
+                 initializeMacroeconomicData(); 
+            } else if (!countrySpecificConfig[selectedCountry]) {
+                 mainDataTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No configuration for ${selectedCountry}</td></tr>`;
+                 activeIndicatorId = '';
+                 historicalDataTitleEl.textContent = 'Historical Data';
+                 historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No data</td></tr>';
+                 if(historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                 setupLegendButtons();
+                 hideFullScreenLoading();
+                 return;
             }
+            
+            populateMainDataTableHTML(selectedCountry); 
 
-            updateMainDataTable(selectedCountry); 
-            if (selectedCountry === 'USD') {
-                await fetchLatestDataFromSheet(selectedCountry, 'United States');
+            if (!macroeconomicData[selectedCountry] || !macroeconomicData[selectedCountry].hasFetchedAllHistoricalData) {
+                macroeconomicData[selectedCountry].hasFetchedAllHistoricalData = false; 
+                
+                await fetchLatestDataFromSheet(selectedCountry); 
+                await fetchAllHistoricalDataForCountry(selectedCountry); 
             }
-            await displayHistoricalData(activeIndicatorId, selectedCountry); 
+            
             updateMainDataTable(selectedCountry); 
-            hideFullScreenLoading();
-        });
 
-        mainDataTableBody.querySelectorAll('tr').forEach(row => {
-            row.addEventListener('click', async () => { 
-                const newIndicatorId = row.dataset.indicator;
-                if (newIndicatorId && newIndicatorId !== activeIndicatorId) {
-                    activeIndicatorId = newIndicatorId;
-                    currentDataPointsToShow = 15; 
-                    dataPointsInput.value = '15'; 
-                }
-                setActiveIndicatorRow(activeIndicatorId); 
+            if (activeIndicatorId) { 
                 await displayHistoricalData(activeIndicatorId, selectedCountry); 
-            });
+            } else { 
+                historicalDataTitleEl.textContent = 'Historical Data';
+                historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Select an indicator.</td></tr>';
+                if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                setupLegendButtons(); 
+            }
+            hideFullScreenLoading();
         });
        
         async function applyDataPointsFilter() { 
@@ -1429,7 +1375,7 @@
                 currentDataPointsToShow = 15; 
                 dataPointsInput.value = '15'; 
             }
-            await displayHistoricalData(activeIndicatorId, selectedCountry); 
+            if (activeIndicatorId) await displayHistoricalData(activeIndicatorId, selectedCountry); 
         }
 
         dataPointsInput.addEventListener('input', applyDataPointsFilter);
@@ -1442,9 +1388,14 @@
 
         showAllDataButton.addEventListener('click', async () => { 
             currentDataPointsToShow = null; 
-            const indicatorData = macroeconomicData[selectedCountry]?.[indicatorMapping[activeIndicatorId]?.dataKey];
-            dataPointsInput.value = indicatorData?.historicalDates?.length > 0 ? indicatorData.historicalDates.length : '15'; 
-            await displayHistoricalData(activeIndicatorId, selectedCountry); 
+            const indicatorConf = getCurrentIndicatorConfig(activeIndicatorId, selectedCountry);
+            if (indicatorConf && macroeconomicData[selectedCountry] && macroeconomicData[selectedCountry][indicatorConf.dataKey]) {
+                const indicatorData = macroeconomicData[selectedCountry][indicatorConf.dataKey];
+                dataPointsInput.value = indicatorData?.historicalDates?.length > 0 ? indicatorData.historicalDates.length : '15'; 
+            } else {
+                dataPointsInput.value = '15';
+            }
+            if (activeIndicatorId) await displayHistoricalData(activeIndicatorId, selectedCountry); 
         });
 
         decreaseDataPointsButton.addEventListener('click', () => { 
@@ -1460,23 +1411,29 @@
 
         increaseDataPointsButton.addEventListener('click', () => { 
             let currentValue = parseInt(dataPointsInput.value) || 15; 
-            const countryData = macroeconomicData[selectedCountry];
-            const indicatorDataObj = countryData ? countryData[indicatorMapping[activeIndicatorId]?.dataKey] : null;
-            const maxPoints = (indicatorDataObj && indicatorDataObj.historicalDates && indicatorDataObj.historicalDates.length > 0) 
-                              ? indicatorDataObj.historicalDates.length 
-                              : (currentValue + 10); 
-
+            const indicatorConf = getCurrentIndicatorConfig(activeIndicatorId, selectedCountry);
+            let maxPoints = currentValue + 10; 
+            if (indicatorConf && macroeconomicData[selectedCountry] && macroeconomicData[selectedCountry][indicatorConf.dataKey]) {
+                const indicatorDataObj = macroeconomicData[selectedCountry][indicatorConf.dataKey];
+                if (indicatorDataObj && indicatorDataObj.historicalDates && indicatorDataObj.historicalDates.length > 0) {
+                    maxPoints = indicatorDataObj.historicalDates.length;
+                }
+            }
+            
             if (currentValue < maxPoints) { 
                  dataPointsInput.value = currentValue + 1;
-            } else if (indicatorDataObj && indicatorDataObj.historicalDates.length > 0) { 
-                 dataPointsInput.value = indicatorDataObj.historicalDates.length;
+            } else if (maxPoints !== currentValue + 10) { 
+                 dataPointsInput.value = maxPoints;
             }
             applyDataPointsFilter(); 
         });
 
 
+        // --- Initialization ---
         document.addEventListener('DOMContentLoaded', async () => { 
             showFullScreenLoading();
+            initializeMacroeconomicData(); 
+            
             countrySelect.value = selectedCountry; 
             dataPointsInput.value = '15'; 
 
@@ -1484,13 +1441,21 @@
                 forecastMarkerImage = createHorizontalLineMarker('rgba(255, 255, 255, 1)', 20, 4); 
             }
             
-            if (selectedCountry === 'USD') { 
-                await fetchLatestDataFromSheet(selectedCountry, 'United States');
-            }
+            populateMainDataTableHTML(selectedCountry); 
+            
+            await fetchLatestDataFromSheet(selectedCountry); 
+            await fetchAllHistoricalDataForCountry(selectedCountry); 
             
             updateMainDataTable(selectedCountry); 
-            await displayHistoricalData(activeIndicatorId, selectedCountry); 
-            setActiveIndicatorRow(activeIndicatorId);
+            
+            if (activeIndicatorId) { 
+                await displayHistoricalData(activeIndicatorId, selectedCountry); 
+            } else {
+                historicalDataTitleEl.textContent = 'Historical Data';
+                historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Select an indicator.</td></tr>';
+                 if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                 setupLegendButtons();
+            }
             hideFullScreenLoading();
         });
 
@@ -1498,9 +1463,7 @@
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(async () => { 
-                showFullScreenLoading();
                 await handlePanesResized(); 
-                hideFullScreenLoading();
             }, 250); 
         });
 
