@@ -57,15 +57,21 @@
             color: #ddd;
         }
 
-        .filter-select {
+        /* ... (CSS lainnya tetap sama seperti yang Anda berikan) ... */
+        #search-container {
+            display: flex;
+            align-items: center;
+        }
+
+        #search-input {
             background-color: #1a1a1a;
             border: 1px solid #333;
             padding: 5px;
             color: #fff;
             border-radius: 5px;
+            margin-left: 10px;
         }
-
-        .news-container {
+         .news-container {
             flex: 1;
             overflow-y: auto;
             padding: 10px;
@@ -133,40 +139,6 @@
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
-
-        .link-button {
-            color: #aaa;
-            text-decoration: none;
-            font-size: 10px;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            margin-left: 0;
-            display: inline;
-        }
-
-        .link-button:hover {
-            color: #fff;
-        }
-
-        .link-icon::before {
-            content: "🔗";
-             margin-left: 5px;
-        }
-
-        #search-container {
-            display: flex;
-            align-items: center;
-        }
-
-        #search-input {
-            background-color: #1a1a1a;
-            border: 1px solid #333;
-            padding: 5px;
-            color: #fff;
-            border-radius: 5px;
-            margin-left: 10px;
-        }
     </style>
 </head>
 <body>
@@ -183,27 +155,29 @@
         </div>
     </div>
     <script>
-        // GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA YANG SUDAH DI-DEPLOY
-        const DATA_ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbwhKS-HBcJAlFofL6Zc6CtonAZQuHgMV1PZnlkuF_pylqvvuYu7jD3tlVO8-RW78_fZ/exec'; 
-
-        // GANTI DENGAN SECRET TOKEN YANG SAMA PERSIS DENGAN YANG DI APPS SCRIPT
-        const SECRET_ACCESS_TOKEN = 'SMASHBUNNYDUNGEON'; 
+        // GANTI DENGAN URL SUPABASE EDGE FUNCTION (PROXY) ANDA YANG SUDAH DI-DEPLOY
+        // Contoh: 'https://<project-ref>.supabase.co/functions/v1/proxy-berita'
+        const PROXY_ENDPOINT_URL = 'https://cslqnaxftxghirasjvof.supabase.co/functions/v1/Izin-Akses-GS-Market-News-Article'; 
 
         const newsContainer = document.getElementById("news-container");
         const searchInput = document.getElementById('search-input');
         let allNewsItems = []; // Untuk menyimpan semua berita yang diambil dari API
 
         async function fetchNews() {
-            newsContainer.innerHTML = "<div class='news-item'>Loading news...</div>"; // Tampilkan pesan loading
+            newsContainer.innerHTML = "<div class='news-item'>Loading news...</div>";
             try {
-                const response = await fetch(`${DATA_ENDPOINT_URL}?token=${SECRET_ACCESS_TOKEN}`);
+                // Memanggil endpoint proxy Supabase. Tidak perlu mengirim token dari sini.
+                const response = await fetch(PROXY_ENDPOINT_URL); 
                 
                 if (!response.ok) {
-                    let errorText = `Failed to fetch news. Status: ${response.status}`;
+                    let errorText = `Failed to fetch news from proxy. Status: ${response.status}`;
                     try {
-                        const errorJson = await response.json();
+                        const errorJson = await response.json(); // Proxy seharusnya mengembalikan JSON error
                         errorText += ` - Message: ${errorJson.error || 'No additional details.'}`;
                         if(errorJson.details) errorText += ` Details: ${errorJson.details}`;
+                        if(errorJson.upstream_status) errorText += ` Upstream Status: ${errorJson.upstream_status}`;
+                        if(errorJson.upstream_message) errorText += ` Upstream Message: ${errorJson.upstream_message}`;
+
                     } catch (e) {
                         const rawErrorText = await response.text();
                         errorText += ` - Raw response: ${rawErrorText || 'No raw response.'}`;
@@ -213,32 +187,29 @@
 
                 const data = await response.json();
 
-                if (data.error) { // Jika API mengembalikan error dalam format JSON yang kita definisikan
+                if (data.error) { // Jika proxy atau Apps Script mengembalikan error dalam format JSON
                     throw new Error(`API Error: ${data.error}${data.details ? ' - ' + data.details : ''}`);
                 }
 
                 if (!Array.isArray(data)) {
                     console.error("Received data is not an array:", data);
-                    throw new Error("Invalid data format received from API.");
+                    throw new Error("Invalid data format received from proxy.");
                 }
                 
                 allNewsItems = data.map(item => {
-                    // Pastikan properti ada dan konversi tanggal
                     const originalDate = item.Date ? new Date(item.Date) : null;
                     let gmt7Date = null;
                     if (originalDate && !isNaN(originalDate)) {
                         gmt7Date = new Date(originalDate.getTime() + (7 * 60 * 60 * 1000));
                     }
                     return {
-                        // Gunakan nama properti yang dikirim oleh Apps Script
-                        DateObj: gmt7Date, // Simpan sebagai Date object untuk sorting
+                        DateObj: gmt7Date,
                         Title: item.Title || "No Title",
                         Description: item.Description || "",
                         Link: item.Link || "#"
                     };
-                }).filter(item => item.DateObj); // Filter item yang tidak memiliki tanggal valid
+                }).filter(item => item.DateObj);
 
-                // Sort news items by date, most recent first
                 allNewsItems.sort((a, b) => b.DateObj - a.DateObj);
                 
                 renderNews(allNewsItems);
@@ -250,7 +221,7 @@
         }
 
         function renderNews(newsItemsToRender) {
-            newsContainer.innerHTML = ''; // Clear existing news items
+            newsContainer.innerHTML = ''; 
 
             if (newsItemsToRender.length === 0) {
                 newsContainer.innerHTML = "<div class='news-item'>No news found.</div>";
@@ -267,17 +238,14 @@
                 }) : "Invalid Date";
                 const link = item.Link;
 
-                // Format description
                 if (description) {
-                    description = description.replace(/(\d+\.\s)/g, '<br>&emsp;&bull; '); // Replace numbered lists with bullets
+                    description = description.replace(/(\d+\.\s)/g, '<br>&emsp;&bull; ');
                 }
 
                 const newsItemDiv = document.createElement("div");
                 newsItemDiv.className = "news-item";
-                // Simpan data asli di elemen untuk pencarian yang lebih baik jika perlu
                 newsItemDiv.dataset.title = title;
                 newsItemDiv.dataset.description = description;
-
 
                 const titleElement = document.createElement("h2");
                 titleElement.className = "news-title";
@@ -288,7 +256,6 @@
                     titleElement.style.cursor = 'default';
                 }
                 
-
                 const descriptionElement = document.createElement("p");
                 descriptionElement.className = "news-description";
                 descriptionElement.innerHTML = description;
@@ -308,7 +275,7 @@
         searchInput.addEventListener('input', () => {
             const searchTerm = searchInput.value.toLowerCase().trim();
             if (searchTerm === "") {
-                renderNews(allNewsItems); // Tampilkan semua jika search kosong
+                renderNews(allNewsItems);
                 return;
             }
             const filteredNews = allNewsItems.filter(item => {
@@ -319,7 +286,6 @@
             renderNews(filteredNews);
         });
 
-        // Panggil fungsi untuk memuat berita saat halaman dimuat
         fetchNews();
     </script>
 </body>
