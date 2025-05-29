@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Interaktif - Tabs & Penyimpanan Layout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Gaya Global dan Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: rgba(255,255,255,0.2); }
+        html { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Source Code Pro', monospace;
+            background-color: #000;
+            color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        .tab-bar-container {
+            background-color: #1a1a1a;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #2a2a2a;
+            flex-shrink: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        #tab-bar {
+            display: flex;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+
+        .tab-item {
+            background-color: #2c2c2c;
+            color: #ccc;
+            padding: 6px 12px;
+            margin-right: 5px;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+            border: 1px solid #333;
+            border-bottom: none;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            position: relative; /* Untuk positioning elemen rename */
+        }
+
+        .tab-item:hover {
+            background-color: #383838;
+            color: #fff;
+        }
+
+        .tab-item.active {
+            background-color: #111111;
+            color: #FFA500;
+            border-color: #2a2a2a;
+            position: relative;
+        }
+        .tab-item.active:after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #111111;
+        }
+
+        .tab-name { /* Tetap ada, disembunyikan saat rename */
+            padding-right: 8px;
+        }
+
+        .tab-item .close-tab-button {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 0 0 0 4px;
+            margin-left: 5px; /* Beri sedikit jarak jika nama tab pendek */
+            font-size: 14px;
+            line-height: 1;
+        }
+        .tab-item .close-tab-button:hover {
+            color: #fff;
+        }
+
+        /* Gaya untuk Kontrol Rename Inline */
+        .rename-controls {
+            display: none; /* Sembunyikan secara default */
+            align-items: center;
+            width: 100%; /* Ambil lebar penuh dari tab-item saat aktif */
+        }
+
+        .tab-item.renaming .tab-name,
+        .tab-item.renaming .close-tab-button {
+            display: none; /* Sembunyikan nama asli dan tombol close saat renaming */
+        }
+
+        .tab-item.renaming .rename-controls {
+            display: flex; /* Tampilkan kontrol rename saat .renaming aktif */
+        }
+
+        .rename-input {
+            flex-grow: 1;
+            background-color: #333;
+            color: #f0f0f0;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 3px 6px;
+            font-size: 13px;
+            font-family: 'Source Code Pro', monospace;
+            margin-right: 4px;
+        }
+        .rename-input:focus {
+            outline: none;
+            border-color: #FFA500;
+        }
+
+        .rename-button {
+            background-color: #444;
+            color: #ccc;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 3px 6px;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            margin-left: 3px;
+        }
+        .rename-button:hover {
+            background-color: #555;
+            color: #fff;
+        }
+
+        #add-tab-button {
+            background-color: #333;
+            color: #ccc;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-left: 5px;
+            flex-shrink: 0;
+            align-self: flex-end;
+            margin-bottom: 1px;
+        }
+        #add-tab-button:hover {
+            background-color: #444;
+            color: #fff;
+        }
+
+        .button-container {
+            background-color: #111111;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid #2a2a2a;
+            flex-shrink: 0;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .custom-button {
+            background-color: #1a1a1a;
+            color: #FFA500;
+            border: 1px solid #FFA500;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: 'Source Code Pro', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .custom-button:hover {
+            background-color: #2a2a2a;
+            border-color: #FFC966;
+            color: #FFC966;
+        }
+
+        .custom-button#clear-all-widgets-button {
+            background-color: #502222;
+            border-color: #773333;
+            color: #f0f0f0;
+        }
+        .custom-button#clear-all-widgets-button:hover {
+            background-color: #6b2b2b;
+            border-color: #994444;
+            color: #ffffff;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            background-color: #000;
+            color: #f0f0f0;
+            position: relative;
+            overflow-y: hidden;
+        }
+
+        #widget-canvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .widget {
+            position: absolute;
+            background-color: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+            min-height: 150px;
+            overflow: hidden;
+        }
+
+        .widget.locked { /* Tidak ada style khusus lagi */ }
+
+        .widget.dragging, .widget.resizing {
+            opacity: 0.8;
+            user-select: none;
+        }
+
+        .widget-header {
+            background-color: #2a2a2a;
+            padding: 4px 8px;
+            cursor: move; /* Kursor untuk drag */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+            flex-shrink: 0;
+        }
+
+        .widget.locked .widget-header { cursor: default; }
+
+        .widget-title {
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 8px;
+            flex-grow: 1;
+        }
+
+        .widget-controls {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .widget-controls button {
+            background: none; border: none; color: #ccc; cursor: pointer;
+            padding: 3px; margin-left: 4px; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .widget-controls button:hover svg { stroke: #fff; }
+        .widget-controls button svg { width: 13px; height: 13px; stroke-width: 2; }
+
+        .widget-content {
+            flex-grow: 1; overflow: hidden; background-color: #101010;
+        }
+
+        .widget-content iframe {
+            width: 100%; height: 100%; border: none; display: block;
+        }
+
+        .resizer {
+            width: 12px; height: 12px; background: rgba(255,255,255,0.1);
+            position: absolute; border: 1px solid rgba(255,255,255,0.2); z-index: 10;
+        }
+        .widget.locked .resizer { display: none; }
+        .resizer.se { bottom: -1px; right: -1px; cursor: nwse-resize; }
+        .resizer.sw { bottom: -1px; left: -1px; cursor: nesw-resize; }
+        .resizer.ne { top: -1px; right: -1px; cursor: nesw-resize; }
+        .resizer.nw { top: -1px; left: -1px; cursor: nwse-resize; }
+    </style>
+</head>
+<body>
+    <div class="tab-bar-container">
+        <div id="tab-bar">
+            </div>
+        <button id="add-tab-button" title="Tambah Tab Baru">+</button>
+    </div>
+
+    <div class="button-container">
+        <button class="custom-button" data-widget-name="CHRT" data-html-file="Chart.html">CHRT</button>
+        <button class="custom-button" data-widget-name="TBLD" data-html-file="Table Data.html">TBLD</button>
+        <button class="custom-button" data-widget-name="QTMN" data-html-file="Quote Monitor.html">QTMN</button>
+        <button class="custom-button" data-widget-name="NWSA" data-html-file="News Article.html">NWSA</button>
+	<button class="custom-button" data-widget-name="YLDC" data-html-file="Yield Curve.html">YLDC</button>
+	<button class="custom-button" data-widget-name="IREX" data-html-file="Interest Rate Expectation.html">IREX</button>
+        <button class="custom-button" data-widget-name="MKTH" data-html-file="Market Headline.html">MKTH</button>
+        <button class="custom-button" data-widget-name="MCRD" data-html-file="Macroeconomic Data.html">MCRD</button>
+        <button class="custom-button" data-widget-name="LCHR" data-html-file="Line Chart.html">LCHR</button>
+        <button class="custom-button" data-widget-name="BCHR" data-html-file="Bar Chart.html">BCHR</button>
+        <button class="custom-button" data-widget-name="BBYL" data-html-file="Bloomberg Youtube.html">BBYL</button>
+        <button class="custom-button" data-widget-name="ECNC" data-html-file="Economic Calendar.html">ECNC</button>
+        <button id="clear-all-widgets-button" class="custom-button">Bersihkan</button>
+    </div>
+
+    <div class="main-content">
+        <div id="widget-canvas">
+            </div>
+    </div>
+
+    <script>
+        const widgetCanvas = document.getElementById('widget-canvas');
+        const mainContent = document.querySelector('.main-content');
+        const tabBar = document.getElementById('tab-bar');
+        const addTabButton = document.getElementById('add-tab-button');
+
+        let currentHighestZ = 0;
+        let currentWidgetCounter = 0;
+
+        let tabs = [];
+        let activeTabId = null;
+        let isRenamingTab = false;
+        let currentRenameCleanupFunction = null; // REVISI: Untuk menyimpan fungsi cleanup rename aktif
+
+        let activeWidget = null;
+        let currentAction = null;
+        let initialMouseX, initialMouseY;
+        let initialWidgetX, initialWidgetY;
+        let initialWidgetWidth, initialWidgetHeight;
+        let currentResizerType = null;
+
+        const GITHUB_BASE_URL = 'https://xxslashbunny24xx.github.io/Terminal-Widget/';
+        const TAB_STORAGE_KEY = 'interactiveWidgetTabsLayout_v2';
+
+        function forceCancelRename() {
+            if (typeof currentRenameCleanupFunction === 'function') {
+                currentRenameCleanupFunction(false); // false berarti jangan simpan, hanya batalkan
+            }
+            // isRenamingTab dan currentRenameCleanupFunction akan direset di dalam cleanup
+        }
+
+        function saveLayout() {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab) {
+                activeTab.widgets = [];
+                document.querySelectorAll('#widget-canvas .widget').forEach(widgetEl => {
+                    activeTab.widgets.push({
+                        id: widgetEl.id,
+                        name: widgetEl.dataset.widgetName,
+                        htmlFile: widgetEl.dataset.htmlFile,
+                        left: widgetEl.style.left,
+                        top: widgetEl.style.top,
+                        width: widgetEl.style.width,
+                        height: widgetEl.style.height,
+                        zIndex: parseInt(widgetEl.style.zIndex) || 0,
+                        locked: widgetEl.dataset.locked === 'true'
+                    });
+                });
+                activeTab.highestZ = currentHighestZ;
+                activeTab.widgetCounter = currentWidgetCounter;
+            }
+            try {
+                localStorage.setItem(TAB_STORAGE_KEY, JSON.stringify({ tabs, activeTabId }));
+            } catch (error) {
+                console.error('Error saving layout to localStorage:', error);
+            }
+        }
+
+        function loadLayout() {
+            forceCancelRename(); // REVISI: Pastikan rename dibatalkan sebelum load
+            widgetCanvas.innerHTML = '';
+            try {
+                const savedDataJSON = localStorage.getItem(TAB_STORAGE_KEY);
+                if (savedDataJSON) {
+                    const savedData = JSON.parse(savedDataJSON);
+                    tabs = savedData.tabs || [];
+                    activeTabId = savedData.activeTabId || null;
+                }
+
+                if (tabs.length === 0) {
+                    const initialTabId = `tab-${Date.now()}`;
+                    tabs = [{ id: initialTabId, name: 'Workspace 1', widgets: [], highestZ: 0, widgetCounter: 0 }];
+                    activeTabId = initialTabId;
+                } else if (!activeTabId || !tabs.find(t => t.id === activeTabId)) {
+                    activeTabId = tabs[0].id;
+                }
+            } catch (error) {
+                console.error('Error loading layout from localStorage:', error);
+                const initialTabId = `tab-${Date.now()}`;
+                tabs = [{ id: initialTabId, name: 'Workspace 1', widgets: [], highestZ: 0, widgetCounter: 0 }];
+                activeTabId = initialTabId;
+            }
+            renderTabs(); // renderTabs akan memanggil forceCancelRename juga
+            loadWidgetsForActiveTab();
+            saveLayout();
+        }
+
+        function renderTabs() {
+            forceCancelRename(); // REVISI: Pastikan rename dibatalkan sebelum render ulang tab
+            
+            tabBar.innerHTML = '';
+            tabs.forEach(tab => {
+                const tabElement = document.createElement('div');
+                tabElement.className = 'tab-item';
+                tabElement.dataset.tabId = tab.id;
+                if (tab.id === activeTabId) {
+                    tabElement.classList.add('active');
+                }
+
+                const tabNameSpan = document.createElement('span');
+                tabNameSpan.className = 'tab-name';
+                tabNameSpan.textContent = tab.name;
+                tabNameSpan.title = "Klik dua kali untuk ganti nama";
+                tabElement.appendChild(tabNameSpan);
+
+                const renameControls = document.createElement('div');
+                renameControls.className = 'rename-controls';
+                const renameInput = document.createElement('input');
+                renameInput.type = 'text';
+                renameInput.className = 'rename-input';
+                const saveNameButton = document.createElement('button');
+                saveNameButton.className = 'rename-button rename-save-button';
+                saveNameButton.innerHTML = '&#10003;';
+                saveNameButton.title = 'Simpan';
+                const cancelNameButton = document.createElement('button');
+                cancelNameButton.className = 'rename-button rename-cancel-button';
+                cancelNameButton.innerHTML = '&#10005;';
+                cancelNameButton.title = 'Batal';
+                renameControls.appendChild(renameInput);
+                renameControls.appendChild(saveNameButton);
+                renameControls.appendChild(cancelNameButton);
+                tabElement.appendChild(renameControls);
+                
+                tabNameSpan.addEventListener('dblclick', () => {
+                    startInlineRename(tab, tabElement, tabNameSpan, renameInput, saveNameButton, cancelNameButton);
+                });
+
+                if (tabs.length > 1) {
+                    const closeButton = document.createElement('button');
+                    closeButton.className = 'close-tab-button';
+                    closeButton.innerHTML = '&times;';
+                    closeButton.title = 'Tutup Tab';
+                    closeButton.onclick = (e) => {
+                        if (isRenamingTab) return;
+                        e.stopPropagation();
+                        closeTab(tab.id);
+                    };
+                    tabElement.appendChild(closeButton);
+                }
+
+                tabElement.addEventListener('click', (e) => {
+                    if (tabElement.classList.contains('renaming')) { // Jika sedang rename di tab ini
+                        if (!renameControls.contains(e.target) && e.target !== renameInput) {
+                             // Klik di luar area rename controls di tab yang sama, jangan switch
+                            return;
+                        }
+                    } else if (isRenamingTab) { // Jika sedang rename di tab LAIN
+                        return; // Jangan switch tab jika ada rename aktif di tab lain
+                    }
+                    switchTab(tab.id);
+                });
+                tabBar.appendChild(tabElement);
+            });
+        }
+
+        function startInlineRename(tab, tabElement, tabNameSpan, renameInput, saveButton, cancelButton) {
+            forceCancelRename(); // REVISI: Batalkan rename lain yang mungkin aktif
+
+            isRenamingTab = true;
+            tabElement.classList.add('renaming');
+            renameInput.value = tab.name;
+            renameInput.focus();
+            renameInput.select();
+
+            let blurTimeout;
+
+            // REVISI: Mendefinisikan fungsi cleanup di dalam startInlineRename
+            const finishThisInlineRename = (shouldSaveNewName) => {
+                if (!tabElement.classList.contains('renaming')) return; // Sudah selesai atau tidak pernah dimulai di elemen ini
+
+                clearTimeout(blurTimeout);
+                const newName = renameInput.value.trim();
+
+                if (shouldSaveNewName && newName && newName !== tab.name) {
+                    tab.name = newName;
+                    saveLayout();
+                }
+                tabNameSpan.textContent = tab.name; // Selalu update span ke nama (baru atau lama) dari data
+
+                tabElement.classList.remove('renaming');
+                isRenamingTab = false;
+                currentRenameCleanupFunction = null; // Hapus referensi cleanup
+
+                saveButton.removeEventListener('click', handleSave);
+                cancelButton.removeEventListener('click', handleCancel);
+                renameInput.removeEventListener('keydown', handleKeydown);
+                renameInput.removeEventListener('blur', handleBlur);
+            };
+            
+            currentRenameCleanupFunction = finishThisInlineRename; // Simpan fungsi cleanup saat ini
+
+            const handleSave = () => finishThisInlineRename(true);
+            const handleCancel = () => finishThisInlineRename(false);
+            const handleKeydown = (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleSave();
+                } else if (event.key === 'Escape') {
+                    handleCancel();
+                }
+            };
+            const handleBlur = () => {
+                blurTimeout = setTimeout(() => {
+                    // Hanya batalkan jika fokus benar-benar hilang dari kontrol rename
+                    if (isRenamingTab && document.activeElement !== renameInput && 
+                        document.activeElement !== saveButton && document.activeElement !== cancelButton) {
+                       handleCancel();
+                    }
+                }, 100);
+            };
+
+            saveButton.addEventListener('click', handleSave);
+            cancelButton.addEventListener('click', handleCancel);
+            renameInput.addEventListener('keydown', handleKeydown);
+            renameInput.addEventListener('blur', handleBlur);
+        }
+
+        function loadWidgetsForActiveTab() {
+            widgetCanvas.innerHTML = '';
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab) {
+                currentHighestZ = activeTab.highestZ || 0;
+                currentWidgetCounter = activeTab.widgetCounter || 0;
+                activeTab.widgets.forEach(widgetData => {
+                    createWidget(widgetData.name, widgetData.htmlFile, widgetData, false);
+                });
+            } else {
+                currentHighestZ = 0;
+                currentWidgetCounter = 0;
+            }
+            updateScrollability();
+        }
+
+        function switchTab(tabId) {
+            if (tabId === activeTabId || isRenamingTab) return;
+            forceCancelRename(); // REVISI
+            saveLayout();
+            activeTabId = tabId;
+            loadWidgetsForActiveTab();
+            renderTabs();
+            saveLayout();
+        }
+
+        function addNewTab() {
+            if (isRenamingTab) return;
+            forceCancelRename(); // REVISI
+            saveLayout();
+            const newTabId = `tab-${Date.now()}`;
+            const newTabName = `Workspace ${tabs.length + 1}`;
+            tabs.push({ id: newTabId, name: newTabName, widgets: [], highestZ: 0, widgetCounter: 0 });
+            activeTabId = newTabId;
+            loadWidgetsForActiveTab();
+            renderTabs();
+            saveLayout();
+        }
+
+        function closeTab(tabIdToClose) {
+            if (isRenamingTab) return;
+            forceCancelRename(); // REVISI
+            if (tabs.length <= 1) {
+                showCustomModal("Tidak bisa menutup tab terakhir.");
+                return;
+            }
+            const tabIndex = tabs.findIndex(t => t.id === tabIdToClose);
+            if (tabIndex === -1) return;
+
+            showCustomConfirm(`Anda yakin ingin menutup tab "${tabs[tabIndex].name}"?`, () => {
+                tabs.splice(tabIndex, 1);
+                if (activeTabId === tabIdToClose) {
+                    activeTabId = tabs[Math.max(0, tabIndex - 1)].id;
+                    loadWidgetsForActiveTab(); // Muat widget SEBELUM renderTabs jika activeTabId berubah
+                }
+                renderTabs();
+                saveLayout();
+            });
+        }
+        addTabButton.addEventListener('click', addNewTab);
+
+        function createWidget(widgetName, htmlFile, options = {}, fromButton = true) {
+            if (fromButton) {
+                currentWidgetCounter++;
+                currentHighestZ++;
+            }
+            const widget = document.createElement('div');
+            widget.className = 'widget';
+            widget.id = options.id || `widget-${activeTabId}-${currentWidgetCounter}`;
+            const idParts = widget.id.split('-');
+            const counterForPositioning = parseInt(idParts[idParts.length - 1] || 0);
+            widget.style.left = options.left || `${(counterForPositioning % 10) * 20 + 20}px`;
+            widget.style.top = options.top || `${Math.floor(counterForPositioning / 10) * 20 + 20}px`;
+            widget.style.width = options.width || '400px';
+            widget.style.height = options.height || '300px';
+            widget.style.zIndex = options.zIndex || currentHighestZ;
+            widget.dataset.locked = options.locked ? 'true' : 'false';
+            widget.dataset.widgetName = widgetName;
+            widget.dataset.htmlFile = htmlFile;
+            if (options.locked) widget.classList.add('locked');
+
+            const header = document.createElement('div');
+            header.className = 'widget-header';
+            header.addEventListener('mousedown', startDrag);
+            const title = document.createElement('span');
+            title.className = 'widget-title';
+            const controls = document.createElement('div');
+            controls.className = 'widget-controls';
+            const lockButton = document.createElement('button');
+            lockButton.title = 'Kunci/Buka Widget';
+            if (widget.dataset.locked === 'true') {
+                lockButton.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M12 1L8 5v2.051c-2.766.788-4.811 3.007-5.543 5.796L2 13v7c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2v-7l-.457-.153c-.732-2.789-2.777-5.008-5.543-5.796V5l-4-4zm0 2.828L13.172 5H10.828L12 3.828zM10 7h4v3.051A6.002 6.002 0 0 0 12 10a6.002 6.002 0 0 0-2 .051V7zm-3 5h10v5H7v-5z"></path></svg>`;
+            } else {
+                lockButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+            }
+            lockButton.onclick = toggleLock;
+            const deleteButton = document.createElement('button');
+            deleteButton.title = 'Hapus Widget';
+            deleteButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+            deleteButton.onclick = deleteWidget;
+            controls.appendChild(lockButton);
+            controls.appendChild(deleteButton);
+            header.appendChild(title);
+            header.appendChild(controls);
+            const content = document.createElement('div');
+            content.className = 'widget-content';
+            const iframe = document.createElement('iframe');
+            iframe.src = `${GITHUB_BASE_URL}${encodeURIComponent(htmlFile)}`;
+            iframe.setAttribute('allowfullscreen', '');
+            if (currentAction === 'drag' || currentAction === 'resize') {
+                iframe.style.pointerEvents = 'none';
+            }
+            content.appendChild(iframe);
+            widget.appendChild(header);
+            widget.appendChild(content);
+            ['se', 'sw', 'ne', 'nw'].forEach(type => {
+                const resizer = document.createElement('div');
+                resizer.className = `resizer ${type}`;
+                resizer.addEventListener('mousedown', (e) => startResize(e, type));
+                widget.appendChild(resizer);
+            });
+            widget.addEventListener('mousedown', bringToFront);
+            widgetCanvas.appendChild(widget);
+            if (fromButton) saveLayout();
+            updateScrollability();
+        }
+
+        function bringToFront(event) {
+            const widget = event.currentTarget;
+            if (widget.dataset.locked === 'true' || isRenamingTab) return;
+            const oldZIndex = parseInt(widget.style.zIndex);
+            if (oldZIndex !== currentHighestZ) {
+                currentHighestZ++;
+                widget.style.zIndex = currentHighestZ;
+                saveLayout();
+            }
+        }
+
+        function setIframesPointerEvents(value) {
+            const iframes = widgetCanvas.querySelectorAll('.widget-content iframe');
+            iframes.forEach(iframe => {
+                iframe.style.pointerEvents = value;
+            });
+        }
+
+        function startDrag(event) {
+            if (event.target.closest('.widget-controls button') || isRenamingTab) return;
+            activeWidget = this.closest('.widget');
+            if (!activeWidget || activeWidget.dataset.locked === 'true') return;
+            event.preventDefault();
+            bringToFront({currentTarget: activeWidget});
+            currentAction = 'drag';
+            activeWidget.classList.add('dragging');
+            initialMouseX = event.clientX;
+            initialMouseY = event.clientY;
+            initialWidgetX = activeWidget.offsetLeft;
+            initialWidgetY = activeWidget.offsetTop;
+            setIframesPointerEvents('none');
+            document.addEventListener('mousemove', performDragOrResize);
+            document.addEventListener('mouseup', stopDragOrResize);
+        }
+
+        function startResize(event, resizerType) {
+            if (isRenamingTab) return;
+            activeWidget = event.target.closest('.widget');
+            if (!activeWidget || activeWidget.dataset.locked === 'true') return;
+            event.preventDefault();
+            event.stopPropagation();
+            bringToFront({currentTarget: activeWidget});
+            currentAction = 'resize';
+            currentResizerType = resizerType;
+            activeWidget.classList.add('resizing');
+            initialMouseX = event.clientX;
+            initialMouseY = event.clientY;
+            initialWidgetX = activeWidget.offsetLeft;
+            initialWidgetY = activeWidget.offsetTop;
+            initialWidgetWidth = activeWidget.offsetWidth;
+            initialWidgetHeight = activeWidget.offsetHeight;
+            setIframesPointerEvents('none');
+            document.addEventListener('mousemove', performDragOrResize);
+            document.addEventListener('mouseup', stopDragOrResize);
+        }
+
+        function performDragOrResize(event) {
+            if (!activeWidget) return;
+            event.preventDefault();
+            const deltaX = event.clientX - initialMouseX;
+            const deltaY = event.clientY - initialMouseY;
+            if (currentAction === 'drag') {
+                activeWidget.style.left = `${initialWidgetX + deltaX}px`;
+                activeWidget.style.top = `${initialWidgetY + deltaY}px`;
+            } else if (currentAction === 'resize') {
+                let newWidth = initialWidgetWidth;
+                let newHeight = initialWidgetHeight;
+                let newLeft = initialWidgetX;
+                let newTop = initialWidgetY;
+                if (currentResizerType.includes('e')) newWidth = initialWidgetWidth + deltaX;
+                if (currentResizerType.includes('w')) { newWidth = initialWidgetWidth - deltaX; newLeft = initialWidgetX + deltaX; }
+                if (currentResizerType.includes('s')) newHeight = initialWidgetHeight + deltaY;
+                if (currentResizerType.includes('n')) { newHeight = initialWidgetHeight - deltaY; newTop = initialWidgetY + deltaY; }
+                const minWidth = parseInt(getComputedStyle(activeWidget).minWidth) || 150;
+                const minHeight = parseInt(getComputedStyle(activeWidget).minHeight) || 100;
+                if (newWidth >= minWidth) {
+                    activeWidget.style.width = `${newWidth}px`;
+                    if (currentResizerType.includes('w')) activeWidget.style.left = `${newLeft}px`;
+                }
+                if (newHeight >= minHeight) {
+                    activeWidget.style.height = `${newHeight}px`;
+                    if (currentResizerType.includes('n')) activeWidget.style.top = `${newTop}px`;
+                }
+            }
+        }
+
+        function stopDragOrResize() {
+            if (activeWidget) {
+                activeWidget.classList.remove('dragging', 'resizing');
+            }
+            setIframesPointerEvents('auto');
+            activeWidget = null;
+            currentAction = null;
+            currentResizerType = null;
+            document.removeEventListener('mousemove', performDragOrResize);
+            document.removeEventListener('mouseup', stopDragOrResize);
+            saveLayout();
+            updateScrollability();
+        }
+
+        function toggleLock(event) {
+            if (isRenamingTab) return;
+            const widget = event.target.closest('.widget');
+            if (!widget) return;
+            const isCurrentlyLocked = widget.dataset.locked === 'true';
+            const newLockState = !isCurrentlyLocked;
+            widget.dataset.locked = newLockState ? 'true' : 'false';
+            widget.classList.toggle('locked', newLockState);
+            const lockButton = widget.querySelector('.widget-controls button:first-child');
+            const lockIconSvg = lockButton.querySelector('svg');
+            if (newLockState) {
+                lockIconSvg.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M12 1L8 5v2.051c-2.766.788-4.811 3.007-5.543 5.796L2 13v7c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2v-7l-.457-.153c-.732-2.789-2.777-5.008-5.543-5.796V5l-4-4zm0 2.828L13.172 5H10.828L12 3.828zM10 7h4v3.051A6.002 6.002 0 0 0 12 10a6.002 6.002 0 0 0-2 .051V7zm-3 5h10v5H7v-5z"></path></svg>`;
+            } else {
+                lockIconSvg.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+            }
+            saveLayout();
+        }
+
+        function deleteWidget(event) {
+            if (isRenamingTab) return;
+            const widget = event.target.closest('.widget');
+            if (widget && widget.parentElement) {
+                widget.parentElement.removeChild(widget);
+                saveLayout();
+                updateScrollability();
+            }
+        }
+
+        function clearAllWidgetsForActiveTab() {
+            if (isRenamingTab) return;
+            showCustomConfirm("Apakah Anda yakin ingin menghapus semua widget di tab ini? Tampilan tab akan kembali bersih.", () => {
+                const activeTab = tabs.find(t => t.id === activeTabId);
+                if (activeTab) {
+                    activeTab.widgets = [];
+                    activeTab.highestZ = 0;
+                    activeTab.widgetCounter = 0;
+                    currentHighestZ = 0;
+                    currentWidgetCounter = 0;
+                }
+                widgetCanvas.innerHTML = '';
+                saveLayout();
+                updateScrollability();
+            });
+        }
+
+        document.querySelectorAll('.button-container .custom-button').forEach(button => {
+            if (button.id === 'clear-all-widgets-button') {
+                button.addEventListener('click', clearAllWidgetsForActiveTab);
+            } else {
+                button.addEventListener('click', () => {
+                    if (isRenamingTab) return;
+                    const widgetName = button.dataset.widgetName;
+                    const htmlFile = button.dataset.htmlFile;
+                    if (widgetName && htmlFile) {
+                        createWidget(widgetName, htmlFile, {}, true);
+                    } else {
+                        console.error('Tombol tidak memiliki data-widget-name atau data-html-file:', button);
+                    }
+                });
+            }
+        });
+
+        function updateScrollability() {
+            if (!widgetCanvas || !mainContent) return;
+            let maxBottom = 0;
+            const widgetsOnCanvas = widgetCanvas.querySelectorAll('.widget');
+            if (widgetsOnCanvas.length === 0) {
+                mainContent.style.overflowY = 'hidden';
+                return;
+            }
+            widgetsOnCanvas.forEach(widget => {
+                const bottomEdge = widget.offsetTop + widget.offsetHeight;
+                if (bottomEdge > maxBottom) maxBottom = bottomEdge;
+            });
+            if (maxBottom > mainContent.clientHeight) {
+                mainContent.style.overflowY = 'auto';
+            } else {
+                mainContent.style.overflowY = 'hidden';
+            }
+        }
+
+        function showCustomModal(message) {
+            const existingModal = document.getElementById('customModalOverlay');
+            if (existingModal) document.body.removeChild(existingModal);
+            const modalOverlay = document.createElement('div');
+            modalOverlay.id = 'customModalOverlay';
+            modalOverlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000;`;
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `background-color: #2a2a2a; color: #f0f0f0; padding: 25px; border-radius: 8px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); max-width: 400px;`;
+            const messageP = document.createElement('p');
+            messageP.textContent = message;
+            messageP.style.marginBottom = '20px';
+            messageP.style.fontSize = '14px';
+            const okButton = document.createElement('button');
+            okButton.textContent = 'OK';
+            okButton.style.cssText = `background-color: #FFA500; color: #000; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-size: 13px;`;
+            okButton.onclick = () => document.body.removeChild(modalOverlay);
+            modalContent.appendChild(messageP);
+            modalContent.appendChild(okButton);
+            modalOverlay.appendChild(modalContent);
+            document.body.appendChild(modalOverlay);
+        }
+
+        function showCustomConfirm(message, onConfirm) {
+            const existingModal = document.getElementById('customConfirmModalOverlay');
+            if (existingModal) document.body.removeChild(existingModal);
+            const modalOverlay = document.createElement('div');
+            modalOverlay.id = 'customConfirmModalOverlay';
+            modalOverlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000;`;
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `background-color: #2a2a2a; color: #f0f0f0; padding: 25px; border-radius: 8px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); max-width: 400px;`;
+            const messageP = document.createElement('p');
+            messageP.textContent = message;
+            messageP.style.marginBottom = '20px';
+            messageP.style.fontSize = '14px';
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.display = 'flex';
+            buttonContainer.style.justifyContent = 'space-around';
+            buttonContainer.style.gap = '10px';
+            const confirmButton = document.createElement('button');
+            confirmButton.textContent = 'Ya';
+            confirmButton.style.cssText = `background-color: #FFA500; color: #000; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-size: 13px;`;
+            confirmButton.onclick = () => {
+                document.body.removeChild(modalOverlay);
+                onConfirm();
+            };
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'Batal';
+            cancelButton.style.cssText = `background-color: #555; color: #f0f0f0; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-size: 13px;`;
+            cancelButton.onclick = () => document.body.removeChild(modalOverlay);
+            buttonContainer.appendChild(confirmButton);
+            buttonContainer.appendChild(cancelButton);
+            modalContent.appendChild(messageP);
+            modalContent.appendChild(buttonContainer);
+            modalOverlay.appendChild(modalContent);
+            document.body.appendChild(modalOverlay);
+        }
+
+        loadLayout();
+    </script>
+</body>
+</html>
