@@ -31,6 +31,18 @@
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
 
+        /* Scrollbar hiding utility */
+        .pane-scrollbar-hidden::-webkit-scrollbar-thumb {
+            background-color: transparent !important;
+        }
+        .pane-scrollbar-hidden::-webkit-scrollbar-track {
+            background: transparent !important;
+        }
+        .pane-scrollbar-hidden {
+            scrollbar-color: transparent transparent !important; /* Firefox */
+        }
+
+
         html, body {
             margin: 0;
             padding: 0;
@@ -102,12 +114,19 @@
         }
 
         .left-pane {
-            width: 57%; 
-            min-width: 200px; 
+            /* width: 57%; Default, will be controlled by JS */
+            /* min-width: 200px; Will be effectively 0 if hidden */
             padding: 20px;
             overflow-y: auto;
             position: relative; 
+            background-color: #0d0d0d; /* Slightly different bg for distinction */
+            display: block; /* Default display */
         }
+        .left-pane.hidden-pane {
+            padding: 0;
+            overflow: hidden;
+        }
+
 
         .resizer-x {
             width: 8px; 
@@ -118,6 +137,7 @@
             align-items: center;
             justify-content: center;
             user-select: none; 
+            z-index: 5; /* Ensure resizer is clickable */
         }
         .resizer-x::before {
             content: '';
@@ -129,15 +149,20 @@
 
 
         .right-pane {
-            width: calc(43% - 8px); 
-            min-width: 200px; 
+            /* width: calc(43% - 8px); Default, will be controlled by JS */
+            /* min-width: 200px; Will be effectively 0 if hidden */
             padding: 20px;
             display: flex;
             flex-direction: column; 
             height: 100%; 
             position: relative; /* Needed for absolute positioning of pane-loading-overlay */
+            background-color: #0a0a0a; /* Slightly different bg for distinction */
         }
-       
+        .right-pane.hidden-pane {
+            padding: 0;
+            overflow: hidden;
+        }
+        
         #historical-data-title {
             font-size: 18px; 
             font-weight: bold;
@@ -179,7 +204,7 @@
             font-size: 13px; 
             white-space: nowrap; 
         }
-       
+        
         .data-table tbody tr {
             cursor: pointer; 
             transition: background-color 0.2s ease;
@@ -216,7 +241,7 @@
             font-size: 12px;
             margin-left: 5px;
         }
-       
+        
         .custom-legend-controls {
             display: flex;
             gap: 10px;
@@ -249,7 +274,7 @@
             background-color: #2c2c2c; 
             border-color: #f0f0f0; 
         }
-       
+        
         .data-points-control {
             display: flex;
             align-items: center;
@@ -265,7 +290,7 @@
         .stepper-button {
             padding: 6px 8px; 
         }
-       
+        
         #decreaseDataPoints {
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
@@ -295,24 +320,30 @@
             position: relative; 
             z-index: 1;
         }
-       
+        
         #increaseDataPoints {
             border-top-left-radius: 0;
             border-bottom-left-radius: 0;
             border-left-width: 0px; 
         }
-       
+        
 
         .chart-outer-container { 
             width: 100%;
-            height: 300px; 
-            margin-bottom: 20px; 
+            /* height: 300px; Will be controlled by JS */
+            margin-bottom: 0; /* Adjusted as resizer is below */
             background-color: #1a1a1a;
             padding:10px;
             border-radius: 5px;
             position: relative; 
-            flex-shrink: 0; 
+            /* flex-shrink: 0; Removed, height controlled by JS */
+            overflow: hidden; /* To contain the canvas properly */
         }
+        .chart-outer-container.hidden-pane {
+            padding: 0;
+            border: none;
+        }
+
         .chart-scroll-wrapper { 
             width: 100%;
             height: 100%;
@@ -323,9 +354,31 @@
         #historical-chart { 
              /* Height and width will be set by JS */
         }
+        
+        .resizer-y { /* Horizontal resizer for chart/table */
+            height: 8px;
+            background-color: #2a2a2a;
+            cursor: row-resize;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            margin-top: 5px; /* Space from chart */
+            margin-bottom: 5px; /* Space to table */
+            z-index: 5;
+        }
+        .resizer-y::before {
+            content: '';
+            width: 25px;
+            height: 2px;
+            background-color: #555;
+            border-radius: 1px;
+        }
+
 
         .historical-table-wrapper {
-            flex-grow: 1; 
+            /* flex-grow: 1; Removed, height controlled by JS */
             overflow-y: auto; 
             position: relative; 
             border: 1px solid #222; 
@@ -334,6 +387,11 @@
             display: flex; 
             flex-direction: column; 
         }
+        .historical-table-wrapper.hidden-pane {
+            border: none;
+            overflow: hidden;
+        }
+
 
         .historical-data-table {
             width: 100%;
@@ -440,8 +498,8 @@
         </select>
     </div>
 
-    <div class="content-container">
-        <div class="left-pane">
+    <div class="content-container" id="contentContainer">
+        <div class="left-pane" id="leftPane">
             <table class="data-table" id="mainDataTable">
                 <thead>
                     <tr>
@@ -458,16 +516,16 @@
                     </tbody>
             </table>
         </div>
-        <div class="right-pane">
+        <div class="resizer-x" id="verticalResizer"></div> <div class="right-pane" id="rightPane">
             <div class="pane-loading-overlay" id="rightPaneLoadingOverlay">
                 <div class="loading-spinner"></div>
             </div>
             <h2 id="historical-data-title">Historical Data</h2>
-            <div class="custom-legend-controls">
+            <div class="custom-legend-controls" id="customLegendControls">
                 <button class="legend-toggle-button" data-dataset-index="0">Actual</button>
                 <button class="legend-toggle-button" data-dataset-index="1">Forecast</button>
                 <button class="legend-toggle-button" data-dataset-index="2">Surprise Index</button>
-               
+                
                 <div class="data-points-control">
                     <div class="input-group-combined">
                         <button id="decreaseDataPoints" class="stepper-button" title="Decrease data points">-</button>
@@ -477,12 +535,12 @@
                     <button id="showAllDataButton" class="control-button" title="Show all historical data points">Reset</button>
                 </div>
             </div>
-            <div class="chart-outer-container">
+            <div class="chart-outer-container" id="chartOuterContainer">
                 <div class="chart-scroll-wrapper">
                     <canvas id="historical-chart"></canvas>
                 </div>
             </div>
-            <div class="historical-table-wrapper"> 
+            <div class="resizer-y" id="chartTableResizer"></div> <div class="historical-table-wrapper" id="historicalTableWrapper"> 
                 <table class="historical-data-table">
                     <thead>
                         <tr>
@@ -504,9 +562,9 @@
         const GOOGLE_SHEET_IDS = { 
             USD: '1NSRaFuf5fNwbaZvgXgVKTr97v6aSp8-EXwSgM0ZXKcc',
             EUR: '11SSoWwYCpe1oGJmgkxdsFyFWsHBV_xqhZKOOf6iQj4A',
-            GBP: '1kL2HimpF3llcFS5Pp0ZXY5dPK6GVwTWySuQ3lRdPzjk' // Added GBP Sheet ID
+            GBP: '1kL2HimpF3llcFS5Pp0ZXY5dPK6GVwTWySuQ3lRdPzjk'
         };
-        const GOOGLE_API_KEY = 'AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4'; 
+        const GOOGLE_API_KEY = 'AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4'; // Replace with your actual API key if needed for testing outside environment
 
         // --- DOM Elements ---
         const fullScreenLoadingOverlay = document.querySelector('.loading-overlay'); 
@@ -517,10 +575,17 @@
         const countrySelect = document.getElementById('countrySelect');
         const mainDataTableBody = document.getElementById('mainDataTable').querySelector('tbody');
         const historicalDataTitleEl = document.getElementById('historical-data-title');
-       
-        const leftPane = document.querySelector('.left-pane');
-        const rightPane = document.querySelector('.right-pane');
-        const contentContainer = document.querySelector('.content-container');
+        
+        const contentContainer = document.getElementById('contentContainer');
+        const leftPane = document.getElementById('leftPane');
+        const rightPane = document.getElementById('rightPane');
+        const verticalResizer = document.getElementById('verticalResizer');
+
+        const chartOuterContainer = document.getElementById('chartOuterContainer');
+        const historicalTableWrapper = document.getElementById('historicalTableWrapper');
+        const chartTableResizer = document.getElementById('chartTableResizer');
+        const customLegendControls = document.getElementById('customLegendControls');
+
 
         const dataPointsInput = document.getElementById('dataPointsInput');
         const showAllDataButton = document.getElementById('showAllDataButton');
@@ -546,11 +611,9 @@
         }
 
         // --- Data Structures ---
-        const countrySpecificConfig = {
-            USD: {
-                sheetIdKey: 'USD',
-                latestSheetName: 'United States',
-                latestSheetRange: 'B2:G33', 
+        const countrySpecificConfig = { /* ... existing config ... */
+            USD: { 
+                sheetIdKey: 'USD', latestSheetName: 'United States', latestSheetRange: 'B2:G33', 
                 latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
                 indicatorSetup: [
                     { id: 'gdp-sales-qq', name: 'GDP Sales q/q', dataKey: 'gdpSalesQq', unit: 'q/q', historicalSheet: 'US Source', historicalRanges: { date: 'A3:A', actual: 'B3:B', forecast: 'C3:C', surprise: 'E3:E' } },
@@ -588,146 +651,85 @@
                 ]
             },
             EUR: {
-                sheetIdKey: 'EUR',
-                latestSheetName: 'Overview',
-                latestSheetRange: 'B2:G28', 
+                sheetIdKey: 'EUR', latestSheetName: 'Overview', latestSheetRange: 'B2:G28', 
                 latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
                 indicatorSetup: [] 
             },
-            GBP: { // Added GBP configuration
-                sheetIdKey: 'GBP',
-                latestSheetName: 'Overview',
-                latestSheetRange: 'B2:G30', // 29 indicators
-                latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, // Date from Col G (index 5), Col F (Unit from sheet) is skipped
-                indicatorSetup: [] // Will be populated by generateGbpHistoricalConfig
+            GBP: { 
+                sheetIdKey: 'GBP', latestSheetName: 'Overview', latestSheetRange: 'B2:G30', 
+                latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
+                indicatorSetup: [] 
             }
         };
         
-        function generateEurHistoricalConfig() {
+        function generateEurHistoricalConfig() { /* ... existing function ... */
             const eurIndicatorsBase = [
-                { id: 'gdp-qq-eur', name: 'GDP q/q', dataKey: 'gdpQqEur', unit: 'q/q' },
-                { id: 'gdp-yy-eur', name: 'GDP y/y', dataKey: 'gdpYyEur', unit: '% y/y' },
-                { id: 'unemployment-rate-eur', name: 'Unemployment Rate', dataKey: 'unemploymentRateEur', unit: '%' },
-                { id: 'wage-costs-yy-eur', name: 'Wage Costs y/y', dataKey: 'wageCostsYyEur', unit: '% y/y' },
-                { id: 'labour-cost-index-eur', name: 'Labour Cost Index', dataKey: 'labourCostIndexEur', unit: 'Index' },
-                { id: 'employment-level-eur', name: 'Employment Level', dataKey: 'employmentLevelEur', unit: 'K' },
-                { id: 'cpi-eur', name: 'CPI', dataKey: 'cpiEur', unit: '% y/y' },
-                { id: 'cpi-mm-eur', name: 'CPI m/m', dataKey: 'cpiMmEur', unit: '% m/m' },
-                { id: 'cpi-yy-eur', name: 'CPI y/y', dataKey: 'cpiYyEur', unit: '% y/y' },
-                { id: 'core-cpi-eur', name: 'Core CPI', dataKey: 'coreCpiEur', unit: '% y/y' },
-                { id: 'core-cpi-mm-eur', name: 'Core CPI m/m', dataKey: 'coreCpiMmEur', unit: '% m/m' },
-                { id: 'core-cpi-yy-eur', name: 'Core CPI y/y', dataKey: 'coreCpiYyEur', unit: '% y/y' },
-                { id: 'ppi-mm-eur', name: 'PPI m/m', dataKey: 'ppiMmEur', unit: '% m/m' },
-                { id: 'ppi-yy-eur', name: 'PPI y/y', dataKey: 'ppiYyEur', unit: '% y/y' },
-                { id: 'ecb-interest-rate-decision-eur', name: 'ECB Interest Rate Decision', dataKey: 'ecbInterestRateDecisionEur', unit: '%' },
-                { id: 'current-account-eur', name: 'Current Account', dataKey: 'currentAccountEur', unit: 'Billion' }, // Assuming Billion EUR, adjust if needed
-                { id: 'trade-balance-eur', name: 'Trade Balance', dataKey: 'tradeBalanceEur', unit: 'Billion' }, // Assuming Billion EUR
-                { id: 'business-climate-indicator-eur', name: 'Business Climate Indicator', dataKey: 'businessClimateIndicatorEur', unit: 'Index' },
-                { id: 'economic-sentiment-indicator-eur', name: 'Economic Sentiment Indicator', dataKey: 'economicSentimentIndicatorEur', unit: 'Index' },
-                { id: 'sp-global-composite-pmi-eur', name: 'S&P Global Composite PMI', dataKey: 'spGlobalCompositePmiEur', unit: 'Index' },
-                { id: 'sp-global-construction-pmi-eur', name: 'S&P Global Construction PMI', dataKey: 'spGlobalConstructionPmiEur', unit: 'Index' },
-                { id: 'sp-global-manufacturing-pmi-eur', name: 'S&P Global Manufacturing PMI', dataKey: 'spGlobalManufacturingPmiEur', unit: 'Index' },
-                { id: 'sp-global-services-pmi-eur', name: 'S&P Global Services PMI', dataKey: 'spGlobalServicesPmiEur', unit: 'Index' },
-                { id: 'zew-economic-sentiment-indicator-eur', name: 'ZEW Economic Sentiment Indicator', dataKey: 'zewEconomicSentimentIndicatorEur', unit: 'Index' },
-                { id: 'consumer-confidence-index-eur', name: 'Consumer Confidence Index', dataKey: 'consumerConfidenceIndexEur', unit: 'Index' },
-                { id: 'retail-sales-mm-eur', name: 'Retail Sales m/m', dataKey: 'retailSalesMmEur', unit: '% m/m' },
+                { id: 'gdp-qq-eur', name: 'GDP q/q', dataKey: 'gdpQqEur', unit: 'q/q' }, { id: 'gdp-yy-eur', name: 'GDP y/y', dataKey: 'gdpYyEur', unit: '% y/y' },
+                { id: 'unemployment-rate-eur', name: 'Unemployment Rate', dataKey: 'unemploymentRateEur', unit: '%' }, { id: 'wage-costs-yy-eur', name: 'Wage Costs y/y', dataKey: 'wageCostsYyEur', unit: '% y/y' },
+                { id: 'labour-cost-index-eur', name: 'Labour Cost Index', dataKey: 'labourCostIndexEur', unit: 'Index' }, { id: 'employment-level-eur', name: 'Employment Level', dataKey: 'employmentLevelEur', unit: 'K' },
+                { id: 'cpi-eur', name: 'CPI', dataKey: 'cpiEur', unit: '% y/y' }, { id: 'cpi-mm-eur', name: 'CPI m/m', dataKey: 'cpiMmEur', unit: '% m/m' },
+                { id: 'cpi-yy-eur', name: 'CPI y/y', dataKey: 'cpiYyEur', unit: '% y/y' }, { id: 'core-cpi-eur', name: 'Core CPI', dataKey: 'coreCpiEur', unit: '% y/y' },
+                { id: 'core-cpi-mm-eur', name: 'Core CPI m/m', dataKey: 'coreCpiMmEur', unit: '% m/m' }, { id: 'core-cpi-yy-eur', name: 'Core CPI y/y', dataKey: 'coreCpiYyEur', unit: '% y/y' },
+                { id: 'ppi-mm-eur', name: 'PPI m/m', dataKey: 'ppiMmEur', unit: '% m/m' }, { id: 'ppi-yy-eur', name: 'PPI y/y', dataKey: 'ppiYyEur', unit: '% y/y' },
+                { id: 'ecb-interest-rate-decision-eur', name: 'ECB Interest Rate Decision', dataKey: 'ecbInterestRateDecisionEur', unit: '%' }, { id: 'current-account-eur', name: 'Current Account', dataKey: 'currentAccountEur', unit: 'Billion' },
+                { id: 'trade-balance-eur', name: 'Trade Balance', dataKey: 'tradeBalanceEur', unit: 'Billion' }, { id: 'business-climate-indicator-eur', name: 'Business Climate Indicator', dataKey: 'businessClimateIndicatorEur', unit: 'Index' },
+                { id: 'economic-sentiment-indicator-eur', name: 'Economic Sentiment Indicator', dataKey: 'economicSentimentIndicatorEur', unit: 'Index' }, { id: 'sp-global-composite-pmi-eur', name: 'S&P Global Composite PMI', dataKey: 'spGlobalCompositePmiEur', unit: 'Index' },
+                { id: 'sp-global-construction-pmi-eur', name: 'S&P Global Construction PMI', dataKey: 'spGlobalConstructionPmiEur', unit: 'Index' }, { id: 'sp-global-manufacturing-pmi-eur', name: 'S&P Global Manufacturing PMI', dataKey: 'spGlobalManufacturingPmiEur', unit: 'Index' },
+                { id: 'sp-global-services-pmi-eur', name: 'S&P Global Services PMI', dataKey: 'spGlobalServicesPmiEur', unit: 'Index' }, { id: 'zew-economic-sentiment-indicator-eur', name: 'ZEW Economic Sentiment Indicator', dataKey: 'zewEconomicSentimentIndicatorEur', unit: 'Index' },
+                { id: 'consumer-confidence-index-eur', name: 'Consumer Confidence Index', dataKey: 'consumerConfidenceIndexEur', unit: 'Index' }, { id: 'retail-sales-mm-eur', name: 'Retail Sales m/m', dataKey: 'retailSalesMmEur', unit: '% m/m' },
                 { id: 'retail-sales-yy-eur', name: 'Retail Sales y/y', dataKey: 'retailSalesYyEur', unit: '% y/y' },
             ];
-
             countrySpecificConfig.EUR.indicatorSetup = eurIndicatorsBase.map((indicator, index) => {
                 const baseColIndex = index * 6; 
-                const dateCol = colToExcel(baseColIndex + 0);
-                const actualCol = colToExcel(baseColIndex + 1);
-                const forecastCol = colToExcel(baseColIndex + 2);
-                const surpriseCol = colToExcel(baseColIndex + 4);
+                const dateCol = colToExcel(baseColIndex + 0); const actualCol = colToExcel(baseColIndex + 1);
+                const forecastCol = colToExcel(baseColIndex + 2); const surpriseCol = colToExcel(baseColIndex + 4);
                 const startRow = 4; 
-
-                return {
-                    ...indicator,
-                    historicalSheet: 'Historical Data',
-                    historicalRanges: {
-                        date: `${dateCol}${startRow}:${dateCol}`,
-                        actual: `${actualCol}${startRow}:${actualCol}`,
-                        forecast: `${forecastCol}${startRow}:${forecastCol}`,
-                        surprise: `${surpriseCol}${startRow}:${surpriseCol}`
-                    }
-                };
+                return { ...indicator, historicalSheet: 'Historical Data', historicalRanges: { date: `${dateCol}${startRow}:${dateCol}`, actual: `${actualCol}${startRow}:${actualCol}`, forecast: `${forecastCol}${startRow}:${forecastCol}`, surprise: `${surpriseCol}${startRow}:${surpriseCol}` } };
             });
         }
         generateEurHistoricalConfig(); 
 
-        function generateGbpHistoricalConfig() {
+        function generateGbpHistoricalConfig() { /* ... existing function ... */
             const gbpIndicatorsBase = [
-                { id: 'gdp-qq-gbp', name: 'GDP q/q', dataKey: 'gdpQqGbp', unit: '% q/q' },
-                { id: 'gdp-yy-gbp', name: 'GDP y/y', dataKey: 'gdpYyGbp', unit: '% y/y' },
-                { id: 'claimant-count-change-gbp', name: 'Claimant Count Change', dataKey: 'claimantCountChangeGbp', unit: 'K' },
-                { id: 'employment-change-3m-gbp', name: 'Employment Change 3-months', dataKey: 'employmentChange3mGbp', unit: 'K' },
-                { id: 'unemployment-rate-gbp', name: 'Unemployment Rate', dataKey: 'unemploymentRateGbp', unit: '%' },
-                { id: 'cpi-gbp', name: 'CPI', dataKey: 'cpiGbp', unit: '% y/y' }, // Assuming main CPI is y/y
-                { id: 'cpi-mm-gbp', name: 'CPI m/m', dataKey: 'cpiMmGbp', unit: '% m/m' },
-                { id: 'cpi-yy-gbp', name: 'CPI y/y', dataKey: 'cpiYyGbp', unit: '% y/y' },
-                { id: 'core-cpi-mm-gbp', name: 'Core CPI m/m', dataKey: 'coreCpiMmGbp', unit: '% m/m' },
-                { id: 'core-cpi-yy-gbp', name: 'Core CPI y/y', dataKey: 'coreCpiYyGbp', unit: '% y/y' },
-                { id: 'ppi-input-mm-gbp', name: 'PPI Input m/m', dataKey: 'ppiInputMmGbp', unit: '% m/m' },
-                { id: 'ppi-input-yy-gbp', name: 'PPI Input y/y', dataKey: 'ppiInputYyGbp', unit: '% y/y' },
-                { id: 'ppi-output-mm-gbp', name: 'PPI Output m/m', dataKey: 'ppiOutputMmGbp', unit: '% m/m' },
-                { id: 'ppi-output-yy-gbp', name: 'PPI Output y/y', dataKey: 'ppiOutputYyGbp', unit: '% y/y' },
-                { id: 'boe-interest-rate-decision-gbp', name: 'BoE Interest Rate Decision', dataKey: 'boeInterestRateDecisionGbp', unit: '%' },
-                { id: 'boe-mpc-vote-cut-gbp', name: 'BoE MPC Vote Cut', dataKey: 'boeMpcVoteCutGbp', unit: '' }, // No specific unit, just a number
-                { id: 'boe-mpc-vote-hike-gbp', name: 'BoE MPC Vote Hike', dataKey: 'boeMpcVoteHikeGbp', unit: '' },
-                { id: 'boe-mpc-vote-unchanged-gbp', name: 'BoE MPC Vote Unchanged', dataKey: 'boeMpcVoteUnchangedGbp', unit: '' },
-                { id: 'current-account-gbp', name: 'Current Account', dataKey: 'currentAccountGbp', unit: 'Billion' }, // Assuming Billion GBP
-                { id: 'trade-balance-gbp', name: 'Trade Balance', dataKey: 'tradeBalanceGbp', unit: 'Billion' }, // Assuming Billion GBP
-                { id: 'sp-cips-composite-pmi-gbp', name: 'S&P Global/CIPS Composite PMI', dataKey: 'spCipsCompositePmiGbp', unit: 'Index' },
-                { id: 'sp-cips-construction-pmi-gbp', name: 'S&P Global/CIPS Construction PMI', dataKey: 'spCipsConstructionPmiGbp', unit: 'Index' },
-                { id: 'sp-cips-manufacturing-pmi-gbp', name: 'S&P Global/CIPS Manufacturing PMI', dataKey: 'spCipsManufacturingPmiGbp', unit: 'Index' },
-                { id: 'sp-cips-services-pmi-gbp', name: 'S&P Global/CIPS Services PMI', dataKey: 'spCipsServicesPmiGbp', unit: 'Index' },
-                { id: 'core-retail-sales-mm-gbp', name: 'Core Retail Sales m/m', dataKey: 'coreRetailSalesMmGbp', unit: '% m/m' },
-                { id: 'core-retail-sales-yy-gbp', name: 'Core Retail Sales y/y', dataKey: 'coreRetailSalesYyGbp', unit: '% y/y' },
-                { id: 'gfk-consumer-confidence-gbp', name: 'GfK Consumer Confidence', dataKey: 'gfkConsumerConfidenceGbp', unit: 'Index' },
-                { id: 'retail-sales-mm-gbp', name: 'Retail Sales m/m', dataKey: 'retailSalesMmGbp', unit: '% m/m' },
+                { id: 'gdp-qq-gbp', name: 'GDP q/q', dataKey: 'gdpQqGbp', unit: '% q/q' }, { id: 'gdp-yy-gbp', name: 'GDP y/y', dataKey: 'gdpYyGbp', unit: '% y/y' },
+                { id: 'claimant-count-change-gbp', name: 'Claimant Count Change', dataKey: 'claimantCountChangeGbp', unit: 'K' }, { id: 'employment-change-3m-gbp', name: 'Employment Change 3-months', dataKey: 'employmentChange3mGbp', unit: 'K' },
+                { id: 'unemployment-rate-gbp', name: 'Unemployment Rate', dataKey: 'unemploymentRateGbp', unit: '%' }, { id: 'cpi-gbp', name: 'CPI', dataKey: 'cpiGbp', unit: '% y/y' },
+                { id: 'cpi-mm-gbp', name: 'CPI m/m', dataKey: 'cpiMmGbp', unit: '% m/m' }, { id: 'cpi-yy-gbp', name: 'CPI y/y', dataKey: 'cpiYyGbp', unit: '% y/y' },
+                { id: 'core-cpi-mm-gbp', name: 'Core CPI m/m', dataKey: 'coreCpiMmGbp', unit: '% m/m' }, { id: 'core-cpi-yy-gbp', name: 'Core CPI y/y', dataKey: 'coreCpiYyGbp', unit: '% y/y' },
+                { id: 'ppi-input-mm-gbp', name: 'PPI Input m/m', dataKey: 'ppiInputMmGbp', unit: '% m/m' }, { id: 'ppi-input-yy-gbp', name: 'PPI Input y/y', dataKey: 'ppiInputYyGbp', unit: '% y/y' },
+                { id: 'ppi-output-mm-gbp', name: 'PPI Output m/m', dataKey: 'ppiOutputMmGbp', unit: '% m/m' }, { id: 'ppi-output-yy-gbp', name: 'PPI Output y/y', dataKey: 'ppiOutputYyGbp', unit: '% y/y' },
+                { id: 'boe-interest-rate-decision-gbp', name: 'BoE Interest Rate Decision', dataKey: 'boeInterestRateDecisionGbp', unit: '%' }, { id: 'boe-mpc-vote-cut-gbp', name: 'BoE MPC Vote Cut', dataKey: 'boeMpcVoteCutGbp', unit: '' },
+                { id: 'boe-mpc-vote-hike-gbp', name: 'BoE MPC Vote Hike', dataKey: 'boeMpcVoteHikeGbp', unit: '' }, { id: 'boe-mpc-vote-unchanged-gbp', name: 'BoE MPC Vote Unchanged', dataKey: 'boeMpcVoteUnchangedGbp', unit: '' },
+                { id: 'current-account-gbp', name: 'Current Account', dataKey: 'currentAccountGbp', unit: 'Billion' }, { id: 'trade-balance-gbp', name: 'Trade Balance', dataKey: 'tradeBalanceGbp', unit: 'Billion' },
+                { id: 'sp-cips-composite-pmi-gbp', name: 'S&P Global/CIPS Composite PMI', dataKey: 'spCipsCompositePmiGbp', unit: 'Index' }, { id: 'sp-cips-construction-pmi-gbp', name: 'S&P Global/CIPS Construction PMI', dataKey: 'spCipsConstructionPmiGbp', unit: 'Index' },
+                { id: 'sp-cips-manufacturing-pmi-gbp', name: 'S&P Global/CIPS Manufacturing PMI', dataKey: 'spCipsManufacturingPmiGbp', unit: 'Index' }, { id: 'sp-cips-services-pmi-gbp', name: 'S&P Global/CIPS Services PMI', dataKey: 'spCipsServicesPmiGbp', unit: 'Index' },
+                { id: 'core-retail-sales-mm-gbp', name: 'Core Retail Sales m/m', dataKey: 'coreRetailSalesMmGbp', unit: '% m/m' }, { id: 'core-retail-sales-yy-gbp', name: 'Core Retail Sales y/y', dataKey: 'coreRetailSalesYyGbp', unit: '% y/y' },
+                { id: 'gfk-consumer-confidence-gbp', name: 'GfK Consumer Confidence', dataKey: 'gfkConsumerConfidenceGbp', unit: 'Index' }, { id: 'retail-sales-mm-gbp', name: 'Retail Sales m/m', dataKey: 'retailSalesMmGbp', unit: '% m/m' },
                 { id: 'retail-sales-yy-gbp', name: 'Retail Sales y/y', dataKey: 'retailSalesYyGbp', unit: '% y/y' },
             ];
-
             countrySpecificConfig.GBP.indicatorSetup = gbpIndicatorsBase.map((indicator, index) => {
                 const baseColIndex = index * 6; 
-                const dateCol = colToExcel(baseColIndex + 0);
-                const actualCol = colToExcel(baseColIndex + 1);
-                const forecastCol = colToExcel(baseColIndex + 2);
-                const surpriseCol = colToExcel(baseColIndex + 4);
+                const dateCol = colToExcel(baseColIndex + 0); const actualCol = colToExcel(baseColIndex + 1);
+                const forecastCol = colToExcel(baseColIndex + 2); const surpriseCol = colToExcel(baseColIndex + 4);
                 const startRow = 4; 
-
-                return {
-                    ...indicator,
-                    historicalSheet: 'Historical Data',
-                    historicalRanges: {
-                        date: `${dateCol}${startRow}:${dateCol}`,
-                        actual: `${actualCol}${startRow}:${actualCol}`,
-                        forecast: `${forecastCol}${startRow}:${forecastCol}`,
-                        surprise: `${surpriseCol}${startRow}:${surpriseCol}`
-                    }
-                };
+                return { ...indicator, historicalSheet: 'Historical Data', historicalRanges: { date: `${dateCol}${startRow}:${dateCol}`, actual: `${actualCol}${startRow}:${actualCol}`, forecast: `${forecastCol}${startRow}:${forecastCol}`, surprise: `${surpriseCol}${startRow}:${surpriseCol}` } };
             });
         }
-        generateGbpHistoricalConfig(); // Populate GBP historical configs
+        generateGbpHistoricalConfig(); 
 
 
         const macroeconomicData = {}; 
         
-        function initializeMacroeconomicData() {
+        function initializeMacroeconomicData() { /* ... existing function ... */
             Object.keys(countrySpecificConfig).forEach(countryCode => {
-                macroeconomicData[countryCode] = {
-                    hasFetchedAllHistoricalData: false 
-                };
+                macroeconomicData[countryCode] = { hasFetchedAllHistoricalData: false };
                 const indicators = countrySpecificConfig[countryCode].indicatorSetup;
-                if (indicators && indicators.length > 0) { // Check if indicators are defined
+                if (indicators && indicators.length > 0) { 
                     indicators.forEach(indicator => {
                         macroeconomicData[countryCode][indicator.dataKey] = {
-                            latestActual: '', previousActual: '', latestForecast: '',
-                            latestSurprise: '', latestDate: '', 
+                            latestActual: '', previousActual: '', latestForecast: '', latestSurprise: '', latestDate: '', 
                             unit: indicator.unit || '', 
-                            historicalDates: [], historicalValues: [], historicalForecasts: [],
-                            historicalSurprises: [] 
+                            historicalDates: [], historicalValues: [], historicalForecasts: [], historicalSurprises: [] 
                         };
                     });
                 }
@@ -741,16 +743,14 @@
         function hideRightPaneLoading() { if (rightPaneLoadingOverlay) rightPaneLoadingOverlay.style.display = 'none'; }
 
         // --- Dynamic Table Population ---
-        function populateMainDataTableHTML(countryCode) {
+        function populateMainDataTableHTML(countryCode) { /* ... existing function ... */
             mainDataTableBody.innerHTML = ''; 
             const indicators = countrySpecificConfig[countryCode]?.indicatorSetup;
 
             if (!indicators || indicators.length === 0) {
                 const row = mainDataTableBody.insertRow();
-                const cell = row.insertCell();
-                cell.colSpan = 7; 
-                cell.textContent = `No indicators configured for ${countryCode}.`;
-                cell.style.textAlign = 'center';
+                const cell = row.insertCell(); cell.colSpan = 7; 
+                cell.textContent = `No indicators configured for ${countryCode}.`; cell.style.textAlign = 'center';
                 activeIndicatorId = ''; 
                 return;
             }
@@ -761,8 +761,7 @@
 
                 row.insertCell().textContent = indicator.name;
                 row.insertCell().innerHTML = `<span class="data-value" id="${indicator.id}-value"></span>`;
-                row.insertCell().id = `${indicator.id}-previous`;
-                row.insertCell().id = `${indicator.id}-forecast`;
+                row.insertCell().id = `${indicator.id}-previous`; row.insertCell().id = `${indicator.id}-forecast`;
                 row.insertCell().id = `${indicator.id}-surprise`;
                 row.insertCell().innerHTML = `<span class="data-unit-main" id="${indicator.id}-unit"></span>`; 
                 row.insertCell().id = `${indicator.id}-date`;
@@ -787,128 +786,85 @@
 
 
         // --- Data Fetching Functions ---
-        async function fetchLatestDataFromSheet(countryCode) {
+        async function fetchLatestDataFromSheet(countryCode) { /* ... existing function ... */
             const config = countrySpecificConfig[countryCode];
-            if (!config) {
-                updateMainDataTable(countryCode); 
-                return;
-            }
-
+            if (!config) { updateMainDataTable(countryCode); return; }
             const sheetId = GOOGLE_SHEET_IDS[config.sheetIdKey];
-            if (!sheetId) {
-                updateMainDataTable(countryCode);
-                return;
-            }
+            if (!sheetId) { updateMainDataTable(countryCode); return; }
 
             const range = `${config.latestSheetName}!${config.latestSheetRange}`;
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${GOOGLE_API_KEY}`;
 
             try {
                 const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Google Sheets API request failed for latest data (${countryCode}) with status ${response.status}`);
-                }
-                const data = await response.json();
-                const rows = data.values;
-                const cols = config.latestDataColumns; 
+                if (!response.ok) { throw new Error(`Google Sheets API request failed for latest data (${countryCode}) with status ${response.status}`); }
+                const data = await response.json(); const rows = data.values; const cols = config.latestDataColumns; 
 
                 if (rows && rows.length > 0) {
                     config.indicatorSetup.forEach((indicator, index) => {
                         if (rows[index] && macroeconomicData[countryCode] && macroeconomicData[countryCode][indicator.dataKey]) { 
                             const rowData = rows[index]; 
                             const targetIndicatorData = macroeconomicData[countryCode][indicator.dataKey];
-                            targetIndicatorData.latestActual = rowData[cols.latest] !== undefined ? rowData[cols.latest] : '';    
+                            targetIndicatorData.latestActual = rowData[cols.latest] !== undefined ? rowData[cols.latest] : '';   
                             targetIndicatorData.previousActual = rowData[cols.previous] !== undefined ? rowData[cols.previous] : ''; 
                             targetIndicatorData.latestForecast = rowData[cols.forecast] !== undefined ? rowData[cols.forecast] : ''; 
                             targetIndicatorData.latestSurprise = rowData[cols.surprise] !== undefined ? rowData[cols.surprise] : ''; 
-                            targetIndicatorData.latestDate = rowData[cols.date] !== undefined ? rowData[cols.date] : '';     
+                            targetIndicatorData.latestDate = rowData[cols.date] !== undefined ? rowData[cols.date] : '';    
                             targetIndicatorData.unit = indicator.unit || ''; 
                         }
                     });
-                } else {
-                    // console.warn(`No latest data returned from Google Sheet for ${countryCode} or sheet is empty for range ${range}.`);
-                }
-            } catch (error) {
-                console.error(`Error fetching latest data for ${countryCode} from Google Sheet:`, error);
-            }
+                } else { /* console.warn(`No latest data returned for ${countryCode}`); */ }
+            } catch (error) { console.error(`Error fetching latest data for ${countryCode}:`, error); }
         }
         
-        async function fetchAllHistoricalDataForCountry(countryCode) {
+        async function fetchAllHistoricalDataForCountry(countryCode) { /* ... existing function ... */
             const countryConfig = countrySpecificConfig[countryCode];
-            if (!countryConfig || !macroeconomicData[countryCode] || macroeconomicData[countryCode].hasFetchedAllHistoricalData) {
-                return; 
-            }
+            if (!countryConfig || !macroeconomicData[countryCode] || macroeconomicData[countryCode].hasFetchedAllHistoricalData) { return; }
 
-            const indicatorsWithHistoricalConfig = countryConfig.indicatorSetup.filter(
-                ind => ind.historicalSheet && ind.historicalRanges && ind.historicalRanges.date && ind.historicalRanges.actual
-            );
-
-            if (indicatorsWithHistoricalConfig.length === 0) {
-                macroeconomicData[countryCode].hasFetchedAllHistoricalData = true;
-                return; 
-            }
+            const indicatorsWithHistoricalConfig = countryConfig.indicatorSetup.filter(ind => ind.historicalSheet && ind.historicalRanges && ind.historicalRanges.date && ind.historicalRanges.actual);
+            if (indicatorsWithHistoricalConfig.length === 0) { macroeconomicData[countryCode].hasFetchedAllHistoricalData = true; return; }
 
             const allRangesToFetch = [];
             indicatorsWithHistoricalConfig.forEach(indConfig => {
-                const hr = indConfig.historicalRanges;
-                const sheetName = indConfig.historicalSheet;
+                const hr = indConfig.historicalRanges; const sheetName = indConfig.historicalSheet;
                 if (hr.date) allRangesToFetch.push(`${sheetName}!${hr.date}`);
                 if (hr.actual) allRangesToFetch.push(`${sheetName}!${hr.actual}`);
                 if (hr.forecast && hr.forecast.trim() !== '') allRangesToFetch.push(`${sheetName}!${hr.forecast}`);
                 if (hr.surprise && hr.surprise.trim() !== '') allRangesToFetch.push(`${sheetName}!${hr.surprise}`);
             });
 
-            if (allRangesToFetch.length === 0) {
-                macroeconomicData[countryCode].hasFetchedAllHistoricalData = true;
-                return;
-            }
+            if (allRangesToFetch.length === 0) { macroeconomicData[countryCode].hasFetchedAllHistoricalData = true; return; }
 
             const historicalSheetIdKey = countryConfig.sheetIdKey; 
             const sheetId = GOOGLE_SHEET_IDS[historicalSheetIdKey];
-
-            if (!sheetId) {
-                macroeconomicData[countryCode].hasFetchedAllHistoricalData = true; 
-                return;
-            }
+            if (!sheetId) { macroeconomicData[countryCode].hasFetchedAllHistoricalData = true; return; }
             
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchGet?ranges=${allRangesToFetch.map(r => encodeURIComponent(r)).join('&ranges=')}&key=${GOOGLE_API_KEY}`;
 
             try {
                 const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Google Sheets API batchGet request failed for historical data (${countryCode}) with status ${response.status}`);
-                }
+                if (!response.ok) { throw new Error(`Google Sheets API batchGet failed for historical data (${countryCode}) with status ${response.status}`);}
                 const data = await response.json();
                 
                 if (data.valueRanges && data.valueRanges.length > 0) {
                     let responseRangeIndex = 0;
                     indicatorsWithHistoricalConfig.forEach(indConfig => {
-                         if (!macroeconomicData[countryCode][indConfig.dataKey]) { // Defensive check
-                            console.warn(`Data key ${indConfig.dataKey} not found in macroeconomicData for ${countryCode}. Skipping historical data processing for this indicator.`);
-                            // Adjust responseRangeIndex if ranges were added for this indicator
-                            if (indConfig.historicalRanges.date) responseRangeIndex++;
-                            if (indConfig.historicalRanges.actual) responseRangeIndex++;
+                        if (!macroeconomicData[countryCode][indConfig.dataKey]) { 
+                            console.warn(`Data key ${indConfig.dataKey} not found for ${countryCode}.`);
+                            if (indConfig.historicalRanges.date) responseRangeIndex++; if (indConfig.historicalRanges.actual) responseRangeIndex++;
                             if (indConfig.historicalRanges.forecast && indConfig.historicalRanges.forecast.trim() !== '') responseRangeIndex++;
                             if (indConfig.historicalRanges.surprise && indConfig.historicalRanges.surprise.trim() !== '') responseRangeIndex++;
                             return; 
                         }
-                        const targetIndicatorData = macroeconomicData[countryCode][indConfig.dataKey];
-                        const hr = indConfig.historicalRanges;
-
+                        const targetIndicatorData = macroeconomicData[countryCode][indConfig.dataKey]; const hr = indConfig.historicalRanges;
                         const datesRaw = (hr.date && data.valueRanges[responseRangeIndex]) ? (data.valueRanges[responseRangeIndex++]?.values || []) : [];
                         const actualsRaw = (hr.actual && data.valueRanges[responseRangeIndex]) ? (data.valueRanges[responseRangeIndex++]?.values || []) : [];
                         
                         let forecastsRaw = [];
-                        if (hr.forecast && hr.forecast.trim() !== '') {
-                            if (data.valueRanges[responseRangeIndex]) forecastsRaw = data.valueRanges[responseRangeIndex]?.values || [];
-                            responseRangeIndex++;
-                        }
+                        if (hr.forecast && hr.forecast.trim() !== '') { if (data.valueRanges[responseRangeIndex]) forecastsRaw = data.valueRanges[responseRangeIndex]?.values || []; responseRangeIndex++; }
                         
                         let surprisesRaw = [];
-                        if (hr.surprise && hr.surprise.trim() !== '') {
-                             if (data.valueRanges[responseRangeIndex]) surprisesRaw = data.valueRanges[responseRangeIndex]?.values || [];
-                             responseRangeIndex++;
-                        }
+                        if (hr.surprise && hr.surprise.trim() !== '') { if (data.valueRanges[responseRangeIndex]) surprisesRaw = data.valueRanges[responseRangeIndex]?.values || []; responseRangeIndex++; }
 
                         targetIndicatorData.historicalDates = datesRaw.map(row => row[0] || '').filter(date => date && date.toString().trim() !== '');
                         const dataLength = targetIndicatorData.historicalDates.length;
@@ -917,53 +873,30 @@
                             targetIndicatorData.historicalValues = actualsRaw.slice(0, dataLength).map(row => (row && row[0] !== undefined && row[0] !== null) ? row[0] : null);
                             targetIndicatorData.historicalForecasts = forecastsRaw.slice(0, dataLength).map(row => (row && row[0] !== undefined && row[0] !== null) ? row[0] : null);
                             targetIndicatorData.historicalSurprises = surprisesRaw.slice(0, dataLength).map(row => (row && row[0] !== undefined && row[0] !== null) ? row[0] : null);
-                        } else {
-                            targetIndicatorData.historicalValues = [];
-                            targetIndicatorData.historicalForecasts = [];
-                            targetIndicatorData.historicalSurprises = [];
-                        }
+                        } else { targetIndicatorData.historicalValues = []; targetIndicatorData.historicalForecasts = []; targetIndicatorData.historicalSurprises = []; }
                     });
-                } else {
-                    // console.warn(`No valueRanges returned from Google Sheet for batch historical data of ${countryCode}.`);
-                }
-            } catch (error) {
-                console.error(`Error fetching batch historical data for ${countryCode}:`, error);
-            } finally {
-                macroeconomicData[countryCode].hasFetchedAllHistoricalData = true;
-            }
+                } else { /* console.warn(`No valueRanges returned for batch historical data of ${countryCode}.`); */ }
+            } catch (error) { console.error(`Error fetching batch historical data for ${countryCode}:`, error); }
+            finally { macroeconomicData[countryCode].hasFetchedAllHistoricalData = true; }
         }
 
 
         // --- UI Update Functions ---
-        function createHorizontalLineMarker(color, width = 20, height = 3) {
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = color;
-            ctx.fillRect(0, (height - 2) / 2, width, 2); 
-            const image = new Image();
-            image.src = canvas.toDataURL();
-            return image;
+        function createHorizontalLineMarker(color, width = 20, height = 3) { /* ... existing function ... */
+            const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d'); ctx.fillStyle = color; ctx.fillRect(0, (height - 2) / 2, width, 2); 
+            const image = new Image(); image.src = canvas.toDataURL(); return image;
         }
 
-        function updateMainDataTable(country) {
-            const currentCountryData = macroeconomicData[country];
-            const indicatorsConfig = countrySpecificConfig[country]?.indicatorSetup;
-
-            if (!currentCountryData || !indicatorsConfig) {
-                return;
-            }
-           
+        function updateMainDataTable(country) { /* ... existing function ... */
+            const currentCountryData = macroeconomicData[country]; const indicatorsConfig = countrySpecificConfig[country]?.indicatorSetup;
+            if (!currentCountryData || !indicatorsConfig) { return; }
+            
             indicatorsConfig.forEach(indicatorConf => {
                 const indicatorData = currentCountryData[indicatorConf.dataKey];
-                
-                const valueEl = document.getElementById(`${indicatorConf.id}-value`);
-                const previousEl = document.getElementById(`${indicatorConf.id}-previous`);
-                const forecastEl = document.getElementById(`${indicatorConf.id}-forecast`);
-                const surpriseEl = document.getElementById(`${indicatorConf.id}-surprise`);
-                const unitEl = document.getElementById(`${indicatorConf.id}-unit`); 
-                const dateEl = document.getElementById(`${indicatorConf.id}-date`);
+                const valueEl = document.getElementById(`${indicatorConf.id}-value`); const previousEl = document.getElementById(`${indicatorConf.id}-previous`);
+                const forecastEl = document.getElementById(`${indicatorConf.id}-forecast`); const surpriseEl = document.getElementById(`${indicatorConf.id}-surprise`);
+                const unitEl = document.getElementById(`${indicatorConf.id}-unit`);  const dateEl = document.getElementById(`${indicatorConf.id}-date`);
 
                 if (indicatorData) {
                     if(valueEl) valueEl.textContent = indicatorData.latestActual !== undefined ? indicatorData.latestActual : '';
@@ -973,19 +906,14 @@
                     if(unitEl) unitEl.textContent = indicatorData.unit || ''; 
                     if(dateEl) dateEl.textContent = indicatorData.latestDate !== undefined ? indicatorData.latestDate : '';
                 } else { 
-                    if(valueEl) valueEl.textContent = '';
-                    if(previousEl) previousEl.textContent = '';
-                    if(forecastEl) forecastEl.textContent = '';
-                    if(surpriseEl) surpriseEl.textContent = '';
-                    if(unitEl) unitEl.textContent = (indicatorConf.unit || '');
-                    if(dateEl) dateEl.textContent = '';
+                    if(valueEl) valueEl.textContent = ''; if(previousEl) previousEl.textContent = ''; if(forecastEl) forecastEl.textContent = '';
+                    if(surpriseEl) surpriseEl.textContent = ''; if(unitEl) unitEl.textContent = (indicatorConf.unit || ''); if(dateEl) dateEl.textContent = '';
                 }
             });
-           
             setActiveIndicatorRow(activeIndicatorId); 
         }
         
-        function getCurrentIndicatorConfig(indicatorId, countryCode) {
+        function getCurrentIndicatorConfig(indicatorId, countryCode) { /* ... existing function ... */
             const countryConfig = countrySpecificConfig[countryCode];
             if (!countryConfig || !countryConfig.indicatorSetup) return null;
             return countryConfig.indicatorSetup.find(ind => ind.id === indicatorId);
@@ -999,35 +927,25 @@
                 if (!currentIndConfig) {
                     historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Error: Indicator mapping not found.</td></tr>';
                     if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
-                    historicalDataTitleEl.textContent = `Historical Data`;
-                    setupLegendButtons(); 
-                    hideRightPaneLoading();
-                    return;
+                    historicalDataTitleEl.textContent = `Historical Data`; setupLegendButtons(); 
+                    hideRightPaneLoading(); return;
                 }
 
                 historicalDataTitleEl.textContent = `Historical Data - ${currentIndConfig.name}`;
-            
+                
                 const countryDataStore = macroeconomicData[country];
                 const indicatorData = countryDataStore ? countryDataStore[currentIndConfig.dataKey] : null;
 
                 if (!indicatorData) {
                     historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">No data structure.</td></tr>';
-                    if (historicalChartInstance) {
-                        historicalChartInstance.data.labels = [];
-                        historicalChartInstance.data.datasets.forEach(dataset => { dataset.data = []; });
-                        historicalChartInstance.update();
-                    }
-                    setupLegendButtons(); 
-                    hideRightPaneLoading();
-                    return;
+                    if (historicalChartInstance) { historicalChartInstance.data.labels = []; historicalChartInstance.data.datasets.forEach(dataset => { dataset.data = []; }); historicalChartInstance.update(); }
+                    setupLegendButtons(); hideRightPaneLoading(); return;
                 }
                 
                 if (!countryDataStore.hasFetchedAllHistoricalData && currentIndConfig.historicalSheet) {
-                     historicalDataTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Historical data is loading for ${country}...</td></tr>`;
-                     if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
-                     setupLegendButtons();
-                     hideRightPaneLoading();
-                     return;
+                    historicalDataTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Historical data is loading for ${country}...</td></tr>`;
+                    if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                    setupLegendButtons(); hideRightPaneLoading(); return;
                 }
 
 
@@ -1041,91 +959,71 @@
 
                 if (currentDataPointsToShow !== null && currentDataPointsToShow > 0 && fullHistoricalDates.length > 0) {
                     const numPoints = Math.min(currentDataPointsToShow, fullHistoricalDates.length);
-                    
-                    chartDates = fullHistoricalDates.slice(0, numPoints).reverse();
-                    chartActuals = fullHistoricalActuals.slice(0, numPoints).reverse();
-                    chartForecasts = fullHistoricalForecasts.slice(0, numPoints).reverse();
-                    chartSurprises = fullHistoricalSurprises.slice(0, numPoints).reverse();
-
-                    tableDates = fullHistoricalDates.slice(0, numPoints);
-                    tableActuals = fullHistoricalActuals.slice(0, numPoints);
-                    tableForecasts = fullHistoricalForecasts.slice(0, numPoints);
-                    tableSurprises = fullHistoricalSurprises.slice(0, numPoints);
-
+                    chartDates = fullHistoricalDates.slice(0, numPoints).reverse(); chartActuals = fullHistoricalActuals.slice(0, numPoints).reverse();
+                    chartForecasts = fullHistoricalForecasts.slice(0, numPoints).reverse(); chartSurprises = fullHistoricalSurprises.slice(0, numPoints).reverse();
+                    tableDates = fullHistoricalDates.slice(0, numPoints); tableActuals = fullHistoricalActuals.slice(0, numPoints);
+                    tableForecasts = fullHistoricalForecasts.slice(0, numPoints); tableSurprises = fullHistoricalSurprises.slice(0, numPoints);
                 } else { 
-                    chartDates = [...fullHistoricalDates].reverse();
-                    chartActuals = [...fullHistoricalActuals].reverse();
-                    chartForecasts = [...fullHistoricalForecasts].reverse();
-                    chartSurprises = [...fullHistoricalSurprises].reverse();
-
-                    tableDates = fullHistoricalDates; 
-                    tableActuals = fullHistoricalActuals;
-                    tableForecasts = fullHistoricalForecasts;
-                    tableSurprises = fullHistoricalSurprises;
+                    chartDates = [...fullHistoricalDates].reverse(); chartActuals = [...fullHistoricalActuals].reverse();
+                    chartForecasts = [...fullHistoricalForecasts].reverse(); chartSurprises = [...fullHistoricalSurprises].reverse();
+                    tableDates = fullHistoricalDates; tableActuals = fullHistoricalActuals;
+                    tableForecasts = fullHistoricalForecasts; tableSurprises = fullHistoricalSurprises;
                 }
                 
                 const unitForChartAndTable = indicatorData.unit || currentIndConfig.unit || '';
 
                 historicalDataTableBody.innerHTML = ''; 
                 if (tableDates.length === 0 && !currentIndConfig.historicalSheet) { 
-                     historicalDataTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Historical data not configured for ${currentIndConfig.name}.</td></tr>`;
+                    historicalDataTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Historical data not configured for ${currentIndConfig.name}.</td></tr>`;
                 } else if (tableDates.length === 0) { 
                     historicalDataTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">No historical data available for ${currentIndConfig.name}.</td></tr>`;
-                }
-                else {
+                } else {
                     tableDates.forEach((year, index) => { 
-                        const row = historicalDataTableBody.insertRow();
-                        row.insertCell().textContent = year; 
-                        const actualVal = tableActuals[index];
-                        const forecastVal = tableForecasts[index];
-                        const surpriseVal = tableSurprises[index];
-
+                        const row = historicalDataTableBody.insertRow(); row.insertCell().textContent = year; 
+                        const actualVal = tableActuals[index]; const forecastVal = tableForecasts[index]; const surpriseVal = tableSurprises[index];
                         const formatDisplayValue = (val) => (val !== null && val !== undefined) ? val : '';
-                        
                         const actualText = `${formatDisplayValue(actualVal)}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
                         const forecastText = `${formatDisplayValue(forecastVal)}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
-                        
                         row.insertCell().textContent = actualVal !== null && actualVal !== undefined ? actualText : '';
                         row.insertCell().textContent = forecastVal !== null && forecastVal !== undefined ? forecastText : '';
                         row.insertCell().textContent = formatDisplayValue(surpriseVal); 
                     });
                 }
+                
+                // Ensure chart canvas is visible before getting dimensions
+                if (chartOuterContainer.style.display === 'none') {
+                     if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                     setupLegendButtons(); // Update legend button visibility
+                     hideRightPaneLoading();
+                     return; // Don't try to draw chart if its container is hidden
+                }
+
 
                 const scrollWrapperWidth = historicalChartScrollWrapper.offsetWidth;
-                historicalChartCanvasEl.style.width = scrollWrapperWidth + 'px';
-                historicalChartCanvasEl.width = scrollWrapperWidth * window.devicePixelRatio; 
-                historicalChartCanvasEl.style.height = historicalChartScrollWrapper.offsetHeight + 'px'; 
-                historicalChartCanvasEl.height = historicalChartScrollWrapper.offsetHeight * window.devicePixelRatio;
+                const scrollWrapperHeight = historicalChartScrollWrapper.offsetHeight;
 
-                if (historicalChartInstance) {
-                    historicalChartInstance.destroy(); 
+                if (scrollWrapperWidth > 0 && scrollWrapperHeight > 0) {
+                    historicalChartCanvasEl.style.width = scrollWrapperWidth + 'px';
+                    historicalChartCanvasEl.width = scrollWrapperWidth * window.devicePixelRatio; 
+                    historicalChartCanvasEl.style.height = scrollWrapperHeight + 'px'; 
+                    historicalChartCanvasEl.height = scrollWrapperHeight * window.devicePixelRatio;
+                } else {
+                    // Fallback or hide chart if container has no dimensions
+                     if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                     setupLegendButtons();
+                     hideRightPaneLoading();
+                     return;
                 }
-            
-                if (!forecastMarkerImage) {
-                    forecastMarkerImage = createHorizontalLineMarker('rgba(255, 255, 255, 1)', 20, 4); 
-                }
+
+
+                if (historicalChartInstance) { historicalChartInstance.destroy(); }
+                
+                if (!forecastMarkerImage) { forecastMarkerImage = createHorizontalLineMarker('rgba(255, 255, 255, 1)', 20, 4); }
 
                 const datasetsTemplate = [ 
-                    { 
-                        label: `Actual${unitForChartAndTable ? ` (${unitForChartAndTable.trim()})` : ''}`, 
-                        data: chartActuals, 
-                        backgroundColor: 'rgba(170, 170, 170, 0.7)', 
-                        borderColor: 'rgba(170, 170, 170, 1)', 
-                        borderWidth: 1, type: 'bar', yAxisID: 'yPrimary', order: 3, hidden: false 
-                    },
-                    { 
-                        label: `Forecast${unitForChartAndTable ? ` (${unitForChartAndTable.trim()})` : ''}`, 
-                        data: chartForecasts, 
-                        type: 'line', showLine: false, pointStyle: forecastMarkerImage, pointRadius: 10, 
-                        pointBackgroundColor: 'rgba(100, 100, 100, 1)', pointBorderColor: 'rgba(100, 100, 100, 1)',   
-                        yAxisID: 'yPrimary', order: 2, hidden: false 
-                    },
-                    { 
-                        label: 'Surprise Index', data: chartSurprises, 
-                        borderColor: 'rgba(255, 128, 0, 1)', backgroundColor: 'rgba(255, 128, 0, 0.5)', 
-                        borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, 
-                        yAxisID: 'ySurprise', type: 'line', fill: false, tension: 0.4, order: 1, hidden: true 
-                    }
+                    { label: `Actual${unitForChartAndTable ? ` (${unitForChartAndTable.trim()})` : ''}`, data: chartActuals, backgroundColor: 'rgba(170, 170, 170, 0.7)', borderColor: 'rgba(170, 170, 170, 1)', borderWidth: 1, type: 'bar', yAxisID: 'yPrimary', order: 3, hidden: false },
+                    { label: `Forecast${unitForChartAndTable ? ` (${unitForChartAndTable.trim()})` : ''}`, data: chartForecasts, type: 'line', showLine: false, pointStyle: forecastMarkerImage, pointRadius: 10, pointBackgroundColor: 'rgba(100, 100, 100, 1)', pointBorderColor: 'rgba(100, 100, 100, 1)', yAxisID: 'yPrimary', order: 2, hidden: false },
+                    { label: 'Surprise Index', data: chartSurprises, borderColor: 'rgba(255, 128, 0, 1)', backgroundColor: 'rgba(255, 128, 0, 0.5)', borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, yAxisID: 'ySurprise', type: 'line', fill: false, tension: 0.4, order: 1, hidden: true }
                 ];
                 
                 const activeDatasets = datasetsTemplate.filter(ds => {
@@ -1137,23 +1035,16 @@
                 });
                 
                 let finalDatasetsForChart = activeDatasets;
-                if (activeDatasets.length === 0 && chartDates.length > 0) {
-                    finalDatasetsForChart = [datasetsTemplate[0]]; 
-                } else if (activeDatasets.length === 0 && chartDates.length === 0) {
-                     if (!currentIndConfig.historicalSheet) { 
-                        finalDatasetsForChart = [];
-                    } else { 
-                        finalDatasetsForChart = datasetsTemplate;
-                    }
+                if (activeDatasets.length === 0 && chartDates.length > 0) { finalDatasetsForChart = [datasetsTemplate[0]]; }
+                else if (activeDatasets.length === 0 && chartDates.length === 0) {
+                    if (!currentIndConfig.historicalSheet) { finalDatasetsForChart = []; }
+                    else { finalDatasetsForChart = datasetsTemplate; }
                 }
 
 
                 const ctx = historicalChartCanvasEl.getContext('2d');
                 historicalChartInstance = new Chart(ctx, {
-                    data: {
-                        labels: chartDates, 
-                        datasets: finalDatasetsForChart 
-                    },
+                    data: { labels: chartDates, datasets: finalDatasetsForChart },
                     options: {
                         responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false},
                         scales: {
@@ -1161,26 +1052,11 @@
                             ySurprise: { type: 'linear', display: true, position: 'right', beginAtZero: true, ticks: { color: '#f0f0f0' }, grid: { drawOnChartArea: false, }, title: { display: true, text: 'Surprise Index', color: '#f0f0f0'}},
                             x: { ticks: { color: '#f0f0f0', autoSkip: chartDates.length > 15, maxRotation: chartDates.length > 10 ? 70 : 0, minRotation: chartDates.length > 10 ? 70 : 0 }, grid: { display: false }}
                         },
-                        plugins: {
-                            legend: { display: false }, 
-                            tooltip: { 
-                                callbacks: { 
-                                    label: function(context) { 
-                                        let label = context.dataset.label || ''; 
-                                        if (label) label += ': '; 
-                                        if (context.parsed.y !== null && context.parsed.y !== undefined) { 
-                                            label += context.parsed.y; 
-                                        } 
-                                        return label;
-                                    }
-                                }
-                            }
-                        },
-                        barPercentage: 0.9, 
-                        categoryPercentage: 0.8,  
+                        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; if (context.parsed.y !== null && context.parsed.y !== undefined) { label += context.parsed.y; } return label; } } } },
+                        barPercentage: 0.9, categoryPercentage: 0.8, 
                     }
                 });
-            
+                
                 const surpriseDataset = historicalChartInstance.data.datasets.find(ds => ds.label === 'Surprise Index');
                 historicalChartInstance.options.scales.ySurprise.display = !!(surpriseDataset && !surpriseDataset.hidden && (surpriseDataset.data?.some(d => d !== null)));
                 
@@ -1190,53 +1066,39 @@
                 hideRightPaneLoading();
             }
         }
-       
-        function setActiveIndicatorRow(indicatorIdToActivate) {
+        
+        function setActiveIndicatorRow(indicatorIdToActivate) { /* ... existing function ... */
             mainDataTableBody.querySelectorAll('tr').forEach(row => {
                 row.classList.remove('active-indicator');
-                if (row.dataset.indicator === indicatorIdToActivate) {
-                    row.classList.add('active-indicator');
-                }
+                if (row.dataset.indicator === indicatorIdToActivate) { row.classList.add('active-indicator'); }
             });
         }
 
-        function setupLegendButtons() {
+        function setupLegendButtons() { /* ... existing function ... */
             const currentLegendButtons = document.querySelectorAll('.right-pane .legend-toggle-button');
             if (!historicalChartInstance || !historicalChartInstance.data || !historicalChartInstance.data.datasets) {
-                currentLegendButtons.forEach(button => {
-                    button.classList.remove('active');
-                    button.style.display = 'none'; 
-                });
-                return;
+                currentLegendButtons.forEach(button => { button.classList.remove('active'); button.style.display = 'none'; }); return;
             }
-           
+            
             currentLegendButtons.forEach(button => {
                 const datasetIndex = parseInt(button.dataset.datasetIndex);
-                const originalDatasetTemplate = [ 
-                    `Actual`, `Forecast`, `Surprise Index`
-                ];
+                const originalDatasetTemplate = [ `Actual`, `Forecast`, `Surprise Index` ];
                 const targetLabelPart = originalDatasetTemplate[datasetIndex];
                 const dataset = historicalChartInstance.data.datasets.find(ds => ds.label.startsWith(targetLabelPart));
 
-
                 if (!dataset) { 
-                    button.classList.remove('active');
-                    button.style.display = 'none'; 
-                    const newButton = button.cloneNode(true); 
-                    if (button.parentNode) button.parentNode.replaceChild(newButton, button);
+                    button.classList.remove('active'); button.style.display = 'none'; 
+                    const newButton = button.cloneNode(true);  if (button.parentNode) button.parentNode.replaceChild(newButton, button);
                     return;
                 }
                 button.style.display = ''; 
 
                 const isInitiallyVisible = !dataset.hidden;
                 button.classList.toggle('active', isInitiallyVisible);
-                                           
+                                        
                 const newButton = button.cloneNode(true); 
-                if (button.parentNode) { 
-                    button.parentNode.replaceChild(newButton, button);
-                } else {
-                    return; 
-                }
+                if (button.parentNode) {  button.parentNode.replaceChild(newButton, button); }
+                else { return; }
 
                 newButton.addEventListener('click', () => {
                     const liveDataset = historicalChartInstance.data.datasets.find(ds => ds.label.startsWith(targetLabelPart));
@@ -1256,106 +1118,244 @@
                 });
             });
         }
-       
+        
         // --- Resizer Logic ---
-        const resizer = document.createElement('div');
-        resizer.className = 'resizer-x';
-        if (rightPane && rightPane.parentNode === contentContainer) { 
-            contentContainer.insertBefore(resizer, rightPane); 
-        } else {
-            console.error("Right pane or content container not found for resizer insertion.");
-        }
-
-        let isResizing = false;
+        // Vertical Resizer (Left/Right Panes)
+        let isResizingX = false;
         let startX, startLeftWidth;
-        const minPaneWidth = 150; 
+        const snapThreshold = 30; // Pixels to snap to full collapse
 
-        resizer.addEventListener('mousedown', function(e) {
+        verticalResizer.addEventListener('mousedown', function(e) {
             e.preventDefault(); 
-            isResizing = true;
+            isResizingX = true;
             startX = e.clientX;
             startLeftWidth = leftPane.offsetWidth;
             document.body.style.cursor = 'col-resize'; 
 
-            document.addEventListener('mousemove', handleResizerMouseMove);
-            document.addEventListener('mouseup', handleResizerMouseUp);
+            document.addEventListener('mousemove', handleVerticalResizerMouseMove);
+            document.addEventListener('mouseup', handleVerticalResizerMouseUp);
         });
 
-        function handleResizerMouseMove(e) {
-            if (!isResizing) return;
+        function handleVerticalResizerMouseMove(e) {
+            if (!isResizingX) return;
             const deltaX = e.clientX - startX;
             let newLeftWidth = startLeftWidth + deltaX;
-           
+            
             const containerWidth = contentContainer.offsetWidth;
-            const resizerWidth = resizer.offsetWidth;
+            const resizerWidth = verticalResizer.offsetWidth;
 
-            if (newLeftWidth < minPaneWidth) {
-                newLeftWidth = minPaneWidth;
+            // Snap to fully collapsed left
+            if (newLeftWidth < snapThreshold) {
+                newLeftWidth = 0;
             }
-            if (containerWidth - newLeftWidth - resizerWidth < minPaneWidth) {
-                newLeftWidth = containerWidth - minPaneWidth - resizerWidth;
+            // Snap to fully collapsed right
+            if (containerWidth - (newLeftWidth + resizerWidth) < snapThreshold) {
+                newLeftWidth = containerWidth - resizerWidth;
             }
+
+            // Boundary checks (should not be strictly needed if snapping works)
+            if (newLeftWidth < 0) newLeftWidth = 0;
+            if (newLeftWidth > containerWidth - resizerWidth) newLeftWidth = containerWidth - resizerWidth;
 
             leftPane.style.width = newLeftWidth + 'px';
-            rightPane.style.width = (containerWidth - newLeftWidth - resizerWidth) + 'px';
-        }
+            const newRightWidth = containerWidth - newLeftWidth - resizerWidth;
+            rightPane.style.width = newRightWidth + 'px';
 
-        function handleResizerMouseUp() {
-            if (!isResizing) return;
-            isResizing = false;
-            document.body.style.cursor = 'default'; 
+            leftPane.style.display = newLeftWidth === 0 ? 'none' : 'block';
+            leftPane.classList.toggle('hidden-pane', newLeftWidth === 0);
 
-            document.removeEventListener('mousemove', handleResizerMouseMove);
-            document.removeEventListener('mouseup', handleResizerMouseUp);
+            rightPane.style.display = newRightWidth === 0 ? 'none' : 'flex';
+            rightPane.classList.toggle('hidden-pane', newRightWidth === 0);
 
-            handlePanesResized();
-        }
 
-        async function handlePanesResized() { 
-            try {
-                if (historicalChartInstance && activeIndicatorId) { 
-                    await displayHistoricalData(activeIndicatorId, selectedCountry); 
-                }
-            } catch(e) {
-                console.error("Error during pane resize handling:", e);
+            // If right pane is visible and its width changed, the chart might need redraw
+            if (newRightWidth > 0 && rightPane.style.display !== 'none') {
+                // Debounce or call on mouseup. For now, mouseup handles it.
             }
         }
 
+        function handleVerticalResizerMouseUp() {
+            if (!isResizingX) return;
+            isResizingX = false;
+            document.body.style.cursor = 'default'; 
+
+            document.removeEventListener('mousemove', handleVerticalResizerMouseMove);
+            document.removeEventListener('mouseup', handleVerticalResizerMouseUp);
+
+            if (rightPane.style.display !== 'none' && activeIndicatorId && selectedCountry) {
+                 displayHistoricalData(activeIndicatorId, selectedCountry); 
+            }
+            manageScrollbarEffects();
+        }
+
+        // Horizontal Resizer (Chart/Table in Right Pane)
+        let isResizingY = false;
+        let startY, startChartHeight;
+
+        chartTableResizer.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            isResizingY = true;
+            startY = e.clientY;
+            startChartHeight = chartOuterContainer.offsetHeight;
+            // startTableHeight = historicalTableWrapper.offsetHeight; // Not needed if calculating based on chart height
+            document.body.style.cursor = 'row-resize';
+
+            document.addEventListener('mousemove', handleHorizontalResizerMouseMove);
+            document.addEventListener('mouseup', handleHorizontalResizerMouseUp);
+        });
+        
+        function handleHorizontalResizerMouseMove(e) {
+            if (!isResizingY) return;
+            const deltaY = e.clientY - startY;
+            let newChartHeight = startChartHeight + deltaY;
+
+            const rightPanePaddings = (parseFloat(getComputedStyle(rightPane).paddingTop) || 0) + (parseFloat(getComputedStyle(rightPane).paddingBottom) || 0);
+            const titleHeight = historicalDataTitleEl.offsetHeight + (parseFloat(getComputedStyle(historicalDataTitleEl).marginBottom) || 0);
+            const controlsHeight = customLegendControls.offsetHeight + (parseFloat(getComputedStyle(customLegendControls).marginBottom) || 0);
+            const resizerYHeight = chartTableResizer.offsetHeight + 
+                                   (parseFloat(getComputedStyle(chartTableResizer).marginTop) || 0) + 
+                                   (parseFloat(getComputedStyle(chartTableResizer).marginBottom) || 0);
+
+            const availableHeightForChartAndTable = rightPane.clientHeight - rightPanePaddings - titleHeight - controlsHeight - resizerYHeight;
+            
+            // Snap to fully collapsed chart
+            if (newChartHeight < snapThreshold) {
+                newChartHeight = 0;
+            }
+            // Snap to fully collapsed table
+            if ((availableHeightForChartAndTable - newChartHeight) < snapThreshold) {
+                newChartHeight = availableHeightForChartAndTable;
+            }
+
+            if (newChartHeight < 0) newChartHeight = 0;
+            if (newChartHeight > availableHeightForChartAndTable) newChartHeight = availableHeightForChartAndTable;
+            
+            let newTableHeight = availableHeightForChartAndTable - newChartHeight;
+            if (newTableHeight < 0) newTableHeight = 0;
+
+
+            chartOuterContainer.style.height = newChartHeight + 'px';
+            historicalTableWrapper.style.height = newTableHeight + 'px';
+
+            chartOuterContainer.style.display = newChartHeight === 0 ? 'none' : 'block';
+            chartOuterContainer.classList.toggle('hidden-pane', newChartHeight === 0);
+
+            historicalTableWrapper.style.display = newTableHeight === 0 ? 'none' : 'flex';
+            historicalTableWrapper.classList.toggle('hidden-pane', newTableHeight === 0);
+        }
+
+        function handleHorizontalResizerMouseUp() {
+            if (!isResizingY) return;
+            isResizingY = false;
+            document.body.style.cursor = 'default';
+
+            document.removeEventListener('mousemove', handleHorizontalResizerMouseMove);
+            document.removeEventListener('mouseup', handleHorizontalResizerMouseUp);
+
+            if (chartOuterContainer.style.display !== 'none' && activeIndicatorId && selectedCountry) {
+                 displayHistoricalData(activeIndicatorId, selectedCountry); 
+            } else if (chartOuterContainer.style.display === 'none' && historicalChartInstance) {
+                // Chart is hidden, no need to redraw, but ensure legend buttons are correct
+                setupLegendButtons();
+            }
+            manageScrollbarEffects();
+        }
+
+        // Scrollbar Effects Management
+        function manageScrollbarEffects() {
+            const scrollablePanes = [];
+            if (leftPane.style.display !== 'none') scrollablePanes.push(leftPane);
+            if (rightPane.style.display !== 'none') {
+                // For right pane, the table wrapper is the primary scrollable content area usually
+                if (historicalTableWrapper.style.display !== 'none') scrollablePanes.push(historicalTableWrapper);
+                // chartScrollWrapper is overflow:hidden, so not managed here
+            }
+
+            const isAnyPaneCollapsed = leftPane.style.display === 'none' || 
+                                     rightPane.style.display === 'none' ||
+                                     (rightPane.style.display !== 'none' && chartOuterContainer.style.display === 'none') ||
+                                     (rightPane.style.display !== 'none' && historicalTableWrapper.style.display === 'none');
+
+            scrollablePanes.forEach(pane => {
+                if (pane._scrollbarFadeTimeout) clearTimeout(pane._scrollbarFadeTimeout);
+                pane.classList.remove('pane-scrollbar-hidden'); // Default to visible
+
+                if (isAnyPaneCollapsed && (pane.scrollHeight > pane.clientHeight || pane.scrollWidth > pane.clientWidth)) {
+                     // Apply hiding only if this specific pane is part of the "expanded" view
+                     // when another part is collapsed.
+                     let applyHide = false;
+                     if (pane === leftPane && rightPane.style.display === 'none') applyHide = true;
+                     if (pane === historicalTableWrapper && 
+                        (leftPane.style.display === 'none' || chartOuterContainer.style.display === 'none')) applyHide = true;
+
+
+                    if(applyHide){
+                        pane._scrollbarFadeTimeout = setTimeout(() => {
+                            pane.classList.add('pane-scrollbar-hidden');
+                        }, 2500);
+
+                        if (!pane._scrollHoverListenersAttached) {
+                            pane.addEventListener('mouseenter', () => {
+                                if (pane._scrollbarFadeTimeout) clearTimeout(pane._scrollbarFadeTimeout);
+                                pane.classList.remove('pane-scrollbar-hidden');
+                            });
+                            pane.addEventListener('mouseleave', () => {
+                                // Re-check collapse condition before hiding again
+                                const stillLeftCollapsed = leftPane.style.display === 'none';
+                                const stillRightCollapsed = rightPane.style.display === 'none';
+                                const stillChartCollapsed = rightPane.style.display !== 'none' && chartOuterContainer.style.display === 'none';
+                                const stillTableCollapsed = rightPane.style.display !== 'none' && historicalTableWrapper.style.display === 'none';
+                                
+                                let currentPaneShouldReHide = false;
+                                if (pane === leftPane && stillRightCollapsed) currentPaneShouldReHide = true;
+                                if (pane === historicalTableWrapper && (stillLeftCollapsed || stillChartCollapsed)) currentPaneShouldReHide = true;
+
+                                if (currentPaneShouldReHide) {
+                                    pane._scrollbarFadeTimeout = setTimeout(() => {
+                                        pane.classList.add('pane-scrollbar-hidden');
+                                    }, 500);
+                                }
+                            });
+                            pane._scrollHoverListenersAttached = true;
+                        }
+                    }
+                } else {
+                     // Not collapsed or not scrollable, ensure listeners are removed if they were attached
+                    if (pane._scrollHoverListenersAttached) {
+                        // Consider if listeners should be removed or just class toggled
+                        // For simplicity, let them be, they only act if class is added.
+                    }
+                }
+            });
+        }
+
+
         // --- Event Listeners ---
-        countrySelect.addEventListener('change', async (event) => { 
-            showFullScreenLoading();
-            selectedCountry = event.target.value;
-            currentDataPointsToShow = 15; 
+        countrySelect.addEventListener('change', async (event) => { /* ... existing function ... */
+            showFullScreenLoading(); selectedCountry = event.target.value; currentDataPointsToShow = 15; 
             dataPointsInput.value = '15';
             
-            // Ensure data structure exists, if not, initialize it
-            if (!macroeconomicData[selectedCountry] && countrySpecificConfig[selectedCountry]) {
-                 initializeMacroeconomicData(); 
-            } else if (!countrySpecificConfig[selectedCountry]) {
-                 mainDataTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No configuration for ${selectedCountry}</td></tr>`;
-                 activeIndicatorId = '';
-                 historicalDataTitleEl.textContent = 'Historical Data';
-                 historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No data</td></tr>';
-                 if(historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
-                 setupLegendButtons();
-                 hideFullScreenLoading();
-                 return;
+            if (!macroeconomicData[selectedCountry] && countrySpecificConfig[selectedCountry]) { initializeMacroeconomicData(); }
+            else if (!countrySpecificConfig[selectedCountry]) {
+                mainDataTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No configuration for ${selectedCountry}</td></tr>`;
+                activeIndicatorId = ''; historicalDataTitleEl.textContent = 'Historical Data';
+                historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No data</td></tr>';
+                if(historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                setupLegendButtons(); hideFullScreenLoading(); return;
             }
             
             populateMainDataTableHTML(selectedCountry); 
 
             if (!macroeconomicData[selectedCountry] || !macroeconomicData[selectedCountry].hasFetchedAllHistoricalData) {
                 macroeconomicData[selectedCountry].hasFetchedAllHistoricalData = false; 
-                
                 await fetchLatestDataFromSheet(selectedCountry); 
                 await fetchAllHistoricalDataForCountry(selectedCountry); 
             }
             
             updateMainDataTable(selectedCountry); 
 
-            if (activeIndicatorId) { 
-                await displayHistoricalData(activeIndicatorId, selectedCountry); 
-            } else { 
+            if (activeIndicatorId) { await displayHistoricalData(activeIndicatorId, selectedCountry); }
+            else { 
                 historicalDataTitleEl.textContent = 'Historical Data';
                 historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Select an indicator.</td></tr>';
                 if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
@@ -1363,68 +1363,47 @@
             }
             hideFullScreenLoading();
         });
-       
-        async function applyDataPointsFilter() { 
+        
+        async function applyDataPointsFilter() { /* ... existing function ... */
             const numPoints = parseInt(dataPointsInput.value);
-            if (!isNaN(numPoints) && numPoints >= (parseInt(dataPointsInput.min) || 1)) {
-                currentDataPointsToShow = numPoints;
-            } else if (dataPointsInput.value === '') { 
-                 currentDataPointsToShow = 15; 
-                 dataPointsInput.value = '15';
-            } else { 
-                currentDataPointsToShow = 15; 
-                dataPointsInput.value = '15'; 
-            }
+            if (!isNaN(numPoints) && numPoints >= (parseInt(dataPointsInput.min) || 1)) { currentDataPointsToShow = numPoints; }
+            else if (dataPointsInput.value === '') { currentDataPointsToShow = 15; dataPointsInput.value = '15'; }
+            else { currentDataPointsToShow = 15; dataPointsInput.value = '15'; }
             if (activeIndicatorId) await displayHistoricalData(activeIndicatorId, selectedCountry); 
         }
 
         dataPointsInput.addEventListener('input', applyDataPointsFilter);
+        dataPointsInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') { applyDataPointsFilter(); } });
 
-        dataPointsInput.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                applyDataPointsFilter();
-            }
-        });
-
-        showAllDataButton.addEventListener('click', async () => { 
+        showAllDataButton.addEventListener('click', async () => { /* ... existing function ... */
             currentDataPointsToShow = null; 
             const indicatorConf = getCurrentIndicatorConfig(activeIndicatorId, selectedCountry);
             if (indicatorConf && macroeconomicData[selectedCountry] && macroeconomicData[selectedCountry][indicatorConf.dataKey]) {
                 const indicatorData = macroeconomicData[selectedCountry][indicatorConf.dataKey];
                 dataPointsInput.value = indicatorData?.historicalDates?.length > 0 ? indicatorData.historicalDates.length : '15'; 
-            } else {
-                dataPointsInput.value = '15';
-            }
+            } else { dataPointsInput.value = '15'; }
             if (activeIndicatorId) await displayHistoricalData(activeIndicatorId, selectedCountry); 
         });
 
-        decreaseDataPointsButton.addEventListener('click', () => { 
+        decreaseDataPointsButton.addEventListener('click', () => { /* ... existing function ... */
             let currentValue = parseInt(dataPointsInput.value) || 15; 
             const minValue = parseInt(dataPointsInput.min) || 1;
-            if (currentValue > minValue) {
-                dataPointsInput.value = currentValue - 1;
-            } else {
-                dataPointsInput.value = minValue;
-            }
+            if (currentValue > minValue) { dataPointsInput.value = currentValue - 1; }
+            else { dataPointsInput.value = minValue; }
             applyDataPointsFilter(); 
         });
 
-        increaseDataPointsButton.addEventListener('click', () => { 
+        increaseDataPointsButton.addEventListener('click', () => { /* ... existing function ... */
             let currentValue = parseInt(dataPointsInput.value) || 15; 
             const indicatorConf = getCurrentIndicatorConfig(activeIndicatorId, selectedCountry);
             let maxPoints = currentValue + 10; 
             if (indicatorConf && macroeconomicData[selectedCountry] && macroeconomicData[selectedCountry][indicatorConf.dataKey]) {
                 const indicatorDataObj = macroeconomicData[selectedCountry][indicatorConf.dataKey];
-                if (indicatorDataObj && indicatorDataObj.historicalDates && indicatorDataObj.historicalDates.length > 0) {
-                    maxPoints = indicatorDataObj.historicalDates.length;
-                }
+                if (indicatorDataObj && indicatorDataObj.historicalDates && indicatorDataObj.historicalDates.length > 0) { maxPoints = indicatorDataObj.historicalDates.length; }
             }
             
-            if (currentValue < maxPoints) { 
-                 dataPointsInput.value = currentValue + 1;
-            } else if (maxPoints !== currentValue + 10) { 
-                 dataPointsInput.value = maxPoints;
-            }
+            if (currentValue < maxPoints) { dataPointsInput.value = currentValue + 1; }
+            else if (maxPoints !== currentValue + 10) { dataPointsInput.value = maxPoints; }
             applyDataPointsFilter(); 
         });
 
@@ -1434,12 +1413,28 @@
             showFullScreenLoading();
             initializeMacroeconomicData(); 
             
+            // Set initial pane sizes (optional, can rely on CSS or set explicitly)
+            const initialLeftWidth = contentContainer.offsetWidth * 0.57;
+            leftPane.style.width = initialLeftWidth + 'px';
+            rightPane.style.width = (contentContainer.offsetWidth - initialLeftWidth - verticalResizer.offsetWidth) + 'px';
+
+            // Set initial chart/table heights (optional)
+            const initialChartHeight = 300; // Or calculate based on available space
+             if (rightPane.style.display !== 'none' && chartOuterContainer.style.display !== 'none') {
+                chartOuterContainer.style.height = initialChartHeight + 'px';
+                const rightPanePaddings = (parseFloat(getComputedStyle(rightPane).paddingTop) || 0) + (parseFloat(getComputedStyle(rightPane).paddingBottom) || 0);
+                const titleHeight = historicalDataTitleEl.offsetHeight + (parseFloat(getComputedStyle(historicalDataTitleEl).marginBottom) || 0);
+                const controlsHeight = customLegendControls.offsetHeight + (parseFloat(getComputedStyle(customLegendControls).marginBottom) || 0);
+                const resizerYHeight = chartTableResizer.offsetHeight + (parseFloat(getComputedStyle(chartTableResizer).marginTop) || 0) + (parseFloat(getComputedStyle(chartTableResizer).marginBottom) || 0);
+                const availableHeightForChartAndTable = rightPane.clientHeight - rightPanePaddings - titleHeight - controlsHeight - resizerYHeight;
+                historicalTableWrapper.style.height = (availableHeightForChartAndTable - initialChartHeight) + 'px';
+            }
+
+
             countrySelect.value = selectedCountry; 
             dataPointsInput.value = '15'; 
 
-            if (!forecastMarkerImage) {
-                forecastMarkerImage = createHorizontalLineMarker('rgba(255, 255, 255, 1)', 20, 4); 
-            }
+            if (!forecastMarkerImage) { forecastMarkerImage = createHorizontalLineMarker('rgba(255, 255, 255, 1)', 20, 4); }
             
             populateMainDataTableHTML(selectedCountry); 
             
@@ -1448,22 +1443,27 @@
             
             updateMainDataTable(selectedCountry); 
             
-            if (activeIndicatorId) { 
-                await displayHistoricalData(activeIndicatorId, selectedCountry); 
-            } else {
+            if (activeIndicatorId) { await displayHistoricalData(activeIndicatorId, selectedCountry); }
+            else {
                 historicalDataTitleEl.textContent = 'Historical Data';
                 historicalDataTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Select an indicator.</td></tr>';
-                 if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
-                 setupLegendButtons();
+                if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
+                setupLegendButtons();
             }
             hideFullScreenLoading();
+            manageScrollbarEffects(); // Initial check
         });
 
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(async () => { 
-                await handlePanesResized(); 
+                // Recalculate pane widths if needed, or let resizers handle it
+                // For now, mainly for chart redraw if it's not handled by resizer mouseup
+                if (rightPane.style.display !== 'none' && chartOuterContainer.style.display !== 'none' && activeIndicatorId && selectedCountry) {
+                    await displayHistoricalData(activeIndicatorId, selectedCountry); 
+                }
+                 manageScrollbarEffects();
             }, 250); 
         });
 
