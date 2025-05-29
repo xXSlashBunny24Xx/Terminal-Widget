@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Yield Curve Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #f0f0f0;
+            font-family: 'Source Code Pro', monospace; /* Menggunakan font yang ditentukan */
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Mencegah scrollbar pada body/html */
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1; /* Memungkinkan kontainer chart untuk tumbuh dan mengisi ruang yang tersedia */
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #000; /* Latar belakang gelap untuk kontainer */
+            border: 1px solid #222; /* Border halus */
+            border-radius: 0; /* Sudut tajam sesuai desain asli */
+            overflow: hidden; /* Sembunyikan apa pun yang mungkin meluap */
+            min-height: 0; /* Penting agar item flex dapat menyusut jika diperlukan */
+        }
+
+        .chart-title-bar {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Sejajarkan judul ke kiri */
+            background-color: #1a1a1a; /* Latar belakang lebih gelap untuk bilah judul */
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid #222;
+            padding-left: 12px;
+            flex-shrink: 0; /* Mencegah bilah judul menyusut */
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1; /* Memungkinkan konten mengisi ruang yang tersisa */
+            padding: 16px;
+            gap: 15px; /* Jarak antara kontrol dan chart */
+            box-sizing: border-box;
+            overflow-y: auto; /* Memungkinkan scrolling jika konten meluap (misalnya, pada layar kecil) */
+             min-height: 0; /* Penting agar item flex dapat menyusut jika diperlukan */
+        }
+
+        .controls-wrapper {
+            display: flex;
+            justify-content: flex-start; /* Sejajarkan dropdown ke kiri */
+            align-items: center;
+            padding-bottom: 10px; /* Jarak di bawah dropdown */
+            flex-shrink: 0; /* Mencegah kontrol menyusut */
+        }
+
+        .controls-wrapper label {
+            margin-right: 10px;
+            font-size: 12px;
+            color: #ccc; /* Warna lebih terang untuk label */
+        }
+
+        .controls-wrapper select {
+            background-color: #1a1a1a; /* Latar belakang gelap untuk select */
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #eee; /* Warna teks terang */
+            padding: 6px 10px; /* Padding yang nyaman */
+            font-size: 12px;
+            font-family: 'Source Code Pro', monospace; /* Font yang konsisten */
+            cursor: pointer;
+            outline: none; /* Hapus outline default browser */
+        }
+        
+        .controls-wrapper select:hover {
+            border-color: #ff8000; /* Sorot saat hover */
+        }
+
+        .canvas-wrapper {
+            flex: 1; /* Memungkinkan wrapper canvas mengambil ruang vertikal yang tersedia */
+            position: relative; /* Diperlukan untuk positioning absolut canvas */
+            min-height: 200px; /* Tinggi minimum untuk area chart */
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;  /* Paksa canvas mengisi lebar wrapper */
+            height: 100% !important; /* Paksa canvas mengisi tinggi wrapper */
+        }
+    </style>
+</head>
+<body>
+<div class="chart-container">
+    <div class="chart-title-bar">Yield Curve</div>
+    <div class="content-wrapper">
+        <div class="controls-wrapper">
+            <label for="country-select">Select Country:</label>
+            <select id="country-select" onchange="changeYieldCurve(this.value)">
+                </select>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="myYieldChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('myYieldChart').getContext('2d');
+
+    // Definisikan tenor untuk sumbu x
+    const tenors = ['1M', '3M', '6M', '1Y', '2Y', '5Y', '7Y', '10Y', '20Y', '30Y'];
+
+    // Data yield curve dummy untuk berbagai negara
+    const yieldCurveDataSets = {
+        US: { name: 'US', data: [1.8, 2.0, 2.2, 2.5, 2.8, 3.0, 3.1, 3.2, 3.3, 3.4] }, // Normal
+        EU: { name: 'EU', data: [3.0, 2.9, 2.8, 2.7, 2.6, 2.5, 2.5, 2.4, 2.3, 2.2] }, // Sedikit Terbalik/Datar
+        JP: { name: 'JP', data: [0.05, 0.06, 0.07, 0.1, 0.12, 0.15, 0.18, 0.2, 0.25, 0.3] }, // Sangat Datar/Rendah
+        GB: { name: 'GB', data: [2.5, 2.7, 2.9, 3.1, 3.3, 3.4, 3.5, 3.55, 3.6, 3.65] }, // Normal, awal lebih tinggi
+        ID: { name: 'ID', data: [4.5, 4.8, 5.0, 5.5, 6.0, 6.5, 6.8, 7.0, 7.2, 7.3] }, // Normal Curam (Ilustratif)
+        AU: { name: 'AU', data: [3.2, 3.3, 3.4, 3.5, 3.6, 3.5, 3.4, 3.3, 3.2, 3.1] }, // Berpunuk
+        CA: { name: 'CA', data: [2.0, 2.2, 2.4, 2.6, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3] }  // Sedikit Terbalik
+    };
+
+    // Negara awal untuk ditampilkan
+    const initialCountry = 'US';
+
+    // Konfigurasi Chart.js
+    const config = {
+        type: 'line',
+        data: {
+            labels: tenors,
+            datasets: [{
+                label: `${yieldCurveDataSets[initialCountry].name} Yield Curve`,
+                data: yieldCurveDataSets[initialCountry].data,
+                borderColor: '#ff8000', // Warna garis oranye
+                backgroundColor: 'rgba(255, 128, 0, 0.2)', // Warna isi oranye dengan transparansi
+                fill: true,
+                tension: 0.3, // Menghaluskan garis
+                borderWidth: 2, // Garis sedikit lebih tebal
+                pointBackgroundColor: '#ff8000', // Warna titik
+                pointBorderColor: '#fff', // Warna border titik
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#ff8000'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // Penting agar canvas mengisi wrapper
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Tenor',
+                        color: '#ccc'
+                    },
+                    grid: {
+                        color: '#2a2a2a', // Garis grid lebih gelap
+                        borderColor: '#2a2a2a',
+                    },
+                    ticks: {
+                        color: '#e1e1e1' // Label tick terang
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Yield (%)',
+                        color: '#ccc'
+                    },
+                    grid: {
+                        color: '#2a2a2a',
+                        borderColor: '#2a2a2a',
+                    },
+                    ticks: {
+                        color: '#e1e1e1',
+                        // Tambahkan simbol '%' ke label tick sumbu y
+                        callback: function(value) {
+                            return value.toFixed(1) + '%'; // Tampilkan satu desimal
+                        }
+                    },
+                    beginAtZero: false // Biarkan chart.js menentukan nilai y minimum terbaik
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false // Sembunyikan legenda
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y.toFixed(2) + '%'; // Nilai tooltip dengan 2 desimal
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    // Buat instance chart
+    const myYieldChart = new Chart(ctx, config);
+
+    // Fungsi untuk memperbarui data chart berdasarkan negara yang dipilih
+    function changeYieldCurve(countryCode) {
+        if (yieldCurveDataSets[countryCode]) {
+            myYieldChart.data.datasets[0].data = yieldCurveDataSets[countryCode].data;
+            myYieldChart.data.datasets[0].label = `${yieldCurveDataSets[countryCode].name} Yield Curve`; // Meskipun legenda disembunyikan, label ini berguna untuk tooltip
+            myYieldChart.update();
+        }
+    }
+
+    // Isi menu dropdown
+    const countrySelect = document.getElementById('country-select');
+    Object.keys(yieldCurveDataSets).forEach(countryCode => {
+        const option = document.createElement('option');
+        option.value = countryCode;
+        option.textContent = yieldCurveDataSets[countryCode].name;
+        if (countryCode === initialCountry) {
+            option.selected = true; // Atur negara awal sebagai yang dipilih
+        }
+        countrySelect.appendChild(option);
+    });
+
+</script>
+</body>
+</html>
