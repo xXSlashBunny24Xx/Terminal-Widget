@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Interest Rate Forecast Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #f0f0f0;
+            font-family: 'Source Code Pro', monospace; 
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevent scrollbars at the highest level */
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Ensure body takes full height */
+        }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1; 
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #000; 
+            border: 1px solid #222; 
+            border-radius: 0; 
+            overflow: hidden; /* Prevent scrollbars within the main chart container */
+            min-height: 0; /* Allow shrinking */
+        }
+
+        .chart-title-bar {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; 
+            background-color: #1a1a1a; 
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid #222;
+            padding-left: 12px;
+            flex-shrink: 0; 
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1; 
+            padding: 16px;
+            gap: 15px; 
+            box-sizing: border-box;
+            overflow: hidden; /* Prevent scrollbars here, content should adapt or be hidden */
+            min-height: 0; /* Allow shrinking */
+        }
+
+        .controls-wrapper {
+            display: flex;
+            justify-content: flex-start; 
+            align-items: center;
+            padding-bottom: 10px; 
+            flex-shrink: 0; 
+        }
+
+        .controls-wrapper label {
+            margin-right: 10px;
+            font-size: 12px;
+            color: #ccc; 
+        }
+
+        .controls-wrapper select {
+            background-color: #1a1a1a; 
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #eee; 
+            padding: 6px 10px; 
+            font-size: 12px;
+            font-family: 'Source Code Pro', monospace; 
+            cursor: pointer;
+            outline: none; 
+        }
+        
+        .controls-wrapper select:hover {
+            border-color: #ff8000; 
+        }
+
+        .canvas-wrapper {
+            flex: 1; 
+            position: relative; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Ensure canvas doesn't cause overflow here */
+        }
+
+        canvas#myForecastChart {
+            max-width: 100%;
+            max-height: 100%;
+            display: block; 
+        }
+    </style>
+</head>
+<body>
+<div class="chart-container">
+    <div class="chart-title-bar">Interest Rate Forecast</div>
+    <div class="content-wrapper">
+        <div class="controls-wrapper">
+            <label for="forecast-select">Select Forecast:</label>
+            <select id="forecast-select" onchange="changeForecast(this.value)"></select>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="myForecastChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ctxForecast = document.getElementById('myForecastChart').getContext('2d'); 
+
+    // Sample forecast periods/categories
+    const forecastPeriods = ['Q3 2025', 'Q4 2025', 'Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026'];
+
+    // Sample interest rate forecast data for different entities/countries
+    const interestRateForecastDataSets = {
+        FED: { name: 'US (Fed)', data: [5.25, 5.00, 4.75, 4.75, 4.50, 4.25], note: "Federal Reserve target rate forecast." },
+        ECB: { name: 'EU (ECB)', data: [3.75, 3.50, 3.50, 3.25, 3.00, 3.00], note: "ECB main refinancing operations rate forecast." },
+        BOE: { name: 'UK (BoE)', data: [5.00, 4.75, 4.50, 4.25, 4.25, 4.00], note: "Bank of England bank rate forecast." },
+        BI:  { name: 'ID (BI)',  data: [6.00, 5.75, 5.75, 5.50, 5.25, 5.00], note: "Bank Indonesia 7-Day Reverse Repo Rate forecast."},
+        RBA: { name: 'AU (RBA)', data: [4.35, 4.10, 4.10, 3.85, 3.60, 3.60], note: "Reserve Bank of Australia cash rate target forecast."}
+    };
+
+    const initialForecastKey = 'FED'; 
+
+    const configForecast = { 
+        type: 'bar', // Changed to bar chart
+        data: {
+            labels: forecastPeriods,
+            datasets: [{
+                label: `${interestRateForecastDataSets[initialForecastKey].name} Forecast`,
+                data: interestRateForecastDataSets[initialForecastKey].data,
+                backgroundColor: '#ff8000', // Solid orange for bars
+                borderColor: '#cc6600',     // Slightly darker orange for border
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, 
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Forecast Period',
+                        color: '#ccc'
+                    },
+                    grid: {
+                        color: '#2a2a2a', 
+                        borderColor: '#2a2a2a',
+                        display: false, // Often cleaner for bar charts to hide x-axis grid lines
+                    },
+                    ticks: {
+                        color: '#e1e1e1',
+                        autoSkip: false, // Show all period labels
+                        maxRotation: 0, // Keep labels horizontal
+                        minRotation: 0
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Interest Rate (%)',
+                        color: '#ccc'
+                    },
+                    grid: {
+                        color: '#2a2a2a',
+                        borderColor: '#2a2a2a',
+                    },
+                    ticks: {
+                        color: '#e1e1e1',
+                        callback: function(value) {
+                            return value.toFixed(2) + '%'; 
+                        },
+                        autoSkip: true,
+                        maxTicksLimit: 6 
+                    },
+                    beginAtZero: false // Adjust if your data can be negative or always starts far from zero
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true, // Display legend for bar chart context
+                    position: 'top',
+                    labels: {
+                        color: '#f0f0f0',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y.toFixed(2) + '%'; 
+                            }
+                            return label;
+                        },
+                        afterBody: function(contextTooltipItems) {
+                            // contextTooltipItems is an array, we usually care about the first item for a single bar
+                            const currentKey = document.getElementById('forecast-select').value;
+                            if (interestRateForecastDataSets[currentKey] && interestRateForecastDataSets[currentKey].note) {
+                                return '\n' + interestRateForecastDataSets[currentKey].note;
+                            }
+                            return '';
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    const myForecastChartInstance = new Chart(ctxForecast, configForecast); 
+
+    // Function to change the displayed forecast data
+    window.changeForecast = function(forecastKey) { 
+        if (interestRateForecastDataSets[forecastKey]) {
+            myForecastChartInstance.data.datasets[0].data = interestRateForecastDataSets[forecastKey].data;
+            myForecastChartInstance.data.datasets[0].label = `${interestRateForecastDataSets[forecastKey].name} Forecast`; 
+            myForecastChartInstance.update();
+        }
+    }
+
+    // Populate the select dropdown
+    const forecastSelect = document.getElementById('forecast-select'); 
+    Object.keys(interestRateForecastDataSets).forEach(forecastKey => {
+        const option = document.createElement('option');
+        option.value = forecastKey;
+        option.textContent = interestRateForecastDataSets[forecastKey].name;
+        if (forecastKey === initialForecastKey) {
+            option.selected = true; 
+        }
+        forecastSelect.appendChild(option);
+    });
+
+</script>
+</body>
+</html>
