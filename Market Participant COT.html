@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>COT Overview Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #f0f0f0;
+            font-family: 'Source Code Pro', monospace;
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100%; 
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #000;
+            border: 1px solid #222;
+            border-radius: 0;
+            overflow: hidden; 
+            min-height: 0;
+        }
+
+        .dashboard-title-bar {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid #222;
+            padding-left: 12px;
+            flex-shrink: 0;
+        }
+
+        .dashboard-content-wrapper {
+            flex: 1;
+            padding: 12px; 
+            box-sizing: border-box;
+            overflow-y: auto; 
+            min-height: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px; 
+        }
+
+        th, td {
+            border: 1px solid #222; 
+            padding: 6px; 
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #1a1a1a; 
+            color: #ff8000;
+            position: sticky;
+            top: 0; 
+            z-index: 10;
+            white-space: nowrap; 
+        }
+        
+        td {
+            color: #bbb; 
+             white-space: nowrap; 
+        }
+        
+        tr:nth-child(even) {
+            background-color: #080808; 
+        }
+        tr:hover {
+            background-color: #151515; 
+        }
+
+        .chart-cell {
+            width: 100px; 
+            height: 50px; 
+            padding: 2px; 
+        }
+        .chart-cell canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .positive-change {
+            color: #4CAF50; 
+        }
+        .negative-change {
+            color: #F44336; 
+        }
+        .instrument-name {
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="dashboard-title-bar">COT Overview Dashboard</div>
+    <div class="dashboard-content-wrapper">
+        <table id="cot-overview-table">
+            <thead>
+                <tr>
+                    <th>Instrument</th>
+                    <th>Net Position</th>
+                    <th>Open Interest</th>
+                    <th>Total Long</th>
+                    <th>Total Short</th>
+                    <th>Weekly Δ Net</th>
+                    <th>Net Pos Trend (30w)</th>
+                    <th>Buy/Sell %</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // --- Helper untuk menghasilkan tanggal dan data COT acak ---
+    function generateRandomCotEntry(baseDate, weekOffset, instrumentType) {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() + weekOffset * 7);
+        const dateString = date.toISOString().split('T')[0];
+
+        let lfLongBase = 150000, amLongBase = 200000, dLongBase = 250000;
+        let lfShortBase = 150000, amShortBase = 200000, dShortBase = 250000;
+
+        if (instrumentType === 'GOLD') {
+            lfLongBase = 280000; amLongBase = 50000; dLongBase = 180000;
+            lfShortBase = 70000; amShortBase = 300000; dShortBase = 350000;
+        } else if (instrumentType === 'EURUSD') {
+            lfLongBase = 90000; amLongBase = 150000; dLongBase = 160000;
+            lfShortBase = 150000; amShortBase = 120000; dShortBase = 110000;
+        } else if (instrumentType === 'OIL') {
+            lfLongBase = 350000; amLongBase = 80000; dLongBase = 400000;
+            lfShortBase = 280000; amShortBase = 100000; dShortBase = 450000;
+        } else if (instrumentType === 'SP500') {
+            lfLongBase = 100000; amLongBase = 400000; dLongBase = 50000;
+            lfShortBase = 120000; amShortBase = 380000; dShortBase = 70000;
+        } else if (instrumentType === 'GBPUSD') {
+            lfLongBase = 60000; amLongBase = 40000; dLongBase = 50000;
+            lfShortBase = 70000; amShortBase = 50000; dShortBase = 40000;
+        } else if (instrumentType === 'USDJPY') { 
+            lfLongBase = 20000; amLongBase = 80000; dLongBase = 100000;
+            lfShortBase = 100000; amShortBase = 30000; dShortBase = 20000;
+        } else if (instrumentType === 'AUDUSD') {
+            lfLongBase = 40000; amLongBase = 30000; dLongBase = 20000;
+            lfShortBase = 30000; amShortBase = 40000; dShortBase = 25000;
+        } else if (instrumentType === 'COPPER') {
+            lfLongBase = 50000; amLongBase = 20000; dLongBase = 30000;
+            lfShortBase = 40000; amShortBase = 30000; dShortBase = 20000;
+        }
+        
+        const trendFactor = Math.sin(weekOffset / 10) * 0.2 + 1; 
+        const noiseFactor = () => (Math.random() - 0.5) * 0.15 + 1; 
+
+        const lfLong = Math.floor(lfLongBase * trendFactor * noiseFactor());
+        const lfShort = Math.floor(lfShortBase * (2 - trendFactor) * noiseFactor());
+        const amLong = Math.floor(amLongBase * trendFactor * noiseFactor());
+        const amShort = Math.floor(amShortBase * (2 - trendFactor) * noiseFactor());
+        const dLong = Math.floor(dLongBase * (2 - trendFactor) * noiseFactor());
+        const dShort = Math.floor(dShortBase * trendFactor * noiseFactor());
+        
+        const openInterest = lfLong + amLong + dLong + lfShort + amShort + dShort;
+
+        return {
+            date: dateString,
+            leveragedFund: { long: Math.max(0, lfLong), short: Math.max(0, lfShort) },
+            assetManager: { long: Math.max(0, amLong), short: Math.max(0, amShort) },
+            dealer: { long: Math.max(0, dLong), short: Math.max(0, dShort) },
+            openInterest: Math.max(0, openInterest)
+        };
+    }
+
+    function generateHistoricalData(instrumentKey, numEntries = 30) {
+        const data = [];
+        const reportDayOffset = 2; 
+        let baseDate = new Date(); 
+        baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
+        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
+
+        for (let i = 0; i < numEntries; i++) {
+            data.push(generateRandomCotEntry(baseDate, i, instrumentKey));
+        }
+        return data;
+    }
+
+    const instruments = {
+        EURUSD: "EUR/USD",
+        GBPUSD: "GBP/USD",
+        USDJPY: "JPY/USD", 
+        AUDUSD: "AUD/USD",
+        SP500: "S&P 500",
+        GOLD: "Gold",
+        OIL: "Crude Oil",
+        COPPER: "Copper"
+    };
+
+    const cotDataStore = {};
+    Object.keys(instruments).forEach(key => {
+        cotDataStore[key] = generateHistoricalData(key);
+    });
+
+    const colors = {
+        netPositionLinePositive: 'rgba(34, 177, 76, 0.9)', 
+        netPositionFillPositive: 'rgba(34, 177, 76, 0.15)', 
+        netPositionLineNegative: 'rgba(237, 28, 36, 0.9)', 
+        netPositionFillNegative: 'rgba(237, 28, 36, 0.15)', 
+        long: 'rgba(34, 177, 76, 0.9)',      
+        short: 'rgba(237, 28, 36, 0.9)',    
+        axisAndGrid: '#1c1c1c', 
+        ticks: '#999' 
+    };
+
+    let miniChartInstances = {}; // Objek untuk menyimpan instance grafik mini
+
+    function formatNumber(num) {
+        if (Math.abs(num) >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (Math.abs(num) >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toLocaleString('en-US');
+    }
+
+    function destroyMiniCharts() {
+        Object.keys(miniChartInstances).forEach(key => {
+            if (miniChartInstances[key]) {
+                miniChartInstances[key].destroy();
+            }
+        });
+        miniChartInstances = {}; // Reset objek
+    }
+
+    function populateTable() {
+        destroyMiniCharts(); // Hancurkan instance grafik lama sebelum menggambar ulang
+        const tableBody = document.getElementById('cot-overview-table').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = ''; 
+
+        Object.keys(instruments).forEach(instrumentKey => {
+            const historicalData = cotDataStore[instrumentKey];
+            if (!historicalData || historicalData.length === 0) return;
+
+            const latestReport = historicalData[historicalData.length - 1];
+            const previousReport = historicalData.length > 1 ? historicalData[historicalData.length - 2] : null;
+
+            const latestAllLong = latestReport.dealer.long + latestReport.leveragedFund.long + latestReport.assetManager.long;
+            const latestAllShort = latestReport.dealer.short + latestReport.leveragedFund.short + latestReport.assetManager.short;
+            const latestAllNet = latestAllLong - latestAllShort;
+            
+            let weeklyChangeNetAll = 'N/A';
+            let changeClass = '';
+            if (previousReport) {
+                const prevAllLong = previousReport.dealer.long + previousReport.leveragedFund.long + previousReport.assetManager.long;
+                const prevAllShort = previousReport.dealer.short + previousReport.leveragedFund.short + previousReport.assetManager.short;
+                const prevAllNet = prevAllLong - prevAllShort;
+                const change = latestAllNet - prevAllNet;
+                weeklyChangeNetAll = formatNumber(change);
+                changeClass = change >= 0 ? 'positive-change' : 'negative-change';
+            }
+
+            const row = tableBody.insertRow();
+            const instrumentCell = row.insertCell();
+            instrumentCell.textContent = instruments[instrumentKey];
+            instrumentCell.className = 'instrument-name';
+
+            row.insertCell().textContent = formatNumber(latestAllNet);
+            row.insertCell().textContent = formatNumber(latestReport.openInterest);
+            row.insertCell().textContent = formatNumber(latestAllLong);
+            row.insertCell().textContent = formatNumber(latestAllShort);
+            const changeCell = row.insertCell();
+            changeCell.textContent = weeklyChangeNetAll;
+            changeCell.className = changeClass;
+
+            const netPositionChartCell = row.insertCell();
+            netPositionChartCell.className = 'chart-cell';
+            const netCanvasId = `netChart-${instrumentKey}`;
+            netPositionChartCell.innerHTML = `<canvas id="${netCanvasId}"></canvas>`;
+            
+            const doughnutChartCell = row.insertCell();
+            doughnutChartCell.className = 'chart-cell';
+            const doughnutCanvasId = `doughnutChart-${instrumentKey}`;
+            doughnutChartCell.innerHTML = `<canvas id="${doughnutCanvasId}"></canvas>`;
+
+            setTimeout(() => { 
+                renderNetPositionMiniChart(netCanvasId, historicalData);
+                renderBuySellDoughnutMiniChart(doughnutCanvasId, latestAllLong, latestAllShort);
+            }, 0);
+        });
+    }
+
+    function renderNetPositionMiniChart(canvasId, historicalData) {
+        const element = document.getElementById(canvasId);
+        if (!element) return;
+        const ctx = element.getContext('2d');
+        const netPositionsAll = historicalData.map(d => 
+            (d.dealer.long + d.leveragedFund.long + d.assetManager.long) -
+            (d.dealer.short + d.leveragedFund.short + d.assetManager.short)
+        );
+        const labels = historicalData.map(d => d.date);
+
+        miniChartInstances[canvasId] = new Chart(ctx, { // Simpan instance
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Net Position', 
+                    data: netPositionsAll,
+                    borderWidth: 1,
+                    pointRadius: 0, 
+                    fill: true, 
+                    tension: 0.4,
+                    segment: { 
+                        borderColor: ctxSeg => netPositionsAll[ctxSeg.p0DataIndex] >= 0 ? colors.netPositionLinePositive : colors.netPositionLineNegative,
+                        backgroundColor: ctxSeg => netPositionsAll[ctxSeg.p0DataIndex] >= 0 ? colors.netPositionFillPositive : colors.netPositionFillNegative,
+                    }
+                }]
+            },
+            options: miniChartOptions(true) 
+        });
+    }
+
+    function renderBuySellDoughnutMiniChart(canvasId, totalLong, totalShort) {
+        const element = document.getElementById(canvasId);
+        if (!element) return;
+        const ctx = element.getContext('2d');
+        const grandTotal = totalLong + totalShort;
+        const percLong = grandTotal > 0 ? (totalLong / grandTotal) * 100 : 0;
+
+        miniChartInstances[canvasId] = new Chart(ctx, { // Simpan instance
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [totalLong, totalShort],
+                    backgroundColor: [colors.long, colors.short],
+                    borderColor: '#080808', 
+                    borderWidth: 1, 
+                    hoverOffset: 1 
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '55%', // Diameter lubang diperkecil (nilai lebih kecil = lubang lebih besar, nilai lebih besar = donat lebih tebal/lubang lebih kecil)
+                                // Jadi, 55% akan membuat donat lebih tebal daripada 60% atau 70%.
+                plugins: {
+                    legend: { display: false }, 
+                    tooltip: { 
+                        enabled: true, 
+                        displayColors: false, 
+                        callbacks: {
+                             title: () => null, 
+                             label: function(context) {
+                                const type = context.dataIndex === 0 ? 'Long' : 'Short';
+                                const percentage = context.dataIndex === 0 ? percLong : (100 - percLong);
+                                return `${type}: ${percentage.toFixed(0)}% (${formatNumber(context.parsed)})`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function miniChartOptions(isTimeSeries = false) {
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 0 
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { 
+                    enabled: true, 
+                    mode: 'index', 
+                    intersect: false,
+                    displayColors: false,
+                    callbacks: {
+                        title: () => null,
+                        label: function(context) {
+                            if (context.parsed.y !== null) {
+                                return `${formatNumber(context.parsed.y)}`;
+                            }
+                            return '';
+                        }
+                    }
+                } 
+            },
+            scales: {
+                y: { display: false },
+                x: { display: false }
+            }
+        };
+        // Atur opsi skala x secara kondisional jika isTimeSeries true
+        if (isTimeSeries) {
+            options.scales.x.type = 'time';
+            options.scales.x.time = { parser: 'yyyy-MM-dd', unit: 'week' };
+        }
+        return options;
+    }
+
+    document.addEventListener('DOMContentLoaded', populateTable);
+
+</script>
+</body>
+</html>
