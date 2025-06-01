@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>COTX - CFTC Positioning Explorer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #f0f0f0;
+            font-family: 'Source Code Pro', monospace;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .widget-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #000;
+            border: 1px solid #222;
+            border-radius: 0;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .widget-title-bar {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid #222;
+            padding-left: 12px;
+            flex-shrink: 0;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 16px;
+            gap: 15px;
+            box-sizing: border-box;
+            overflow: auto; 
+            min-height: 0;
+        }
+
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column; 
+            gap: 10px; 
+            padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px; 
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .controls-wrapper label {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .controls-wrapper select, .controls-wrapper button {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #eee;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-family: 'Source Code Pro', monospace;
+            cursor: pointer;
+            outline: none;
+        }
+        .controls-wrapper select:disabled {
+            background-color: #111;
+            color: #555;
+            cursor: not-allowed;
+        }
+
+        .controls-wrapper select:hover:not(:disabled), .controls-wrapper button:hover {
+            border-color: #ff8000;
+        }
+        .controls-wrapper button.active {
+            background-color: #ff8000;
+            color: #000;
+            border-color: #ff8000;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex; 
+            min-height: 300px; 
+            background-color: #0d0d0d; 
+            border-radius: 4px;
+            padding:10px;
+        }
+
+        canvas#cotChart {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+        #insight-area {
+            font-size: 12px;
+            color: #ccc;
+            padding-top: 10px;
+            border-top: 1px solid #222;
+            margin-top:10px;
+            line-height: 1.6;
+        }
+         #insight-area strong {
+            color: #ff8000;
+        }
+    </style>
+</head>
+<body>
+<div class="widget-container">
+    <div class="widget-title-bar">COTX - CFTC Positioning Explorer</div>
+    <div class="content-wrapper">
+        <div class="controls-wrapper">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="instrument-select">Instrument:</label>
+                    <select id="instrument-select"></select>
+                </div>
+                 <div class="control-group">
+                    <label for="trader-type-select">Trader Type:</label>
+                    <select id="trader-type-select">
+                        <option value="all">All Trader Types</option>
+                        <option value="leveragedFund">Leveraged Fund</option>
+                        <option value="assetManager">Asset Manager</option>
+                        <option value="dealer">Dealer</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-row" id="chart-mode-buttons">
+                <button data-mode="netPosition" class="active">Net Positioning</button>
+                <button data-mode="longShortBreakdown">Long/Short Breakdown</button>
+                <button data-mode="openInterest">Open Interest</button>
+                <button data-mode="weeklyChanges">Weekly Changes</button>
+                <button data-mode="percentageBuySell">Buy/Sell %</button>
+            </div>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="cotChart"></canvas>
+        </div>
+        <div id="insight-area">
+            </div>
+    </div>
+</div>
+
+<script>
+    const ctxCot = document.getElementById('cotChart').getContext('2d');
+    const instrumentSelect = document.getElementById('instrument-select');
+    const traderTypeSelect = document.getElementById('trader-type-select'); // New selector
+    const chartModeButtonsContainer = document.getElementById('chart-mode-buttons');
+    const insightArea = document.getElementById('insight-area');
+    let cotChartInstance = null;
+    let currentChartMode = 'netPosition';
+
+    // --- Helper to generate dates and random COT data ---
+    function generateRandomCotEntry(baseDate, weekOffset, instrumentType) {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() + weekOffset * 7);
+        const dateString = date.toISOString().split('T')[0];
+
+        let lfLongBase = 150000, amLongBase = 200000, dLongBase = 250000;
+        let lfShortBase = 150000, amShortBase = 200000, dShortBase = 250000;
+
+        if (instrumentType === 'GOLD') {
+            lfLongBase = 280000; amLongBase = 50000; dLongBase = 180000;
+            lfShortBase = 70000; amShortBase = 300000; dShortBase = 350000;
+        } else if (instrumentType === 'EURUSD') {
+            lfLongBase = 90000; amLongBase = 150000; dLongBase = 160000;
+            lfShortBase = 150000; amShortBase = 120000; dShortBase = 110000;
+        } else if (instrumentType === 'OIL') {
+            lfLongBase = 350000; amLongBase = 80000; dLongBase = 400000;
+            lfShortBase = 280000; amShortBase = 100000; dShortBase = 450000;
+        }
+        
+        const trendFactor = Math.sin(weekOffset / 10) * 0.2 + 1; 
+        const noiseFactor = () => (Math.random() - 0.5) * 0.2 + 1; 
+
+        const lfLong = Math.floor(lfLongBase * trendFactor * noiseFactor() * (instrumentType === 'GOLD' ? 1.1 : 0.9));
+        const lfShort = Math.floor(lfShortBase * (2 - trendFactor) * noiseFactor() * (instrumentType === 'EURUSD' ? 1.1 : 0.9));
+        const amLong = Math.floor(amLongBase * trendFactor * noiseFactor());
+        const amShort = Math.floor(amShortBase * (2 - trendFactor) * noiseFactor());
+        const dLong = Math.floor(dLongBase * (2 - trendFactor) * noiseFactor());
+        const dShort = Math.floor(dShortBase * trendFactor * noiseFactor());
+        
+        const openInterest = lfLong + amLong + dLong + lfShort + amShort + dShort;
+
+        return {
+            date: dateString,
+            leveragedFund: { long: Math.max(0, lfLong), short: Math.max(0, lfShort) },
+            assetManager: { long: Math.max(0, amLong), short: Math.max(0, amShort) },
+            dealer: { long: Math.max(0, dLong), short: Math.max(0, dShort) },
+            openInterest: Math.max(0, openInterest)
+        };
+    }
+
+    function generateHistoricalData(instrumentKey, numEntries = 30) {
+        const data = [];
+        const reportDayOffset = 2; 
+        let baseDate = new Date(); 
+        baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
+        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
+
+        for (let i = 0; i < numEntries; i++) {
+            data.push(generateRandomCotEntry(baseDate, i, instrumentKey));
+        }
+        return data;
+    }
+
+    const cotData = {
+        GOLD: generateHistoricalData('GOLD'),
+        EURUSD: generateHistoricalData('EURUSD'),
+        OIL: generateHistoricalData('OIL')
+    };
+    const instrumentNames = { GOLD: "Gold Futures", EURUSD: "EUR Futures", OIL: "Crude Oil (WTI) Futures"};
+    const traderDisplayNames = {
+        all: "All Trader Types",
+        leveragedFund: "Leveraged Fund",
+        assetManager: "Asset Manager",
+        dealer: "Dealer"
+    };
+
+
+    const colors = {
+        dealer: 'rgba(54, 162, 235, 0.7)',        
+        leveragedFund: 'rgba(255, 99, 132, 0.7)', 
+        assetManager: 'rgba(75, 192, 192, 0.7)',  
+        openInterest: 'rgba(255, 159, 64, 0.7)',  
+        long: 'rgba(75, 192, 75, 0.7)',           
+        short: 'rgba(255, 99, 75, 0.7)',          
+        dealerBorder: 'rgb(54, 162, 235)',
+        leveragedFundBorder: 'rgb(255, 99, 132)',
+        assetManagerBorder: 'rgb(75, 192, 192)',
+        openInterestBorder: 'rgb(255, 159, 64)',
+    };
+
+    function getSelectedInstrumentData() {
+        const selectedKey = instrumentSelect.value;
+        return cotData[selectedKey] || [];
+    }
+
+    function formatNumber(num) {
+        return num.toLocaleString('en-US');
+    }
+    
+    function renderChart() {
+        if (cotChartInstance) {
+            cotChartInstance.destroy();
+        }
+        insightArea.innerHTML = ''; 
+
+        const data = getSelectedInstrumentData();
+        const selectedTraderType = traderTypeSelect.value;
+
+        // Disable/Enable traderTypeSelect based on chart mode
+        if (currentChartMode === 'openInterest' || currentChartMode === 'percentageBuySell') {
+            traderTypeSelect.disabled = true;
+            if (selectedTraderType !== 'all') traderTypeSelect.value = 'all'; // Reset if not applicable
+        } else {
+            traderTypeSelect.disabled = false;
+        }
+
+
+        if (data.length === 0) {
+            insightArea.innerHTML = 'No data available for the selected instrument.';
+            return;
+        }
+
+        const labels = data.map(d => d.date);
+        const latestData = data[data.length - 1];
+        const prevData = data.length > 1 ? data[data.length - 2] : null;
+
+        let chartConfig;
+        const effectiveTraderType = traderTypeSelect.disabled ? 'all' : selectedTraderType;
+
+
+        switch (currentChartMode) {
+            case 'netPosition':
+                chartConfig = getNetPositionConfig(data, labels, effectiveTraderType);
+                generateNetPositionInsights(latestData, prevData, effectiveTraderType);
+                break;
+            case 'longShortBreakdown':
+                chartConfig = getLongShortBreakdownConfig(data, labels, effectiveTraderType);
+                generateLongShortInsights(latestData, prevData, effectiveTraderType);
+                break;
+            case 'openInterest': // Not affected by trader type filter
+                chartConfig = getOpenInterestConfig(data, labels);
+                generateOpenInterestInsights(latestData, prevData);
+                break;
+            case 'weeklyChanges':
+                chartConfig = getWeeklyChangesConfig(latestData, prevData, latestData.date, effectiveTraderType);
+                // generateWeeklyChangesInsights is implicitly called by getWeeklyChangesConfig
+                break;
+            case 'percentageBuySell': // Not affected by trader type filter
+                chartConfig = getPercentageBuySellConfig(latestData);
+                // generatePercentageBuySellInsights implicitly called
+                break;
+            default:
+                console.error('Unknown chart mode:', currentChartMode);
+                return;
+        }
+        if (chartConfig) {
+             cotChartInstance = new Chart(ctxCot, chartConfig);
+        } else if (currentChartMode !== 'weeklyChanges' && currentChartMode !== 'percentageBuySell') { 
+            insightArea.innerHTML = `Chart for mode '${currentChartMode}' is not yet implemented.`;
+        }
+    }
+
+    function getNetPositionConfig(data, labels, selectedTrader) {
+        const datasets = [];
+        if (selectedTrader === 'all' || selectedTrader === 'dealer') {
+            datasets.push({ label: 'Dealer Net', data: data.map(d => d.dealer.long - d.dealer.short), borderColor: colors.dealerBorder, backgroundColor: colors.dealer, fill: false, tension: 0.1 });
+        }
+        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') {
+            datasets.push({ label: 'Leveraged Fund Net', data: data.map(d => d.leveragedFund.long - d.leveragedFund.short), borderColor: colors.leveragedFundBorder, backgroundColor: colors.leveragedFund, fill: false, tension: 0.1 });
+        }
+        if (selectedTrader === 'all' || selectedTrader === 'assetManager') {
+            datasets.push({ label: 'Asset Manager Net', data: data.map(d => d.assetManager.long - d.assetManager.short), borderColor: colors.assetManagerBorder, backgroundColor: colors.assetManager, fill: false, tension: 0.1 });
+        }
+        return {
+            type: 'line',
+            data: { labels: labels, datasets: datasets },
+            options: commonChartOptions(`Net Positions: ${traderDisplayNames[selectedTrader]}`, 'Net Contracts', labels.length > 1)
+        };
+    }
+
+    function getLongShortBreakdownConfig(data, labels, selectedTrader) {
+        const datasets = [];
+        if (selectedTrader === 'all' || selectedTrader === 'dealer') {
+            datasets.push({ label: 'Dealer Long', data: data.map(d => d.dealer.long), backgroundColor: colors.long, stack: 'dealer' });
+            datasets.push({ label: 'Dealer Short', data: data.map(d => d.dealer.short * -1), backgroundColor: colors.short, stack: 'dealer' });
+        }
+        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') {
+            datasets.push({ label: 'Leveraged Fund Long', data: data.map(d => d.leveragedFund.long), backgroundColor: colors.long, stack: 'leveragedFund' });
+            datasets.push({ label: 'Leveraged Fund Short', data: data.map(d => d.leveragedFund.short * -1), backgroundColor: colors.short, stack: 'leveragedFund' });
+        }
+        if (selectedTrader === 'all' || selectedTrader === 'assetManager') {
+            datasets.push({ label: 'Asset Manager Long', data: data.map(d => d.assetManager.long), backgroundColor: colors.long, stack: 'assetManager' });
+            datasets.push({ label: 'Asset Manager Short', data: data.map(d => d.assetManager.short * -1), backgroundColor: colors.short, stack: 'assetManager' });
+        }
+        return {
+            type: 'bar',
+            data: { labels: labels, datasets: datasets },
+             options: {
+                ...commonChartOptions(`Long/Short Gross: ${traderDisplayNames[selectedTrader]}`, 'Number of Contracts', labels.length > 1),
+                scales: {
+                    y: { stacked: false, ticks: { callback: function(value) { return formatNumber(Math.abs(value)); } } },
+                    x: { stacked: true }
+                },
+                plugins: { tooltip: { callbacks: { label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) { label += ': '; }
+                    if (context.parsed.y !== null) { label += formatNumber(Math.abs(context.parsed.y)); }
+                    return label;
+                }}}}
+            }
+        };
+    }
+    
+    function getOpenInterestConfig(data, labels) { // Not filtered by trader type
+        return {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Total Open Interest', data: data.map(d => d.openInterest), borderColor: colors.openInterestBorder, backgroundColor: colors.openInterest, fill: false, tension: 0.1 }
+                ]
+            },
+            options: commonChartOptions('Total Open Interest Over Time', 'Total Contracts', labels.length > 1)
+        };
+    }
+
+    function getWeeklyChangesConfig(latest, previous, labelForChart, selectedTrader) {
+        if (!previous) {
+            insightArea.innerHTML = 'Not enough data for weekly changes.';
+            return null; 
+        }
+        
+        const allTraderCategories = {dealer: 'Dealer', leveragedFund: 'Leveraged Fund', assetManager: 'Asset Manager'};
+        const changes = {};
+        let insightText = `<strong>Weekly Changes for ${instrumentNames[instrumentSelect.value]} (${latest.date}) - ${traderDisplayNames[selectedTrader]}:</strong><br/>`;
+        
+        const traderKeysToProcess = selectedTrader === 'all' ? Object.keys(allTraderCategories) : [selectedTrader];
+        const chartChangeLabels = [];
+        const chartChangeData = [];
+
+        traderKeysToProcess.forEach(catKey => {
+            if (latest[catKey] && previous[catKey]) {
+                const displayName = allTraderCategories[catKey];
+                changes[catKey] = {
+                    long: latest[catKey].long - previous[catKey].long,
+                    short: latest[catKey].short - previous[catKey].short,
+                    net: (latest[catKey].long - latest[catKey].short) - (previous[catKey].long - previous[catKey].short)
+                };
+                insightText += `<em>${displayName}:</em><br/>
+                &nbsp;&nbsp;Longs: ${formatNumber(changes[catKey].long)} (Now: ${formatNumber(latest[catKey].long)})<br/>
+                &nbsp;&nbsp;Shorts: ${formatNumber(changes[catKey].short)} (Now: ${formatNumber(latest[catKey].short)})<br/>
+                &nbsp;&nbsp;Net: ${formatNumber(changes[catKey].net)} (Now: ${formatNumber(latest[catKey].long - latest[catKey].short)})<br/>`;
+
+                const shortName = displayName.substring(0,2).toUpperCase(); // e.g., DE, LF, AM
+                chartChangeLabels.push(`${shortName} L Δ`, `${shortName} S Δ`, `${shortName} N Δ`);
+                chartChangeData.push(changes[catKey].long, changes[catKey].short, changes[catKey].net);
+            }
+        });
+        insightArea.innerHTML = insightText; 
+
+        if (chartChangeData.length === 0) { // No specific trader data found for a non-'all' selection (should not happen with current setup)
+             insightArea.innerHTML = `No weekly change data for ${traderDisplayNames[selectedTrader]}.`;
+             return null;
+        }
+
+        return {
+            type: 'bar',
+            data: {
+                labels: chartChangeLabels,
+                datasets: [{
+                    label: `Weekly Change for ${traderDisplayNames[selectedTrader]} (week ending ${labelForChart})`,
+                    data: chartChangeData,
+                    backgroundColor: chartChangeData.map(d => d >= 0 ? colors.long : colors.short),
+                }]
+            },
+            options: commonChartOptions(`Weekly Changes: ${traderDisplayNames[selectedTrader]}`, 'Change in Contracts', false)
+        };
+    }
+
+    function getPercentageBuySellConfig(latest) { // Not filtered by trader type
+        const totalLongs = latest.dealer.long + latest.leveragedFund.long + latest.assetManager.long;
+        const totalShorts = latest.dealer.short + latest.leveragedFund.short + latest.assetManager.short;
+        const grandTotal = totalLongs + totalShorts;
+
+        if (grandTotal === 0) {
+            insightArea.innerHTML = 'No open contracts to calculate percentages.';
+            return null;
+        }
+
+        const percLong = (totalLongs / grandTotal) * 100;
+        const percShort = (totalShorts / grandTotal) * 100;
+        
+        insightArea.innerHTML = `<strong>Overall Market Sentiment for ${instrumentNames[instrumentSelect.value]} (as of ${latest.date}):</strong><br/>
+        Total Long Contracts: ${formatNumber(totalLongs)} (${percLong.toFixed(1)}%)<br/>
+        Total Short Contracts: ${formatNumber(totalShorts)} (${percShort.toFixed(1)}%)<br/>`;
+
+        return {
+            type: 'doughnut', 
+            data: {
+                labels: [`Longs (${percLong.toFixed(1)}%)`, `Shorts (${percShort.toFixed(1)}%)`],
+                datasets: [{
+                    data: [totalLongs, totalShorts],
+                    backgroundColor: [colors.long, colors.short],
+                    borderColor: ['#0d0d0d', '#0d0d0d'], 
+                    borderWidth: 2, 
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '50%', 
+                plugins: {
+                    title: { display: true, text: `Percentage Buy/Sell - ${instrumentNames[instrumentSelect.value]} (${latest.date})`, color: '#f0f0f0', font: {size: 14} },
+                    legend: { position: 'top', labels: { color: '#f0f0f0' } },
+                    tooltip: { callbacks: { label: function(context) {
+                        let label = context.label || '';
+                        if (context.parsed !== null) { label += ': ' + formatNumber(context.parsed); }
+                        return label;
+                    }}}
+                }
+            }
+        };
+    }
+
+    function commonChartOptions(titleText, yAxisLabel, isTimeSeries = true) {
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: titleText + ` - ${instrumentNames[instrumentSelect.value]}`, color: '#f0f0f0', font: {size: 14}},
+                legend: { position: 'top', labels: { color: '#f0f0f0' } },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    callbacks: { label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) { label += ': '; }
+                        if (context.parsed.y !== null) { label += formatNumber(context.parsed.y); }
+                        return label;
+                    }}
+                }
+            },
+            scales: {
+                y: {
+                    title: { display: true, text: yAxisLabel, color: '#ccc' },
+                    grid: { color: '#2a2a2a' },
+                    ticks: { color: '#e1e1e1', callback: function(value) { return formatNumber(value); } }
+                },
+                x: {
+                    grid: { display: !isTimeSeries, color: '#2a2a2a' }, 
+                    ticks: { color: '#e1e1e1', maxRotation: isTimeSeries? 45 : 0, minRotation: isTimeSeries? 45 : 0 },
+                }
+            }
+        };
+        if (isTimeSeries) {
+            options.scales.x.type = 'time';
+            options.scales.x.time = { unit: 'week', tooltipFormat: 'MMM dd, yy', displayFormats: { week: 'MMM dd' } };
+        }
+        return options;
+    }
+
+    function generateNetPositionInsights(latest, prev, selectedTrader) {
+        let text = `<strong>Net Positioning Insights (${latest.date}) - ${traderDisplayNames[selectedTrader]}:</strong><br/>`;
+        const categories = {};
+        if (selectedTrader === 'all' || selectedTrader === 'dealer') categories['Dealer'] = latest.dealer;
+        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') categories['Leveraged Fund'] = latest.leveragedFund;
+        if (selectedTrader === 'all' || selectedTrader === 'assetManager') categories['Asset Manager'] = latest.assetManager;
+        
+        const keyMap = { "Dealer": "dealer", "Leveraged Fund": "leveragedFund", "Asset Manager": "assetManager" };
+
+        for (const catName in categories) {
+            const catData = categories[catName]; 
+            const netPos = catData.long - catData.short;
+            text += `${catName}: ${formatNumber(netPos)} (L: ${formatNumber(catData.long)}, S: ${formatNumber(catData.short)})`;
+            if (prev) {
+                const dataKey = keyMap[catName]; 
+                const prevCatData = prev[dataKey];
+                if (prevCatData) { 
+                    const prevNetPos = prevCatData.long - prevCatData.short;
+                    const change = netPos - prevNetPos;
+                    text += ` | Weekly Δ: <span style="color:${change >= 0 ? 'lightgreen' : 'salmon'};">${formatNumber(change)}</span>`;
+                } else { text += ` | Weekly Δ: N/A`; }
+            }
+            text += '<br/>';
+        }
+        insightArea.innerHTML = text;
+    }
+
+    function generateLongShortInsights(latest, prev, selectedTrader) {
+         let text = `<strong>Long/Short Breakdown Insights (${latest.date}) - ${traderDisplayNames[selectedTrader]}:</strong><br/>`;
+         const categories = {};
+         if (selectedTrader === 'all' || selectedTrader === 'dealer') categories['Dealer'] = latest.dealer;
+         if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') categories['Leveraged Fund'] = latest.leveragedFund;
+         if (selectedTrader === 'all' || selectedTrader === 'assetManager') categories['Asset Manager'] = latest.assetManager;
+
+         const keyMap = { "Dealer": "dealer", "Leveraged Fund": "leveragedFund", "Asset Manager": "assetManager" };
+
+         for (const catName in categories) {
+            const catData = categories[catName];
+            text += `${catName} - Long: ${formatNumber(catData.long)}, Short: ${formatNumber(catData.short)}`;
+             if (prev) {
+                const dataKey = keyMap[catName];
+                const prevCatData = prev[dataKey];
+                if (prevCatData) {
+                    const longChange = catData.long - prevCatData.long;
+                    const shortChange = catData.short - prevCatData.short;
+                    text += ` | Δ Long: <span style="color:${longChange >= 0 ? 'lightgreen' : 'salmon'};">${formatNumber(longChange)}</span>, Δ Short: <span style="color:${shortChange >= 0 ? 'lightgreen' : 'salmon'};">${formatNumber(shortChange)}</span>`;
+                } else { text += ` | Weekly Δ: N/A`; }
+            }
+            text += '<br/>';
+         }
+         insightArea.innerHTML = text;
+    }
+    
+    function generateOpenInterestInsights(latest, prev) { // Not filtered
+        let text = `<strong>Open Interest Insights (${latest.date}):</strong><br/>
+        Total Open Interest: ${formatNumber(latest.openInterest)}`;
+        if (prev) {
+            const change = latest.openInterest - prev.openInterest;
+            text += ` | Weekly Δ: <span style="color:${change >= 0 ? 'lightgreen' : 'salmon'};">${formatNumber(change)}</span>`;
+        }
+        insightArea.innerHTML = text + '<br/>';
+    }
+
+    // --- Event Listeners ---
+    instrumentSelect.addEventListener('change', renderChart);
+    traderTypeSelect.addEventListener('change', renderChart); // Listener for new dropdown
+
+    chartModeButtonsContainer.addEventListener('click', (event) => {
+        if (event.target.tagName === 'BUTTON') {
+            chartModeButtonsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            currentChartMode = event.target.dataset.mode;
+            renderChart(); // Re-render chart on mode change
+        }
+    });
+
+    // --- Initialization ---
+    function initializeWidget() {
+        Object.keys(cotData).forEach(key => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = instrumentNames[key] || key;
+            instrumentSelect.appendChild(option);
+        });
+        instrumentSelect.value = "GOLD"; 
+        traderTypeSelect.value = "all"; // Default trader type
+        renderChart(); 
+    }
+
+    initializeWidget();
+
+</script>
+</body>
+</html>
