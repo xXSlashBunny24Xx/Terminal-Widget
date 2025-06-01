@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Retail Trader Overview Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #f0f0f0;
+            font-family: 'Source Code Pro', monospace;
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100%; 
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #000;
+            border: 1px solid #222;
+            border-radius: 0;
+            overflow: hidden; 
+            min-height: 0;
+        }
+
+        .dashboard-title-bar {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid #222;
+            padding-left: 12px;
+            flex-shrink: 0;
+        }
+
+        .dashboard-content-wrapper {
+            flex: 1;
+            padding: 10px; /* Sedikit mengurangi padding wrapper */
+            box-sizing: border-box;
+            overflow-y: auto; 
+            min-height: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px; /* Mengurangi font size tabel lagi */
+        }
+
+        th, td {
+            border: 1px solid #1c1c1c; /* Border lebih gelap sedikit */
+            padding: 5px; /* Mengurangi padding sel lagi */
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #1a1a1a; 
+            color: #ff8000;
+            position: sticky;
+            top: 0; 
+            z-index: 10;
+            white-space: nowrap; 
+        }
+        
+        td {
+            color: #aaa; /* Warna teks data lebih lembut lagi */
+             white-space: nowrap; 
+        }
+        td:not(:first-child) { 
+            text-align: right;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #060606; /* Background baris genap lebih gelap */
+        }
+        tr:hover {
+            background-color: #111; 
+        }
+
+        .chart-cell {
+            width: 80px; /* Lebar sel chart diperkecil lagi */
+            height: 40px; /* Tinggi sel chart diperkecil lagi */
+            padding: 1px; /* Padding minimal untuk chart cell */
+        }
+        .chart-cell canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .positive-change, .positive-value {
+            color: #4CAF50; 
+        }
+        .negative-change, .negative-value {
+            color: #F44336; 
+        }
+        .instrument-name {
+            font-weight: bold;
+            color: #d0d0d0; /* Warna nama instrumen sedikit lebih terang */
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="dashboard-title-bar">Retail Trader Overview Dashboard</div>
+    <div class="dashboard-content-wrapper">
+        <table id="retail-overview-table">
+            <thead>
+                <tr>
+                    <th>Instrument</th>
+                    <th>Net Position</th>
+                    <th>Total Positions</th>
+                    <th>% Long</th>
+                    <th>% Short</th>
+                    <th>Weekly Δ Net</th>
+                    <th>Net Pos Trend (30w)</th>
+                    <th>Buy/Sell %</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // --- Helper untuk menghasilkan data retail acak (sama seperti widget sebelumnya) ---
+    function generateRetailDataEntry(baseDate, weekOffset, instrumentKey) {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() + weekOffset * 7);
+        const dateString = date.toISOString().split('T')[0];
+
+        let basePrice = 1.1000; 
+        let priceVolatility = 0.0050;
+        let positionBase = 5000;
+        let volumeBase = 10000;
+
+
+        if (instrumentKey === 'GBPUSD') { basePrice = 1.2700; positionBase = 4500; }
+        else if (instrumentKey === 'USDJPY') { basePrice = 157.00; priceVolatility = 0.50; positionBase = 6000; }
+        else if (instrumentKey === 'AUDUSD') { basePrice = 0.6600; positionBase = 4000; }
+        else if (instrumentKey === 'SP500') { basePrice = 5300; priceVolatility = 50; positionBase = 3000; volumeBase = 15000;}
+        else if (instrumentKey === 'GOLD') { basePrice = 2300; priceVolatility = 20; positionBase = 7000; volumeBase = 20000;}
+        else if (instrumentKey === 'OIL') { basePrice = 80; priceVolatility = 2; positionBase = 8000; volumeBase = 25000;}
+
+        const priceTrend = Math.sin(weekOffset / 8) * priceVolatility * 2; 
+        const currentPrice = basePrice + priceTrend + (Math.random() - 0.5) * priceVolatility;
+
+        const longPos = Math.floor(positionBase * (1 + Math.sin(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
+        const shortPos = Math.floor(positionBase * (1 + Math.cos(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
+        const totalPos = longPos + shortPos;
+
+        const percLong = totalPos > 0 ? (longPos / totalPos) * 100 : 0;
+        const percShort = totalPos > 0 ? (shortPos / totalPos) * 100 : 0;
+
+        const longVol = Math.floor(volumeBase * (percLong / 100 + 0.5) * (0.8 + Math.random() * 0.4));
+        const shortVol = Math.floor(volumeBase * (percShort / 100 + 0.5) * (0.8 + Math.random() * 0.4));
+        
+        const avgLongPrice = currentPrice * (1 - Math.random() * (priceVolatility / basePrice) * 0.5);
+        const avgShortPrice = currentPrice * (1 + Math.random() * (priceVolatility / basePrice) * 0.5);
+
+        return {
+            date: dateString,
+            percentageShort: percShort,
+            percentageLong: percLong,
+            shortVolume: Math.max(0, shortVol), 
+            longVolume: Math.max(0, longVol),   
+            longPosition: Math.max(0, longPos),
+            shortPosition: Math.max(0, shortPos),
+            totalPosition: Math.max(0, totalPos),
+            averageShortPrice: avgShortPrice, 
+            averageLongPrice: avgLongPrice,   
+        };
+    }
+
+    function generateHistoricalRetailData(instrumentKey, numEntries = 30) {
+        const data = [];
+        const reportDayOffset = 2; 
+        let baseDate = new Date(); 
+        baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
+        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
+
+        for (let i = 0; i < numEntries; i++) {
+            data.push(generateRetailDataEntry(baseDate, i, instrumentKey));
+        }
+        return data;
+    }
+
+    const retailInstruments = {
+        EURUSD: "EUR/USD", GBPUSD: "GBP/USD", USDJPY: "JPY/USD", AUDUSD: "AUD/USD",
+        SP500: "S&P 500", GOLD: "Gold", OIL: "Crude Oil"
+    };
+
+    const retailDataStore = {};
+    Object.keys(retailInstruments).forEach(key => {
+        retailDataStore[key] = generateHistoricalRetailData(key);
+    });
+
+    const retailDashboardColors = {
+        netPositionLinePositive: 'rgba(34, 177, 76, 0.8)', // Sedikit lebih transparan untuk garis
+        netPositionFillPositive: 'rgba(34, 177, 76, 0.1)', // Fill lebih transparan lagi
+        netPositionLineNegative: 'rgba(237, 28, 36, 0.8)', 
+        netPositionFillNegative: 'rgba(237, 28, 36, 0.1)', 
+        long: 'rgba(34, 177, 76, 0.8)',      
+        short: 'rgba(237, 28, 36, 0.8)',    
+    };
+
+    let miniChartInstances = {}; 
+
+    function formatRetailDashNumber(num, isPercentage = false) {
+        if (isPercentage) {
+            return num.toFixed(0) + '%'; // Persentase tanpa desimal untuk ruang
+        }
+        if (Math.abs(num) >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (Math.abs(num) >= 1000) {
+            return (num / 1000).toFixed(0) + 'K'; // Ribuan tanpa desimal
+        }
+        return num.toLocaleString('en-US');
+    }
+
+    function destroyMiniCharts() {
+        Object.keys(miniChartInstances).forEach(key => {
+            if (miniChartInstances[key]) {
+                miniChartInstances[key].destroy();
+            }
+        });
+        miniChartInstances = {}; 
+    }
+
+    function populateRetailOverviewTable() {
+        destroyMiniCharts(); 
+        const tableBody = document.getElementById('retail-overview-table').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = ''; 
+
+        Object.keys(retailInstruments).forEach(instrumentKey => {
+            const historicalData = retailDataStore[instrumentKey];
+            if (!historicalData || historicalData.length === 0) return;
+
+            const latestReport = historicalData[historicalData.length - 1];
+            const previousReport = historicalData.length > 1 ? historicalData[historicalData.length - 2] : null;
+
+            const latestNetPosition = latestReport.longPosition - latestReport.shortPosition;
+            
+            let weeklyChangeNet = 'N/A';
+            let changeClass = '';
+            if (previousReport) {
+                const prevNetPosition = previousReport.longPosition - previousReport.shortPosition;
+                const change = latestNetPosition - prevNetPosition;
+                weeklyChangeNet = formatRetailDashNumber(change);
+                changeClass = change >= 0 ? 'positive-change' : 'negative-change';
+            }
+
+            const row = tableBody.insertRow();
+            
+            const instrumentCell = row.insertCell();
+            instrumentCell.textContent = retailInstruments[instrumentKey];
+            instrumentCell.className = 'instrument-name';
+
+            const netPosCell = row.insertCell();
+            netPosCell.textContent = formatRetailDashNumber(latestNetPosition);
+            netPosCell.className = latestNetPosition >= 0 ? 'positive-value' : 'negative-value';
+            
+            row.insertCell().textContent = formatRetailDashNumber(latestReport.totalPosition);
+            row.insertCell().textContent = formatRetailDashNumber(latestReport.percentageLong, true);
+            row.insertCell().textContent = formatRetailDashNumber(latestReport.percentageShort, true);
+            
+            const changeNetCell = row.insertCell();
+            changeNetCell.textContent = weeklyChangeNet;
+            changeNetCell.className = changeClass;
+
+            const netPositionChartCell = row.insertCell();
+            netPositionChartCell.className = 'chart-cell';
+            const netCanvasId = `retailNetChart-${instrumentKey}`;
+            netPositionChartCell.innerHTML = `<canvas id="${netCanvasId}"></canvas>`;
+            
+            const doughnutChartCell = row.insertCell();
+            doughnutChartCell.className = 'chart-cell';
+            const doughnutCanvasId = `retailDoughnutChart-${instrumentKey}`;
+            doughnutChartCell.innerHTML = `<canvas id="${doughnutCanvasId}"></canvas>`;
+
+            setTimeout(() => { 
+                renderRetailNetPositionMiniChart(netCanvasId, historicalData);
+                renderRetailBuySellDoughnutMiniChart(doughnutCanvasId, latestReport.longPosition, latestReport.shortPosition);
+            }, 0);
+        });
+    }
+
+    function renderRetailNetPositionMiniChart(canvasId, historicalData) {
+        const element = document.getElementById(canvasId);
+        if (!element) return;
+        const ctx = element.getContext('2d');
+        const netPositions = historicalData.map(d => d.longPosition - d.shortPosition);
+        const labels = historicalData.map(d => d.date);
+
+        miniChartInstances[canvasId] = new Chart(ctx, { 
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Net Position', 
+                    data: netPositions,
+                    borderWidth: 1, // Garis lebih tipis
+                    pointRadius: 0, 
+                    fill: true, 
+                    tension: 0.4,
+                    segment: { 
+                        borderColor: ctxSeg => netPositions[ctxSeg.p0DataIndex] >= 0 ? retailDashboardColors.netPositionLinePositive : retailDashboardColors.netPositionLineNegative,
+                        backgroundColor: ctxSeg => netPositions[ctxSeg.p0DataIndex] >= 0 ? retailDashboardColors.netPositionFillPositive : retailDashboardColors.netPositionFillNegative,
+                    }
+                }]
+            },
+            options: miniChartOptions(true) 
+        });
+    }
+
+    function renderRetailBuySellDoughnutMiniChart(canvasId, totalLong, totalShort) {
+        const element = document.getElementById(canvasId);
+        if (!element) return;
+        const ctx = element.getContext('2d');
+        const grandTotal = totalLong + totalShort;
+        const percLong = grandTotal > 0 ? (totalLong / grandTotal) * 100 : 0;
+
+        miniChartInstances[canvasId] = new Chart(ctx, { 
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [totalLong, totalShort], 
+                    backgroundColor: [retailDashboardColors.long, retailDashboardColors.short],
+                    borderColor: '#060606', // Warna border disamakan dengan bg baris genap
+                    borderWidth: 1, 
+                    hoverOffset: 1 
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '50%', // Lubang lebih kecil (donat lebih tebal)
+                plugins: {
+                    legend: { display: false }, 
+                    tooltip: { 
+                        enabled: true, 
+                        displayColors: false, 
+                        callbacks: {
+                             title: () => null, 
+                             label: function(context) {
+                                const type = context.dataIndex === 0 ? 'Long' : 'Short';
+                                const percentage = context.dataIndex === 0 ? percLong : (100 - percLong);
+                                return `${type}: ${percentage.toFixed(0)}%`; // Hanya persentase di tooltip
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function miniChartOptions(isTimeSeries = false) {
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 0 
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { 
+                    enabled: true, 
+                    mode: 'index', 
+                    intersect: false,
+                    displayColors: false,
+                    padding: 4, // Padding tooltip lebih kecil
+                    callbacks: {
+                        title: () => null,
+                        label: function(context) {
+                            if (context.parsed.y !== null) {
+                                return `${formatRetailDashNumber(context.parsed.y)}`;
+                            }
+                            return '';
+                        }
+                    }
+                } 
+            },
+            scales: {
+                y: { display: false },
+                x: { display: false }
+            }
+        };
+        if (isTimeSeries) {
+            options.scales.x.type = 'time';
+            options.scales.x.time = { parser: 'yyyy-MM-dd', unit: 'week' };
+        }
+        return options;
+    }
+
+    document.addEventListener('DOMContentLoaded', populateRetailOverviewTable);
+
+</script>
+</body>
+</html>
