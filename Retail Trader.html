@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Retail Trader Positioning Explorer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #f0f0f0;
+            font-family: 'Source Code Pro', monospace;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .widget-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #000;
+            border: 1px solid #222;
+            border-radius: 0;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .widget-title-bar {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid #222;
+            padding-left: 12px;
+            flex-shrink: 0;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 16px;
+            gap: 15px;
+            box-sizing: border-box;
+            overflow: auto; 
+            min-height: 0;
+        }
+
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column; 
+            gap: 10px; 
+            padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px; 
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .controls-wrapper label {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .controls-wrapper select, .controls-wrapper button {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #eee;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-family: 'Source Code Pro', monospace;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .controls-wrapper select:hover, .controls-wrapper button:hover {
+            border-color: #ff8000;
+        }
+        .controls-wrapper button.active {
+            background-color: #ff8000;
+            color: #000;
+            border-color: #ff8000;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex; 
+            min-height: 300px; 
+            background-color: #0d0d0d; 
+            border-radius: 4px;
+            padding:10px;
+        }
+
+        canvas#retailDataChart {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+        #retail-insight-area {
+            font-size: 12px;
+            color: #ccc;
+            padding-top: 10px;
+            border-top: 1px solid #222;
+            margin-top:10px;
+            line-height: 1.6;
+        }
+         #retail-insight-area strong {
+            color: #ff8000;
+        }
+    </style>
+</head>
+<body>
+<div class="widget-container">
+    <div class="widget-title-bar">Retail Trader Positioning Explorer</div>
+    <div class="content-wrapper">
+        <div class="controls-wrapper">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="retail-instrument-select">Instrument:</label>
+                    <select id="retail-instrument-select"></select>
+                </div>
+            </div>
+            <div class="control-row" id="retail-chart-mode-buttons">
+                <button data-mode="netPosition" class="active">Net Position</button>
+                <button data-mode="percentagePosition">Percentage Position</button>
+                <button data-mode="lotVolume">Lot Volume</button>
+                <button data-mode="numPositions">Number of Positions</button>
+                <button data-mode="totalPositionBar">Total Position</button>
+                <button data-mode="averagePrices">Avg. Entry Prices</button>
+            </div>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="retailDataChart"></canvas>
+        </div>
+        <div id="retail-insight-area">
+            </div>
+    </div>
+</div>
+
+<script>
+    const ctxRetail = document.getElementById('retailDataChart').getContext('2d');
+    const retailInstrumentSelect = document.getElementById('retail-instrument-select');
+    const retailChartModeButtonsContainer = document.getElementById('retail-chart-mode-buttons');
+    const retailInsightArea = document.getElementById('retail-insight-area');
+    let retailDataChartInstance = null;
+    let currentRetailChartMode = 'netPosition';
+
+    // --- Helper untuk menghasilkan data retail acak ---
+    function generateRetailDataEntry(baseDate, weekOffset, instrumentKey) {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() + weekOffset * 7);
+        const dateString = date.toISOString().split('T')[0];
+
+        let basePrice = 1.1000; 
+        let priceVolatility = 0.0050;
+        let positionBase = 5000;
+        let volumeBase = 10000;
+
+        if (instrumentKey === 'GBPUSD') { basePrice = 1.2700; positionBase = 4500; }
+        else if (instrumentKey === 'USDJPY') { basePrice = 157.00; priceVolatility = 0.50; positionBase = 6000; }
+        else if (instrumentKey === 'AUDUSD') { basePrice = 0.6600; positionBase = 4000; }
+        else if (instrumentKey === 'SP500') { basePrice = 5300; priceVolatility = 50; positionBase = 3000; volumeBase = 15000;}
+        else if (instrumentKey === 'GOLD') { basePrice = 2300; priceVolatility = 20; positionBase = 7000; volumeBase = 20000;}
+        else if (instrumentKey === 'OIL') { basePrice = 80; priceVolatility = 2; positionBase = 8000; volumeBase = 25000;}
+
+        const priceTrend = Math.sin(weekOffset / 8) * priceVolatility * 2; 
+        const currentPrice = basePrice + priceTrend + (Math.random() - 0.5) * priceVolatility;
+
+        const longPos = Math.floor(positionBase * (1 + Math.sin(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
+        const shortPos = Math.floor(positionBase * (1 + Math.cos(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
+        const totalPos = longPos + shortPos;
+
+        const percLong = totalPos > 0 ? (longPos / totalPos) * 100 : 0;
+        const percShort = totalPos > 0 ? (shortPos / totalPos) * 100 : 0;
+
+        const longVol = Math.floor(volumeBase * (percLong / 100 + 0.5) * (0.8 + Math.random() * 0.4));
+        const shortVol = Math.floor(volumeBase * (percShort / 100 + 0.5) * (0.8 + Math.random() * 0.4));
+        
+        const avgLongPrice = currentPrice * (1 - Math.random() * (priceVolatility / basePrice) * 0.5);
+        const avgShortPrice = currentPrice * (1 + Math.random() * (priceVolatility / basePrice) * 0.5);
+
+        return {
+            date: dateString,
+            percentageShort: percShort,
+            percentageLong: percLong,
+            shortVolume: Math.max(0, shortVol),
+            longVolume: Math.max(0, longVol),
+            longPosition: Math.max(0, longPos),
+            shortPosition: Math.max(0, shortPos),
+            totalPosition: Math.max(0, totalPos),
+            averageShortPrice: avgShortPrice,
+            averageLongPrice: avgLongPrice,
+            openInterest: Math.max(0, totalPos) 
+        };
+    }
+
+    function generateHistoricalRetailData(instrumentKey, numEntries = 30) {
+        const data = [];
+        const reportDayOffset = 2; 
+        let baseDate = new Date(); 
+        baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
+        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
+
+        for (let i = 0; i < numEntries; i++) {
+            data.push(generateRetailDataEntry(baseDate, i, instrumentKey));
+        }
+        return data;
+    }
+    
+    const retailInstruments = {
+        EURUSD: "EUR/USD", GBPUSD: "GBP/USD", USDJPY: "USD/JPY", AUDUSD: "AUD/USD",
+        SP500: "S&P 500 Index", GOLD: "Gold", OIL: "Crude Oil"
+    };
+
+    const retailDataStore = {};
+    Object.keys(retailInstruments).forEach(key => {
+        retailDataStore[key] = generateHistoricalRetailData(key);
+    });
+
+    const retailColors = {
+        netPositive: 'rgba(34, 177, 76, 0.7)',
+        netNegative: 'rgba(237, 28, 36, 0.7)',
+        long: 'rgba(75, 192, 75, 0.7)',
+        short: 'rgba(255, 99, 75, 0.7)',
+        percentageLong: 'rgba(54, 162, 235, 0.7)', 
+        percentageShort: 'rgba(255, 159, 64, 0.7)', 
+        volumeLong: 'rgba(153, 102, 255, 0.7)', 
+        volumeShort: 'rgba(255, 206, 86, 0.7)', 
+        avgPriceLong: 'rgba(75, 192, 192, 0.8)', 
+        avgPriceShort: 'rgba(201, 203, 207, 0.8)', 
+        totalPositions: 'rgba(255, 99, 132, 0.7)' 
+    };
+
+    function formatRetailNumber(num, isPrice = false, instrumentKey = '') {
+        if (isPrice) {
+            if (instrumentKey === 'USDJPY') return num.toFixed(2);
+            return num.toFixed(4);
+        }
+        if (Math.abs(num) >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+        if (Math.abs(num) >= 1000) return (num / 1000).toFixed(1) + 'K';
+        return num.toLocaleString('en-US');
+    }
+
+    function renderRetailChart() {
+        if (retailDataChartInstance) {
+            retailDataChartInstance.destroy();
+        }
+        retailInsightArea.innerHTML = ''; 
+
+        const selectedInstrumentKey = retailInstrumentSelect.value;
+        const data = retailDataStore[selectedInstrumentKey] || [];
+
+        if (data.length === 0) {
+            retailInsightArea.innerHTML = 'No data available for the selected instrument.';
+            return;
+        }
+
+        const labels = data.map(d => d.date);
+        const latestData = data[data.length - 1];
+
+        let chartConfig;
+
+        switch (currentRetailChartMode) {
+            case 'netPosition':
+                chartConfig = getRetailNetPositionConfig(data, labels);
+                break;
+            case 'percentagePosition': 
+                chartConfig = getRetailPercentagePositionConfig(data, labels);
+                break;
+            case 'lotVolume': 
+                chartConfig = getRetailLotVolumeConfig(data, labels);
+                break;
+            case 'numPositions': 
+                chartConfig = getRetailNumPositionsConfig(data, labels);
+                break;
+            case 'totalPositionBar': 
+                chartConfig = getRetailTotalPositionBarConfig(data, labels);
+                break;
+            case 'averagePrices':
+                chartConfig = getRetailAveragePriceConfig(data, labels, selectedInstrumentKey);
+                break;
+            default:
+                console.error('Unknown retail chart mode:', currentRetailChartMode);
+                currentRetailChartMode = 'netPosition';
+                // Pastikan tombol yang benar aktif
+                retailChartModeButtonsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                const defaultButton = retailChartModeButtonsContainer.querySelector(`button[data-mode="netPosition"]`);
+                if (defaultButton) defaultButton.classList.add('active');
+                chartConfig = getRetailNetPositionConfig(data, labels);
+                break;
+        }
+        
+        if (latestData) {
+            generateRetailInsights(latestData, selectedInstrumentKey);
+        }
+
+        if (chartConfig) {
+             retailDataChartInstance = new Chart(ctxRetail, chartConfig);
+        }
+    }
+
+    // --- Konfigurasi Chart untuk Retail ---
+    function getRetailNetPositionConfig(data, labels) {
+        const netPositions = data.map(d => d.longPosition - d.shortPosition);
+        return {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Retail Net Position',
+                    data: netPositions,
+                    borderWidth: 2, 
+                    pointRadius: 2, // Sedikit memperbesar titik agar terlihat jelas
+                    fill: true, 
+                    tension: 0.3,
+                    segment: {
+                        borderColor: ctx => netPositions[ctx.p0DataIndex] >= 0 ? retailColors.netPositive : retailColors.netNegative,
+                        backgroundColor: ctx => netPositions[ctx.p0DataIndex] >= 0 ? retailColors.netPositive.replace('0.7', '0.1') : retailColors.netNegative.replace('0.7', '0.1'),
+                    },
+                    // Atur warna titik secara eksplisit di sini, bukan di dalam segment untuk point
+                    pointBorderColor: netPositions.map(val => val >= 0 ? retailColors.netPositive : retailColors.netNegative),
+                    pointBackgroundColor: netPositions.map(val => val >= 0 ? retailColors.netPositive : retailColors.netNegative),
+                }]
+            },
+            options: commonRetailChartOptions('Retail Net Positions', 'Net Contracts', true, retailInstrumentSelect.value)
+        };
+    }
+
+    function getRetailPercentagePositionConfig(data, labels) {
+        return {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { 
+                        label: 'Percentage Long', 
+                        data: data.map(d => d.percentageLong), 
+                        borderColor: retailColors.percentageLong, 
+                        borderWidth: 2, fill: false, pointRadius: 1, tension: 0.3 
+                    },
+                    { 
+                        label: 'Percentage Short', 
+                        data: data.map(d => d.percentageShort), 
+                        borderColor: retailColors.percentageShort, 
+                        borderWidth: 2, fill: false, pointRadius: 1, tension: 0.3
+                    }
+                ]
+            },
+            options: commonRetailChartOptions('Retail Percentage Position (Long vs. Short)', '% of Total Positions', true, retailInstrumentSelect.value, false, true) 
+        };
+    }
+    
+    function getRetailLotVolumeConfig(data, labels) {
+         return {
+            type: 'line', 
+            data: {
+                labels: labels,
+                datasets: [
+                    { 
+                        label: 'Retail Long Volume', 
+                        data: data.map(d => d.longVolume), 
+                        borderColor: retailColors.volumeLong, 
+                        backgroundColor: retailColors.volumeLong.replace('0.7', '0.1'), 
+                        borderWidth: 2, fill: false, pointRadius: 1, tension: 0.3 
+                    },
+                    { 
+                        label: 'Retail Short Volume', 
+                        data: data.map(d => d.shortVolume), 
+                        borderColor: retailColors.volumeShort, 
+                        backgroundColor: retailColors.volumeShort.replace('0.7', '0.1'), 
+                        borderWidth: 2, fill: false, pointRadius: 1, tension: 0.3
+                    }
+                ]
+            },
+            options: commonRetailChartOptions('Retail Lot Volume (Long vs. Short)', 'Volume', true, retailInstrumentSelect.value)
+        };
+    }
+
+    function getRetailNumPositionsConfig(data, labels) { 
+        return {
+            type: 'line', 
+            data: {
+                labels: labels,
+                datasets: [
+                    { 
+                        label: 'Retail Long Positions', 
+                        data: data.map(d => d.longPosition), 
+                        borderColor: retailColors.long, 
+                        backgroundColor: retailColors.long.replace('0.7', '0.1'), 
+                        borderWidth: 2, fill: false, pointRadius: 1, tension: 0.3 
+                    },
+                    { 
+                        label: 'Retail Short Positions', 
+                        data: data.map(d => d.shortPosition), 
+                        borderColor: retailColors.short, 
+                        backgroundColor: retailColors.short.replace('0.7', '0.1'), 
+                        borderWidth: 2, fill: false, pointRadius: 1, tension: 0.3
+                    }
+                ]
+            },
+            options: commonRetailChartOptions('Retail Number of Positions (Long vs. Short)', 'Number of Positions', true, retailInstrumentSelect.value)
+        };
+    }
+    
+    function getRetailTotalPositionBarConfig(data, labels) { 
+        return {
+            type: 'bar', 
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Retail Positions',
+                    data: data.map(d => d.totalPosition),
+                    backgroundColor: retailColors.totalPositions,
+                    borderColor: retailColors.totalPositions.replace('0.7', '1.0'), 
+                    borderWidth: 1
+                }]
+            },
+            options: commonRetailChartOptions('Total Retail Positions', 'Number of Contracts', true, retailInstrumentSelect.value)
+        };
+    }
+
+    function getRetailAveragePriceConfig(data, labels, instrumentKey) {
+        return {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { 
+                        label: 'Avg. Long Price', 
+                        data: data.map(d => d.averageLongPrice), 
+                        borderColor: retailColors.avgPriceLong, 
+                        borderWidth: 2, fill: false, pointRadius: 1, tension: 0.3 
+                    },
+                    { 
+                        label: 'Avg. Short Price', 
+                        data: data.map(d => d.averageShortPrice), 
+                        borderColor: retailColors.avgPriceShort, 
+                        borderWidth: 2, fill: false, pointRadius: 1, tension: 0.3
+                    }
+                ]
+            },
+            options: commonRetailChartOptions('Retail Average Entry Prices', 'Price', true, instrumentKey, true) 
+        };
+    }
+
+    function commonRetailChartOptions(titleText, yAxisLabel, isTimeSeries = true, instrumentKey = '', isPriceAxis = false, isPercentageAxis = false) {
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: `${titleText} - ${retailInstruments[instrumentKey || retailInstrumentSelect.value]}`, color: '#f0f0f0', font: {size: 14}},
+                legend: { position: 'top', labels: { color: '#f0f0f0' } },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#fff',
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed.y !== null) {
+                                if (isPercentageAxis) {
+                                     label += context.parsed.y.toFixed(1) + '%';
+                                } else {
+                                    label += formatRetailNumber(context.parsed.y, isPriceAxis, instrumentKey || retailInstrumentSelect.value);
+                                }
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    title: { display: true, text: yAxisLabel, color: '#ccc' },
+                    grid: { color: '#2a2a2a' },
+                    ticks: { 
+                        color: '#e1e1e1', 
+                        callback: function(value) { 
+                            if (isPercentageAxis) return value.toFixed(0) + '%';
+                            return formatRetailNumber(value, isPriceAxis, instrumentKey || retailInstrumentSelect.value); 
+                        } 
+                    },
+                    ...(isPercentageAxis && { min: 0, max: 100 }) 
+                },
+                x: {
+                    grid: { display: !isTimeSeries, color: '#2a2a2a' }, 
+                    ticks: { color: '#e1e1e1', maxRotation: isTimeSeries? 45 : 0, minRotation: isTimeSeries? 45 : 0 },
+                }
+            }
+        };
+        if (isTimeSeries) {
+            options.scales.x.type = 'time';
+            options.scales.x.time = { unit: 'week', tooltipFormat: 'MMM dd, yy', displayFormats: { week: 'MMM dd' } };
+        }
+        return options;
+    }
+    
+    function generateRetailInsights(latestData, instrumentKey) {
+        if (!latestData) return;
+        let text = `<strong>Retail Insights for ${retailInstruments[instrumentKey]} (${latestData.date}):</strong><br/>`;
+        text += `Net Position: <span class="${(latestData.longPosition - latestData.shortPosition) >= 0 ? 'positive' : 'negative'}">${formatRetailNumber(latestData.longPosition - latestData.shortPosition)}</span> (L: ${formatRetailNumber(latestData.longPosition)}, S: ${formatRetailNumber(latestData.shortPosition)})<br/>`;
+        text += `Long/Short %: ${latestData.percentageLong.toFixed(1)}% Long / ${latestData.percentageShort.toFixed(1)}% Short<br/>`;
+        text += `Volume: ${formatRetailNumber(latestData.longVolume)} (L) / ${formatRetailNumber(latestData.shortVolume)} (S)<br/>`;
+        text += `Avg Prices: ${formatRetailNumber(latestData.averageLongPrice, true, instrumentKey)} (L) / ${formatRetailNumber(latestData.averageShortPrice, true, instrumentKey)} (S)<br/>`;
+        text += `Total Positions: ${formatRetailNumber(latestData.totalPosition)}<br/>`;
+        retailInsightArea.innerHTML = text;
+    }
+
+    function initializeRetailWidget() {
+        Object.keys(retailInstruments).forEach(key => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = retailInstruments[key];
+            retailInstrumentSelect.appendChild(option);
+        });
+        retailInstrumentSelect.value = "EURUSD"; 
+        
+        retailChartModeButtonsContainer.addEventListener('click', (event) => {
+            if (event.target.tagName === 'BUTTON') {
+                retailChartModeButtonsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                currentRetailChartMode = event.target.dataset.mode;
+                renderRetailChart(); 
+            }
+        });
+        retailInstrumentSelect.addEventListener('change', renderRetailChart);
+        renderRetailChart(); 
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeRetailWidget);
+
+</script>
+</body>
+</html>
