@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Retail Historical Data Table</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #f0f0f0;
+            font-family: 'Source Code Pro', monospace;
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100%; 
+        }
+
+        .widget-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #000;
+            border: 1px solid #222;
+            border-radius: 0;
+            overflow: hidden; 
+            min-height: 0;
+        }
+
+        .widget-title-bar {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 1px solid #222;
+            padding-left: 12px;
+            flex-shrink: 0;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 16px;
+            gap: 15px;
+            box-sizing: border-box;
+            overflow: hidden; 
+            min-height: 0;
+        }
+
+        .controls-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px; 
+            padding-bottom: 10px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .controls-wrapper label {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .controls-wrapper select {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #eee;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-family: 'Source Code Pro', monospace;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .controls-wrapper select:hover {
+            border-color: #ff8000;
+        }
+        
+        .table-container {
+            flex: 1;
+            overflow-y: auto; 
+            min-height: 0; 
+            border: 1px solid #222;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px; 
+        }
+
+        th, td {
+            border-bottom: 1px solid #222; 
+            border-left: 1px solid #222;
+            padding: 7px; 
+            text-align: right; 
+            vertical-align: middle;
+            white-space: nowrap; 
+        }
+        th:first-child, td:first-child {
+            text-align: left; 
+            border-left: none;
+            position: sticky; /* Membuat kolom tanggal sticky */
+            left: 0;
+            background-color: #0d0d0d; /* Warna background agar tidak transparan saat scroll */
+            z-index: 1; /* Di atas baris lain, tapi di bawah header */
+        }
+         tr:nth-child(even) td:first-child {
+            background-color: #060606;
+         }
+         tr:hover td:first-child {
+            background-color: #111;
+         }
+
+
+        th {
+            background-color: #1a1a1a; 
+            color: #ff8000;
+            position: sticky;
+            top: 0; 
+            z-index: 10; 
+        }
+        
+        td {
+            color: #bbb; 
+        }
+        
+        tr:nth-child(even) {
+            background-color: #080808; 
+        }
+        tr:hover {
+            background-color: #151515; 
+        }
+        .positive { color: #4CAF50; }
+        .negative { color: #F44336; }
+
+    </style>
+</head>
+<body>
+<div class="widget-container">
+    <div class="widget-title-bar">Retail Historical Data Table</div>
+    <div class="content-wrapper">
+        <div class="controls-wrapper">
+            <div class="control-group">
+                <label for="retail-hist-instrument-select">Instrument:</label>
+                <select id="retail-hist-instrument-select"></select>
+            </div>
+        </div>
+        <div class="table-container">
+            <table id="retail-historical-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>% Long</th>
+                        <th>% Short</th>
+                        <th>Long Volume</th>
+                        <th>Short Volume</th>
+                        <th>Long Positions</th>
+                        <th>Short Positions</th>
+                        <th>Total Positions</th>
+                        <th>Avg. Long Price</th>
+                        <th>Avg. Short Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const retailHistInstrumentSelect = document.getElementById('retail-hist-instrument-select');
+    const retailHistoricalTableBody = document.getElementById('retail-historical-table').getElementsByTagName('tbody')[0];
+
+    // --- Data Generation (Sama seperti widget Retail Trader Positioning Explorer) ---
+    function generateRetailDataEntry(baseDate, weekOffset, instrumentKey) {
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() + weekOffset * 7);
+        const dateString = date.toISOString().split('T')[0];
+
+        let basePrice = 1.1000; 
+        let priceVolatility = 0.0050;
+        let positionBase = 5000;
+        let volumeBase = 10000;
+
+        if (instrumentKey === 'GBPUSD') { basePrice = 1.2700; positionBase = 4500; }
+        else if (instrumentKey === 'USDJPY') { basePrice = 157.00; priceVolatility = 0.50; positionBase = 6000; }
+        else if (instrumentKey === 'AUDUSD') { basePrice = 0.6600; positionBase = 4000; }
+        else if (instrumentKey === 'SP500') { basePrice = 5300; priceVolatility = 50; positionBase = 3000; volumeBase = 15000;}
+        else if (instrumentKey === 'GOLD') { basePrice = 2300; priceVolatility = 20; positionBase = 7000; volumeBase = 20000;}
+        else if (instrumentKey === 'OIL') { basePrice = 80; priceVolatility = 2; positionBase = 8000; volumeBase = 25000;}
+
+        const priceTrend = Math.sin(weekOffset / 8) * priceVolatility * 2; 
+        const currentPrice = basePrice + priceTrend + (Math.random() - 0.5) * priceVolatility;
+
+        const longPos = Math.floor(positionBase * (1 + Math.sin(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
+        const shortPos = Math.floor(positionBase * (1 + Math.cos(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
+        const totalPos = longPos + shortPos;
+
+        const percLong = totalPos > 0 ? (longPos / totalPos) * 100 : 0;
+        const percShort = totalPos > 0 ? (shortPos / totalPos) * 100 : 0;
+
+        const longVol = Math.floor(volumeBase * (percLong / 100 + 0.5) * (0.8 + Math.random() * 0.4));
+        const shortVol = Math.floor(volumeBase * (percShort / 100 + 0.5) * (0.8 + Math.random() * 0.4));
+        
+        const avgLongPrice = currentPrice * (1 - Math.random() * (priceVolatility / basePrice) * 0.5);
+        const avgShortPrice = currentPrice * (1 + Math.random() * (priceVolatility / basePrice) * 0.5);
+
+        return {
+            date: dateString,
+            percentageShort: percShort,
+            percentageLong: percLong,
+            shortVolume: Math.max(0, shortVol),
+            longVolume: Math.max(0, longVol),
+            longPosition: Math.max(0, longPos),
+            shortPosition: Math.max(0, shortPos),
+            totalPosition: Math.max(0, totalPos),
+            averageShortPrice: avgShortPrice,
+            averageLongPrice: avgLongPrice,
+        };
+    }
+
+    function generateHistoricalRetailData(instrumentKey, numEntries = 30) {
+        const data = [];
+        const reportDayOffset = 2; 
+        let baseDate = new Date(); 
+        baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
+        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
+
+        for (let i = 0; i < numEntries; i++) {
+            data.push(generateRetailDataEntry(baseDate, i, instrumentKey));
+        }
+        return data;
+    }
+
+    const retailInstruments = {
+        EURUSD: "EUR/USD", GBPUSD: "GBP/USD", USDJPY: "USD/JPY", AUDUSD: "AUD/USD",
+        SP500: "S&P 500 Index", GOLD: "Gold", OIL: "Crude Oil"
+    };
+
+    const retailDataStore = {};
+    Object.keys(retailInstruments).forEach(key => {
+        retailDataStore[key] = generateHistoricalRetailData(key);
+    });
+
+    function formatRetailHistNumber(num, isPrice = false, instrumentKey = '', isPercentage = false) {
+        if (isPercentage) {
+            return num.toFixed(1) + '%';
+        }
+        if (isPrice) {
+            if (instrumentKey === 'USDJPY') return num.toFixed(2);
+            return num.toFixed(4);
+        }
+        if (Math.abs(num) >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (Math.abs(num) >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toLocaleString('en-US');
+    }
+    
+    function populateRetailHistoricalDataTable() {
+        retailHistoricalTableBody.innerHTML = ''; 
+        const selectedInstrumentKey = retailHistInstrumentSelect.value;
+        const instrumentData = retailDataStore[selectedInstrumentKey];
+
+        if (!instrumentData || instrumentData.length === 0) {
+            const row = retailHistoricalTableBody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = 10; // Sesuaikan dengan jumlah kolom
+            cell.textContent = 'No data available for this instrument.';
+            cell.style.textAlign = 'center';
+            return;
+        }
+
+        const reversedData = [...instrumentData].reverse(); 
+
+        reversedData.forEach(report => {
+            const row = retailHistoricalTableBody.insertRow();
+            row.insertCell().textContent = report.date;
+            row.insertCell().textContent = formatRetailHistNumber(report.percentageLong, false, selectedInstrumentKey, true);
+            row.insertCell().textContent = formatRetailHistNumber(report.percentageShort, false, selectedInstrumentKey, true);
+            row.insertCell().textContent = formatRetailHistNumber(report.longVolume);
+            row.insertCell().textContent = formatRetailHistNumber(report.shortVolume);
+            row.insertCell().textContent = formatRetailHistNumber(report.longPosition);
+            row.insertCell().textContent = formatRetailHistNumber(report.shortPosition);
+            row.insertCell().textContent = formatRetailHistNumber(report.totalPosition);
+            row.insertCell().textContent = formatRetailHistNumber(report.averageLongPrice, true, selectedInstrumentKey);
+            row.insertCell().textContent = formatRetailHistNumber(report.averageShortPrice, true, selectedInstrumentKey);
+        });
+    }
+
+
+    // --- Inisialisasi ---
+    function initializeRetailHistWidget() {
+        Object.keys(retailInstruments).forEach(key => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = retailInstruments[key];
+            retailHistInstrumentSelect.appendChild(option);
+        });
+        retailHistInstrumentSelect.value = "EURUSD"; 
+
+        retailHistInstrumentSelect.addEventListener('change', populateRetailHistoricalDataTable);
+        populateRetailHistoricalDataTable();
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeRetailHistWidget);
+
+</script>
+</body>
+</html>
