@@ -1,46 +1,45 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>COT Overview Dashboard - Highly Resizable</title>
+    <title>COTX - CFTC Positioning Explorer - Highly Resizable</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Ensure html and body take full viewport height and width of the iframe */
         html, body {
             margin: 0;
             padding: 0;
             background-color: #000;
             color: #f0f0f0;
             font-family: 'Source Code Pro', monospace;
-            height: 100%;
-            width: 100%;
-            overflow: hidden; /* Prevent scrollbars at the highest level */
+            height: 100%; /* Takes full height of its container (iframe) */
+            width: 100%;  /* Takes full width of its container (iframe) */
+            overflow: hidden; /* Prevent scrollbars on body itself */
         }
 
         body {
-            display: flex;
-            flex-direction: column;
-            height: 100%; 
-            overflow: hidden; /* Ensure body itself doesn't scroll */
+            display: flex; /* Use flexbox for layout */
+            flex-direction: column; /* Stack children vertically */
         }
 
-        .dashboard-container {
+        .widget-container {
             display: flex;
             flex-direction: column;
-            flex: 1; /* Takes available space */
+            flex: 1; /* Allows this container to grow and shrink to fill available space in body */
             padding: 0;
             box-sizing: border-box;
             background-color: #000;
-            border: 1px solid #222;
-            border-radius: 0;
-            overflow: hidden; /* Prevents this container from scrolling */
-            min-height: 0; /* Essential for flex children to shrink and allow internal scroll */
+            border: 1px solid #222; 
+            border-radius: 0; 
+            overflow: hidden; /* Prevent this container from showing scrollbars */
+            min-height: 0; /* Crucial for flex children to shrink properly */
         }
 
-        .dashboard-title-bar {
-            height: 30px;
+        .widget-title-bar {
+            height: 30px; 
             display: flex;
             align-items: center;
             justify-content: flex-start;
@@ -50,19 +49,93 @@
             font-weight: bold;
             border-bottom: 1px solid #222;
             padding-left: 12px;
-            flex-shrink: 0; /* Title bar should not shrink */
+            flex-shrink: 0; /* Prevents the title bar from shrinking */
         }
 
-        .dashboard-content-wrapper {
-            flex: 1; /* Takes remaining space after title bar */
-            padding: 10px;  /* MODIFIED: Applied from Retail Dashboard */
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1; /* Takes remaining space in .widget-container */
+            padding: 16px;
+            gap: 15px;
             box-sizing: border-box;
-            overflow-y: auto; /* Allows vertical scrolling for the table content */
-            overflow-x: auto; /* Allows horizontal scrolling for wide table content */
-            min-height: 0; /* Essential for flexbox to allow scrolling within this container */
+            overflow: hidden; 
+            min-height: 0; /* Allows shrinking */
+        }
+
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column; 
+            gap: 10px; 
+            padding-bottom: 10px;
+            flex-shrink: 0; 
         }
         
-        /* Minimalist macOS–Style Scrollbar Styling */
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px; 
+            flex-wrap: wrap; 
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .controls-wrapper label {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .controls-wrapper select, .controls-wrapper button {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #eee;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-family: 'Source Code Pro', monospace;
+            cursor: pointer;
+            outline: none;
+            display: inline-flex; 
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .controls-wrapper button#toggle-insight-button-main { 
+            padding: 4px 8px; 
+            min-width: 30px; 
+            font-size: 14px; 
+            line-height: 1; 
+        }
+        .controls-wrapper select:disabled {
+            background-color: #111;
+            color: #555;
+            cursor: not-allowed;
+        }
+
+        .controls-wrapper select:hover:not(:disabled), .controls-wrapper button:hover {
+            border-color: #ff8000;
+        }
+        .controls-wrapper button.active {
+            background-color: #ff8000;
+            color: #000;
+            border-color: #ff8000;
+        }
+
+        .canvas-wrapper {
+            flex: 1; 
+            position: relative;
+            display: flex; 
+            min-height: 0; 
+            background-color: #0d0d0d; 
+            border-radius: 4px;
+            padding:10px; 
+            overflow: hidden; 
+        }
+        
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -77,104 +150,106 @@
         ::-webkit-scrollbar-thumb:hover {
             background-color: rgba(255,255,255,0.2);
         }
-        /* For Firefox */
-        html { /* Apply to html for consistency */
+        html { 
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px; /* MODIFIED: Applied from Retail Dashboard */
+        
+        canvas#cotChart {
+            max-width: 100%;  
+            max-height: 100%; 
+            display: block;   
         }
 
-        th, td {
-            border: 1px solid #1c1c1c;  /* MODIFIED: Applied from Retail Dashboard */
-            padding: 6px; /* MODIFIED: Applied from Retail Dashboard */
-            text-align: left;
-            vertical-align: middle;
+        #insight-area {
+            /* position: relative; Dihapus karena tombol tidak lagi di dalam sini */
+            font-size: 12px;
+            color: #ccc;
+            border-top: 1px solid #222;
+            margin-top:10px;
+            flex-shrink: 0; 
+            display: flex; 
+            flex-direction: column;
         }
-
-        th {
-            background-color: #1a1a1a; 
+        #insight-area.hidden {
+            display: none !important;
+        }
+        #insight-area strong {
             color: #ff8000;
-            position: sticky; /* Makes table headers sticky during vertical scroll */
-            top: 0; 
-            z-index: 10; /* Ensures headers stay above scrolling content */
-            white-space: nowrap; 
-            font-size: 13px; /* MODIFIED: Applied from Retail Dashboard */
         }
         
-        td {
-            color: #bbb; /* MODIFIED: Applied from Retail Dashboard */
-            white-space: nowrap; 
+        #insight-text-content {
+            padding: 10px; 
+            /* padding-top: 30px; Dihapus karena tombol tidak lagi di dalam sini */
+            overflow-y: auto; 
+            max-height: 100px; 
+            line-height: 1.6;
         }
-        td:not(:first-child) {  /* Added from Retail Dashboard for consistent data alignment */
-            text-align: right;
-        }
-        
-        tr:nth-child(even) {
-            background-color: #080808; /* MODIFIED: Applied from Retail Dashboard */
-        }
-        tr:hover {
-            background-color: #151515; 
-        }
+        /* #insight-area.hidden #insight-text-content { Dihapus karena #insight-area.hidden sudah cukup } */
 
-        .chart-cell {
-            width: 80px;  /* MODIFIED: Applied from Retail Dashboard */
-            height: 40px; /* MODIFIED: Applied from Retail Dashboard */
-            padding: 2px; /* MODIFIED: Applied from Retail Dashboard */
-            box-sizing: border-box;
-        }
-        .chart-cell canvas {
-            max-width: 100%;
-            max-height: 100%;
-            display: block;
-        }
-        .positive-change, .positive-value { /* MODIFIED: '.positive-value' added from Retail Dashboard */
-            color: #4CAF50; 
-        }
-        .negative-change, .negative-value { /* MODIFIED: '.negative-value' added from Retail Dashboard */
-            color: #F44336; 
-        }
-        .instrument-name {
-            font-weight: bold;
-            color: #e0e0e0; 
-        }
     </style>
 </head>
 <body>
-<div class="dashboard-container">
-    <div class="dashboard-title-bar">COT Overview Dashboard</div>
-    <div class="dashboard-content-wrapper">
-        <table id="cot-overview-table">
-            <thead>
-                <tr>
-                    <th>Instrument</th>
-                    <th>Net Position</th>
-                    <th>Open Interest</th>
-                    <th>Total Long</th>
-                    <th>Total Short</th>
-                    <th>Weekly Δ Net</th>
-                    <th>Net Pos Trend (30w)</th>
-                    <th>Buy/Sell %</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
+<div class="widget-container">
+    <div class="widget-title-bar">COTX - CFTC Positioning Explorer</div>
+    <div class="content-wrapper">
+        <div class="controls-wrapper">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="instrument-select">Instrument:</label>
+                    <select id="instrument-select"></select>
+                </div>
+                 <div class="control-group">
+                    <label for="trader-type-select">Trader Type:</label>
+                    <select id="trader-type-select">
+                        <option value="all">All Trader Types</option>
+                        <option value="leveragedFund">Leveraged Fund</option>
+                        <option value="assetManager">Asset Manager</option>
+                        <option value="dealer">Dealer</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-row" id="chart-mode-buttons">
+                <button data-mode="netPosition" class="active">Net Positioning</button>
+                <button data-mode="longShortBreakdown">Long/Short Breakdown</button>
+                <button data-mode="openInterest">Open Interest</button>
+                <button data-mode="weeklyChanges">Weekly Changes</button>
+                <button data-mode="percentageBuySell">Buy/Sell %</button>
+            </div>
+            <div class="control-row">
+                <button id="toggle-insight-button-main" title="Sembunyikan Insight">▲</button>
+            </div>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="cotChart"></canvas>
+        </div>
+        <div id="insight-area">
+            <div id="insight-text-content">
+                </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- Helper untuk menghasilkan tanggal dan data COT acak ---
-    // Data generation functions (generateRandomCotEntry, generateHistoricalData) remain specific to COT data.
+    const ctxCot = document.getElementById('cotChart').getContext('2d');
+    const instrumentSelect = document.getElementById('instrument-select');
+    const traderTypeSelect = document.getElementById('trader-type-select'); 
+    const chartModeButtonsContainer = document.getElementById('chart-mode-buttons');
+    const insightArea = document.getElementById('insight-area');
+    const insightTextContent = document.getElementById('insight-text-content'); 
+    const toggleInsightButtonMain = document.getElementById('toggle-insight-button-main'); // Tombol baru di area kontrol
+    let cotChartInstance = null;
+    let currentChartMode = 'netPosition';
+
+    const arrowUpChar = '▲';    
+    const arrowDownChar = '▼';  
+
+
+    // --- Helper to generate dates and random COT data (Unchanged) ---
     function generateRandomCotEntry(baseDate, weekOffset, instrumentType) {
         const date = new Date(baseDate);
-        // date.setDate(date.getDate() + weekOffset * 7); // Original logic for weekOffset if baseDate is fixed for series
-        // For this script, entryDate is calculated directly in generateHistoricalData, so weekOffset here is relative to entryDate if used differently.
-        // Given current generateHistoricalData, weekOffset in this function effectively becomes 0 or unused if date is already set.
+        date.setDate(date.getDate() + weekOffset * 7);
+        const dateString = date.toISOString().split('T')[0];
 
         let lfLongBase = 150000, amLongBase = 200000, dLongBase = 250000;
         let lfShortBase = 150000, amShortBase = 200000, dShortBase = 250000;
@@ -188,28 +263,13 @@
         } else if (instrumentType === 'OIL') {
             lfLongBase = 350000; amLongBase = 80000; dLongBase = 400000;
             lfShortBase = 280000; amShortBase = 100000; dShortBase = 450000;
-        } else if (instrumentType === 'SP500') {
-            lfLongBase = 100000; amLongBase = 400000; dLongBase = 50000;
-            lfShortBase = 120000; amShortBase = 380000; dShortBase = 70000;
-        } else if (instrumentType === 'GBPUSD') {
-            lfLongBase = 60000; amLongBase = 40000; dLongBase = 50000;
-            lfShortBase = 70000; amShortBase = 50000; dShortBase = 40000;
-        } else if (instrumentType === 'USDJPY') { 
-            lfLongBase = 20000; amLongBase = 80000; dLongBase = 100000;
-            lfShortBase = 100000; amShortBase = 30000; dShortBase = 20000;
-        } else if (instrumentType === 'AUDUSD') {
-            lfLongBase = 40000; amLongBase = 30000; dLongBase = 20000;
-            lfShortBase = 30000; amShortBase = 40000; dShortBase = 25000;
-        } else if (instrumentType === 'COPPER') {
-            lfLongBase = 50000; amLongBase = 20000; dLongBase = 30000;
-            lfShortBase = 40000; amShortBase = 30000; dShortBase = 20000;
         }
         
         const trendFactor = Math.sin(weekOffset / 10) * 0.2 + 1; 
-        const noiseFactor = () => (Math.random() - 0.5) * 0.15 + 1; 
+        const noiseFactor = () => (Math.random() - 0.5) * 0.2 + 1; 
 
-        const lfLong = Math.floor(lfLongBase * trendFactor * noiseFactor());
-        const lfShort = Math.floor(lfShortBase * (2 - trendFactor) * noiseFactor());
+        const lfLong = Math.floor(lfLongBase * trendFactor * noiseFactor() * (instrumentType === 'GOLD' ? 1.1 : 0.9));
+        const lfShort = Math.floor(lfShortBase * (2 - trendFactor) * noiseFactor() * (instrumentType === 'EURUSD' ? 1.1 : 0.9));
         const amLong = Math.floor(amLongBase * trendFactor * noiseFactor());
         const amShort = Math.floor(amShortBase * (2 - trendFactor) * noiseFactor());
         const dLong = Math.floor(dLongBase * (2 - trendFactor) * noiseFactor());
@@ -218,7 +278,7 @@
         const openInterest = lfLong + amLong + dLong + lfShort + amShort + dShort;
 
         return {
-            date: date, // Store actual Date object for time series chart
+            date: dateString,
             leveragedFund: { long: Math.max(0, lfLong), short: Math.max(0, lfShort) },
             assetManager: { long: Math.max(0, amLong), short: Math.max(0, amShort) },
             dealer: { long: Math.max(0, dLong), short: Math.max(0, dShort) },
@@ -229,249 +289,451 @@
     function generateHistoricalData(instrumentKey, numEntries = 30) {
         const data = [];
         const reportDayOffset = 2; // Tuesday
-        let seriesStartDate = new Date(); 
-        seriesStartDate.setDate(seriesStartDate.getDate() - (seriesStartDate.getDay() - reportDayOffset + 7) % 7); // Most recent Tuesday
-        seriesStartDate.setDate(seriesStartDate.getDate() - (numEntries - 1) * 7); // Go back (numEntries - 1) weeks to get the start date
+        let baseDate = new Date(); 
+        baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
+        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
 
         for (let i = 0; i < numEntries; i++) {
-            const entryDate = new Date(seriesStartDate);
-            entryDate.setDate(seriesStartDate.getDate() + i * 7); // Increment date for each entry
-            // Pass 'i' as weekOffset relative to series start, for trendFactor calculation in generateRandomCotEntry
-            data.push(generateRandomCotEntry(entryDate, i, instrumentKey)); 
+            data.push(generateRandomCotEntry(baseDate, i, instrumentKey));
         }
         return data;
     }
 
-    const instruments = {
-        EURUSD: "EUR/USD",
-        GBPUSD: "GBP/USD",
-        USDJPY: "JPY/USD", 
-        AUDUSD: "AUD/USD",
-        SP500: "S&P 500",
-        GOLD: "Gold",
-        OIL: "Crude Oil",
-        COPPER: "Copper"
+    const cotData = {
+        GOLD: generateHistoricalData('GOLD'),
+        EURUSD: generateHistoricalData('EURUSD'),
+        OIL: generateHistoricalData('OIL')
+    };
+    const instrumentNames = { GOLD: "Gold Futures", EURUSD: "EUR Futures", OIL: "Crude Oil (WTI) Futures"};
+    const traderDisplayNames = {
+        all: "All Trader Types",
+        leveragedFund: "Leveraged Fund",
+        assetManager: "Asset Manager",
+        dealer: "Dealer"
     };
 
-    const cotDataStore = {};
-    Object.keys(instruments).forEach(key => {
-        cotDataStore[key] = generateHistoricalData(key);
-    });
 
-    // MODIFIED: Colors object updated to match retailDashboardColors from the first file
-    const colors = { // Renamed from retailDashboardColors for simplicity if preferred, but values are from first file
-        netPositionLinePositive: 'rgba(34, 177, 76, 0.8)', 
-        netPositionFillPositive: 'rgba(34, 177, 76, 0.1)', 
-        netPositionLineNegative: 'rgba(237, 28, 36, 0.8)', 
-        netPositionFillNegative: 'rgba(237, 28, 36, 0.1)', 
-        long: 'rgba(34, 177, 76, 0.8)',      
-        short: 'rgba(237, 28, 36, 0.8)',     
-        // Properties like axisAndGrid, ticks removed as they are not in the first file's theme & axes are hidden
+    const colors = {
+        dealer: 'rgba(54, 162, 235, 0.7)',        
+        leveragedFund: 'rgba(255, 99, 132, 0.7)', 
+        assetManager: 'rgba(75, 192, 192, 0.7)',  
+        openInterest: 'rgba(255, 159, 64, 0.7)',  
+        long: 'rgba(75, 192, 75, 0.7)',           
+        short: 'rgba(255, 99, 75, 0.7)',          
+        dealerBorder: 'rgb(54, 162, 235)',
+        leveragedFundBorder: 'rgb(255, 99, 132)',
+        assetManagerBorder: 'rgb(75, 192, 192)',
+        openInterestBorder: 'rgb(255, 159, 64)',
     };
 
-    let miniChartInstances = {}; 
+    function getSelectedInstrumentData() {
+        const selectedKey = instrumentSelect.value;
+        return cotData[selectedKey] || [];
+    }
 
-    // MODIFIED: Replaced formatNumber with formatRetailDashNumber from the first file
-    function formatRetailDashNumber(num, isPercentage = false) {
-        if (isPercentage) {
-            return num.toFixed(0) + '%'; 
-        }
-        if (Math.abs(num) >= 1000000) {
-            return (num / 1000000).toFixed(1) + 'M';
-        } else if (Math.abs(num) >= 1000) {
-            return (num / 1000).toFixed(0) + 'K'; // Matched toFixed(0) for K
-        }
+    function formatNumber(num) {
         return num.toLocaleString('en-US');
     }
+    
+    function renderChart() {
+        if (cotChartInstance) {
+            cotChartInstance.destroy();
+        }
+        
+        const data = getSelectedInstrumentData();
+        const selectedTraderType = traderTypeSelect.value;
 
-    function destroyMiniCharts() {
-        Object.keys(miniChartInstances).forEach(key => {
-            if (miniChartInstances[key]) {
-                miniChartInstances[key].destroy();
+        if (currentChartMode === 'openInterest' || currentChartMode === 'percentageBuySell') {
+            traderTypeSelect.disabled = true;
+            if (selectedTraderType !== 'all') traderTypeSelect.value = 'all'; 
+        } else {
+            traderTypeSelect.disabled = false;
+        }
+
+        if (data.length === 0) {
+            if (!insightArea.classList.contains('hidden')) { 
+                insightTextContent.innerHTML = 'No data available for the selected instrument.';
             }
-        });
-        miniChartInstances = {}; 
+            ctxCot.clearRect(0, 0, ctxCot.canvas.width, ctxCot.canvas.height);
+            return;
+        }
+
+        const labels = data.map(d => d.date);
+        const latestData = data[data.length - 1];
+        const prevData = data.length > 1 ? data[data.length - 2] : null;
+
+        let chartConfig;
+        const effectiveTraderType = traderTypeSelect.disabled ? 'all' : selectedTraderType;
+
+        if (!insightArea.classList.contains('hidden')) {
+            insightTextContent.innerHTML = ''; 
+        }
+
+        switch (currentChartMode) {
+            case 'netPosition':
+                chartConfig = getNetPositionConfig(data, labels, effectiveTraderType);
+                if (!insightArea.classList.contains('hidden')) generateNetPositionInsights(latestData, prevData, effectiveTraderType);
+                break;
+            case 'longShortBreakdown':
+                chartConfig = getLongShortBreakdownConfig(data, labels, effectiveTraderType);
+                 if (!insightArea.classList.contains('hidden')) generateLongShortInsights(latestData, prevData, effectiveTraderType);
+                break;
+            case 'openInterest': 
+                chartConfig = getOpenInterestConfig(data, labels);
+                if (!insightArea.classList.contains('hidden')) generateOpenInterestInsights(latestData, prevData);
+                break;
+            case 'weeklyChanges':
+                chartConfig = getWeeklyChangesConfig(latestData, prevData, latestData.date, effectiveTraderType);
+                break;
+            case 'percentageBuySell': 
+                chartConfig = getPercentageBuySellConfig(latestData);
+                break;
+            default:
+                console.error('Unknown chart mode:', currentChartMode);
+                return;
+        }
+        if (chartConfig) {
+             cotChartInstance = new Chart(ctxCot, chartConfig);
+        } else if (currentChartMode !== 'weeklyChanges' && currentChartMode !== 'percentageBuySell') { 
+            if (!insightArea.classList.contains('hidden')) {
+                insightTextContent.innerHTML = `Chart for mode '${currentChartMode}' is not yet implemented.`;
+            }
+        }
     }
 
-    function populateTable() {
-        destroyMiniCharts(); 
-        const tableBody = document.getElementById('cot-overview-table').getElementsByTagName('tbody')[0];
-        tableBody.innerHTML = ''; 
-
-        Object.keys(instruments).forEach(instrumentKey => {
-            const historicalData = cotDataStore[instrumentKey];
-            if (!historicalData || historicalData.length === 0) return;
-
-            const latestReport = historicalData[historicalData.length - 1];
-            const previousReport = historicalData.length > 1 ? historicalData[historicalData.length - 2] : null;
-
-            const latestAllLong = latestReport.dealer.long + latestReport.leveragedFund.long + latestReport.assetManager.long;
-            const latestAllShort = latestReport.dealer.short + latestReport.leveragedFund.short + latestReport.assetManager.short;
-            const latestAllNet = latestAllLong - latestAllShort;
-            
-            let weeklyChangeNetAll = 'N/A';
-            let changeClass = '';
-            if (previousReport) {
-                const prevAllLong = previousReport.dealer.long + previousReport.leveragedFund.long + previousReport.assetManager.long;
-                const prevAllShort = previousReport.dealer.short + previousReport.leveragedFund.short + previousReport.assetManager.short;
-                const prevAllNet = prevAllLong - prevAllShort;
-                const change = latestAllNet - prevAllNet;
-                weeklyChangeNetAll = formatRetailDashNumber(change); // MODIFIED: Using new formatter
-                changeClass = change >= 0 ? 'positive-change' : 'negative-change';
-            }
-
-            const row = tableBody.insertRow();
-            const instrumentCell = row.insertCell();
-            instrumentCell.textContent = instruments[instrumentKey];
-            instrumentCell.className = 'instrument-name';
-
-            // MODIFIED: Using new formatter and positive/negative classes for Net Position
-            const netPosCell = row.insertCell();
-            netPosCell.textContent = formatRetailDashNumber(latestAllNet);
-            netPosCell.className = latestAllNet >= 0 ? 'positive-value' : 'negative-value';
-            
-            row.insertCell().textContent = formatRetailDashNumber(latestReport.openInterest);
-            row.insertCell().textContent = formatRetailDashNumber(latestAllLong);
-            row.insertCell().textContent = formatRetailDashNumber(latestAllShort);
-            const changeCell = row.insertCell();
-            changeCell.textContent = weeklyChangeNetAll;
-            changeCell.className = changeClass;
-
-            const netPositionChartCell = row.insertCell();
-            netPositionChartCell.className = 'chart-cell';
-            const netCanvasId = `netChart-${instrumentKey}`; // Keep original ID naming for COT
-            netPositionChartCell.innerHTML = `<canvas id="${netCanvasId}"></canvas>`;
-            
-            const doughnutChartCell = row.insertCell();
-            doughnutChartCell.className = 'chart-cell';
-            const doughnutCanvasId = `doughnutChart-${instrumentKey}`; // Keep original ID naming for COT
-            doughnutChartCell.innerHTML = `<canvas id="${doughnutCanvasId}"></canvas>`;
-
-            setTimeout(() => { 
-                renderNetPositionMiniChart(netCanvasId, historicalData);
-                renderBuySellDoughnutMiniChart(doughnutCanvasId, latestAllLong, latestAllShort);
-            }, 0);
-        });
+    function getNetPositionConfig(data, labels, selectedTrader) {
+        const datasets = [];
+        if (selectedTrader === 'all' || selectedTrader === 'dealer') {
+            datasets.push({ label: 'Dealer Net', data: data.map(d => d.dealer.long - d.dealer.short), borderColor: colors.dealerBorder, backgroundColor: colors.dealer, fill: false, tension: 0.1 });
+        }
+        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') {
+            datasets.push({ label: 'Leveraged Fund Net', data: data.map(d => d.leveragedFund.long - d.leveragedFund.short), borderColor: colors.leveragedFundBorder, backgroundColor: colors.leveragedFund, fill: false, tension: 0.1 });
+        }
+        if (selectedTrader === 'all' || selectedTrader === 'assetManager') {
+            datasets.push({ label: 'Asset Manager Net', data: data.map(d => d.assetManager.long - d.assetManager.short), borderColor: colors.assetManagerBorder, backgroundColor: colors.assetManager, fill: false, tension: 0.1 });
+        }
+        return {
+            type: 'line',
+            data: { labels: labels, datasets: datasets },
+            options: commonChartOptions(`Net Positions: ${traderDisplayNames[selectedTrader]}`, 'Net Contracts', labels.length > 1)
+        };
     }
 
-    function renderNetPositionMiniChart(canvasId, historicalData) {
-        const element = document.getElementById(canvasId);
-        if (!element) return;
-        const ctx = element.getContext('2d');
-        const netPositionsAll = historicalData.map(d => 
-            (d.dealer.long + d.leveragedFund.long + d.assetManager.long) -
-            (d.dealer.short + d.leveragedFund.short + d.assetManager.short)
-        );
-        const labels = historicalData.map(d => d.date); 
-
-        miniChartInstances[canvasId] = new Chart(ctx, { 
+    function getLongShortBreakdownConfig(data, labels, selectedTrader) {
+        const datasets = [];
+        if (selectedTrader === 'all' || selectedTrader === 'dealer') {
+            datasets.push({ label: 'Dealer Long', data: data.map(d => d.dealer.long), backgroundColor: colors.long, stack: 'dealer' });
+            datasets.push({ label: 'Dealer Short', data: data.map(d => d.dealer.short * -1), backgroundColor: colors.short, stack: 'dealer' });
+        }
+        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') {
+            datasets.push({ label: 'Leveraged Fund Long', data: data.map(d => d.leveragedFund.long), backgroundColor: colors.long, stack: 'leveragedFund' });
+            datasets.push({ label: 'Leveraged Fund Short', data: data.map(d => d.leveragedFund.short * -1), backgroundColor: colors.short, stack: 'leveragedFund' });
+        }
+        if (selectedTrader === 'all' || selectedTrader === 'assetManager') {
+            datasets.push({ label: 'Asset Manager Long', data: data.map(d => d.assetManager.long), backgroundColor: colors.long, stack: 'assetManager' });
+            datasets.push({ label: 'Asset Manager Short', data: data.map(d => d.assetManager.short * -1), backgroundColor: colors.short, stack: 'assetManager' });
+        }
+        return {
+            type: 'bar',
+            data: { labels: labels, datasets: datasets },
+             options: {
+                 ...commonChartOptions(`Long/Short Gross: ${traderDisplayNames[selectedTrader]}`, 'Number of Contracts', labels.length > 1),
+                 scales: {
+                     y: { stacked: false, ticks: { callback: function(value) { return formatNumber(Math.abs(value)); } } },
+                     x: { stacked: true }
+                 },
+                 plugins: { tooltip: { callbacks: { label: function(context) {
+                     let label = context.dataset.label || '';
+                     if (label) { label += ': '; }
+                     if (context.parsed.y !== null) { label += formatNumber(Math.abs(context.parsed.y)); }
+                     return label;
+                 }}}}
+            }
+        };
+    }
+    
+    function getOpenInterestConfig(data, labels) { 
+        return {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Net Position', 
-                    data: netPositionsAll,
-                    borderWidth: 1, 
-                    pointRadius: 0, 
-                    fill: true, 
-                    tension: 0.4,
-                    segment: { 
-                        borderColor: ctxSeg => netPositionsAll[ctxSeg.p0DataIndex] >= 0 ? colors.netPositionLinePositive : colors.netPositionLineNegative,
-                        backgroundColor: ctxSeg => netPositionsAll[ctxSeg.p0DataIndex] >= 0 ? colors.netPositionFillPositive : colors.netPositionFillNegative,
-                    }
-                }]
+                datasets: [
+                    { label: 'Total Open Interest', data: data.map(d => d.openInterest), borderColor: colors.openInterestBorder, backgroundColor: colors.openInterest, fill: false, tension: 0.1 }
+                ]
             },
-            options: miniChartOptions(true) // MODIFIED: Using new miniChartOptions
-        });
+            options: commonChartOptions('Total Open Interest Over Time', 'Total Contracts', labels.length > 1)
+        };
     }
 
-    function renderBuySellDoughnutMiniChart(canvasId, totalLong, totalShort) {
-        const element = document.getElementById(canvasId);
-        if (!element) return;
-        const ctx = element.getContext('2d');
-        const grandTotal = totalLong + totalShort;
-        const percLong = grandTotal > 0 ? (totalLong / grandTotal) * 100 : 0;
-        // const percShort = grandTotal > 0 ? (totalShort / grandTotal) * 100 : (percLong > 0 ? 0 : 100); // Alternative for percShort if needed by tooltip
+    function getWeeklyChangesConfig(latest, previous, labelForChart, selectedTrader) {
+        if (!previous) {
+            if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = 'Not enough data for weekly changes.';
+            return null; 
+        }
+        
+        const allTraderCategories = {dealer: 'Dealer', leveragedFund: 'Leveraged Fund', assetManager: 'Asset Manager'};
+        const changes = {};
+        let insightText = `<strong>Weekly Changes for ${instrumentNames[instrumentSelect.value]} (${latest.date}) - ${traderDisplayNames[selectedTrader]}:</strong><br/>`;
+        
+        const traderKeysToProcess = selectedTrader === 'all' ? Object.keys(allTraderCategories) : [selectedTrader];
+        const chartChangeLabels = [];
+        const chartChangeData = [];
 
-        miniChartInstances[canvasId] = new Chart(ctx, { 
-            type: 'doughnut',
-            data: {
-                datasets: [{
-                    data: [totalLong, totalShort], 
-                    backgroundColor: [colors.long, colors.short], // Using updated 'colors'
-                    borderColor: '#060606',  // MODIFIED: Matched from Retail Dashboard doughnut
-                    borderWidth: 1, 
-                    hoverOffset: 1 
-                }]
-            },
-            options: { // Specific options for this doughnut, not from miniChartOptions directly
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '50%', // MODIFIED: Matched from Retail Dashboard doughnut options
-                plugins: {
-                    legend: { display: false }, 
-                    tooltip: { 
-                        enabled: true, 
-                        displayColors: false, 
-                        callbacks: {
-                            title: () => null, 
-                            label: function(context) { // MODIFIED: Tooltip style from Retail Dashboard doughnut
-                                const type = context.dataIndex === 0 ? 'Long' : 'Short';
-                                // 'percLong' is available from the outer function scope
-                                const displayPercentage = context.dataIndex === 0 ? percLong : (100 - percLong);
-                                return `${type}: ${displayPercentage.toFixed(0)}%`; 
-                            }
-                        }
-                    }
-                }
+        traderKeysToProcess.forEach(catKey => {
+            if (latest[catKey] && previous[catKey]) {
+                const displayName = allTraderCategories[catKey];
+                changes[catKey] = {
+                    long: latest[catKey].long - previous[catKey].long,
+                    short: latest[catKey].short - previous[catKey].short,
+                    net: (latest[catKey].long - latest[catKey].short) - (previous[catKey].long - previous[catKey].short)
+                };
+                insightText += `<em>${displayName}:</em><br/>
+                &nbsp;&nbsp;Longs: ${formatNumber(changes[catKey].long)} (Now: ${formatNumber(latest[catKey].long)})<br/>
+                &nbsp;&nbsp;Shorts: ${formatNumber(changes[catKey].short)} (Now: ${formatNumber(latest[catKey].short)})<br/>
+                &nbsp;&nbsp;Net: ${formatNumber(changes[catKey].net)} (Now: ${formatNumber(latest[catKey].long - latest[catKey].short)})<br/>`;
+
+                const shortName = displayName.substring(0,2).toUpperCase(); 
+                chartChangeLabels.push(`${shortName} L Δ`, `${shortName} S Δ`, `${shortName} N Δ`);
+                chartChangeData.push(changes[catKey].long, changes[catKey].short, changes[catKey].net);
             }
         });
+        if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = insightText; 
+
+        if (chartChangeData.length === 0) { 
+             if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = `No weekly change data for ${traderDisplayNames[selectedTrader]}.`;
+             return null;
+        }
+
+        return {
+            type: 'bar',
+            data: {
+                labels: chartChangeLabels,
+                datasets: [{
+                    label: `Weekly Change for ${traderDisplayNames[selectedTrader]} (week ending ${labelForChart})`,
+                    data: chartChangeData,
+                    backgroundColor: chartChangeData.map(d => d >= 0 ? colors.long : colors.short),
+                }]
+            },
+            options: commonChartOptions(`Weekly Changes: ${traderDisplayNames[selectedTrader]}`, 'Change in Contracts', false)
+        };
     }
 
-    // MODIFIED: Replaced with miniChartOptions from the first file
-    function miniChartOptions(isTimeSeries = false) {
+    function getPercentageBuySellConfig(latest) { 
+        const totalLongs = latest.dealer.long + latest.leveragedFund.long + latest.assetManager.long;
+        const totalShorts = latest.dealer.short + latest.leveragedFund.short + latest.assetManager.short;
+        const grandTotal = totalLongs + totalShorts;
+
+        if (grandTotal === 0) {
+            if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = 'No open contracts to calculate percentages.';
+            return null;
+        }
+
+        const percLong = (totalLongs / grandTotal) * 100;
+        const percShort = (totalShorts / grandTotal) * 100;
+        
+        if (!insightArea.classList.contains('hidden')) {
+            insightTextContent.innerHTML = `<strong>Overall Market Sentiment for ${instrumentNames[instrumentSelect.value]} (as of ${latest.date}):</strong><br/>
+            Total Long Contracts: ${formatNumber(totalLongs)} (${percLong.toFixed(1)}%)<br/>
+            Total Short Contracts: ${formatNumber(totalShorts)} (${percShort.toFixed(1)}%)<br/>`;
+        }
+
+        return {
+            type: 'doughnut', 
+            data: {
+                labels: [`Longs (${percLong.toFixed(1)}%)`, `Shorts (${percShort.toFixed(1)}%)`],
+                datasets: [{
+                    data: [totalLongs, totalShorts],
+                    backgroundColor: [colors.long, colors.short],
+                    borderColor: ['#0d0d0d', '#0d0d0d'], 
+                    borderWidth: 2, 
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '50%', 
+                plugins: {
+                    title: { display: true, text: `Percentage Buy/Sell - ${instrumentNames[instrumentSelect.value]} (${latest.date})`, color: '#f0f0f0', font: {size: 14} },
+                    legend: { position: 'top', labels: { color: '#f0f0f0' } },
+                    tooltip: { callbacks: { label: function(context) {
+                        let label = context.label || '';
+                        if (context.parsed !== null) { label += ': ' + formatNumber(context.parsed); }
+                        return label;
+                    }}}
+                }
+            }
+        };
+    }
+
+    function commonChartOptions(titleText, yAxisLabel, isTimeSeries = true) {
         const options = {
             responsive: true,
-            maintainAspectRatio: false,
-            animation: {
-                duration: 0 
-            },
+            maintainAspectRatio: false, 
             plugins: {
-                legend: { display: false },
-                tooltip: { 
-                    enabled: true, 
-                    mode: 'index', 
-                    intersect: false,
-                    displayColors: false,
-                    padding: 4, 
-                    callbacks: {
-                        title: () => null,
-                        label: function(context) {
-                            if (context.parsed.y !== null) {
-                                return `${formatRetailDashNumber(context.parsed.y)}`; // Uses new formatter
-                            }
-                            return '';
-                        }
-                    }
-                } 
+                title: { display: true, text: titleText + ` - ${instrumentNames[instrumentSelect.value]}`, color: '#f0f0f0', font: {size: 14}},
+                legend: { position: 'top', labels: { color: '#f0f0f0' } },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    callbacks: { label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) { label += ': '; }
+                        if (context.parsed.y !== null) { label += formatNumber(context.parsed.y); }
+                        return label;
+                    }}
+                }
             },
             scales: {
-                y: { display: false },
-                x: { display: false }
+                y: {
+                    title: { display: true, text: yAxisLabel, color: '#ccc' },
+                    grid: { color: '#2a2a2a' },
+                    ticks: { color: '#e1e1e1', callback: function(value) { return formatNumber(value); } }
+                },
+                x: {
+                    grid: { display: !isTimeSeries, color: '#2a2a2a' }, 
+                    ticks: { color: '#e1e1e1', maxRotation: isTimeSeries? 45 : 0, minRotation: isTimeSeries? 45 : 0 },
+                }
             }
         };
         if (isTimeSeries) {
             options.scales.x.type = 'time';
-            // Ensure date objects are used for labels if type is 'time'
-            options.scales.x.time = { 
-                // parser: 'yyyy-MM-dd', // No longer needed if labels are Date objects
-                unit: 'week' 
-            };
+            options.scales.x.time = { unit: 'week', tooltipFormat: 'MMM dd, yy', displayFormats: { week: 'MMM dd' } };
         }
         return options;
     }
 
-    document.addEventListener('DOMContentLoaded', populateTable);
+    function generateNetPositionInsights(latest, prev, selectedTrader) {
+        let text = `<strong>Net Positioning Insights (${latest.date}) - ${traderDisplayNames[selectedTrader]}:</strong><br/>`;
+        const categories = {};
+        if (selectedTrader === 'all' || selectedTrader === 'dealer') categories['Dealer'] = latest.dealer;
+        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') categories['Leveraged Fund'] = latest.leveragedFund;
+        if (selectedTrader === 'all' || selectedTrader === 'assetManager') categories['Asset Manager'] = latest.assetManager;
+        
+        const keyMap = { "Dealer": "dealer", "Leveraged Fund": "leveragedFund", "Asset Manager": "assetManager" };
+
+        for (const catName in categories) {
+            const catData = categories[catName]; 
+            const netPos = catData.long - catData.short;
+            text += `${catName}: ${formatNumber(netPos)} (L: ${formatNumber(catData.long)}, S: ${formatNumber(catData.short)})`;
+            if (prev) {
+                const dataKey = keyMap[catName]; 
+                const prevCatData = prev[dataKey];
+                if (prevCatData) { 
+                    const prevNetPos = prevCatData.long - prevCatData.short;
+                    const change = netPos - prevNetPos;
+                    text += ` | Weekly Δ: <span style="color:${change >= 0 ? 'lightgreen' : 'salmon'};">${formatNumber(change)}</span>`;
+                } else { text += ` | Weekly Δ: N/A`; }
+            }
+            text += '<br/>';
+        }
+        if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = text;
+    }
+
+    function generateLongShortInsights(latest, prev, selectedTrader) {
+         let text = `<strong>Long/Short Breakdown Insights (${latest.date}) - ${traderDisplayNames[selectedTrader]}:</strong><br/>`;
+         const categories = {};
+         if (selectedTrader === 'all' || selectedTrader === 'dealer') categories['Dealer'] = latest.dealer;
+         if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') categories['Leveraged Fund'] = latest.leveragedFund;
+         if (selectedTrader === 'all' || selectedTrader === 'assetManager') categories['Asset Manager'] = latest.assetManager;
+
+         const keyMap = { "Dealer": "dealer", "Leveraged Fund": "leveragedFund", "Asset Manager": "assetManager" };
+
+         for (const catName in categories) {
+            const catData = categories[catName];
+            text += `${catName} - Long: ${formatNumber(catData.long)}, Short: ${formatNumber(catData.short)}`;
+             if (prev) {
+                const dataKey = keyMap[catName];
+                const prevCatData = prev[dataKey];
+                if (prevCatData) {
+                    const longChange = catData.long - prevCatData.long;
+                    const shortChange = catData.short - prevCatData.short;
+                    text += ` | Δ Long: <span style="color:${longChange >= 0 ? 'lightgreen' : 'salmon'};">${formatNumber(longChange)}</span>, Δ Short: <span style="color:${shortChange >= 0 ? 'lightgreen' : 'salmon'};">${formatNumber(shortChange)}</span>`;
+                } else { text += ` | Weekly Δ: N/A`; }
+            }
+            text += '<br/>';
+         }
+         if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = text;
+    }
+    
+    function generateOpenInterestInsights(latest, prev) { 
+        let text = `<strong>Open Interest Insights (${latest.date}):</strong><br/>
+        Total Open Interest: ${formatNumber(latest.openInterest)}`;
+        if (prev) {
+            const change = latest.openInterest - prev.openInterest;
+            text += ` | Weekly Δ: <span style="color:${change >= 0 ? 'lightgreen' : 'salmon'};">${formatNumber(change)}</span>`;
+        }
+        if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = text + '<br/>';
+    }
+
+    // --- Event Listeners ---
+    instrumentSelect.addEventListener('change', renderChart);
+    traderTypeSelect.addEventListener('change', renderChart);
+
+    chartModeButtonsContainer.addEventListener('click', (event) => {
+        if (event.target.tagName === 'BUTTON') {
+            chartModeButtonsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            currentChartMode = event.target.dataset.mode;
+            renderChart(); 
+        }
+    });
+
+    toggleInsightButtonMain.addEventListener('click', () => { // Menggunakan ID tombol yang baru
+        insightArea.classList.toggle('hidden');
+        if (insightArea.classList.contains('hidden')) {
+            toggleInsightButtonMain.innerHTML = arrowDownChar; 
+            toggleInsightButtonMain.title = "Tampilkan Insight";
+        } else {
+            toggleInsightButtonMain.innerHTML = arrowUpChar; 
+            toggleInsightButtonMain.title = "Sembunyikan Insight";
+            
+            const data = getSelectedInstrumentData();
+            if (data.length > 0) {
+                const latestData = data[data.length - 1];
+                const prevData = data.length > 1 ? data[data.length - 2] : null;
+                const effectiveTraderType = traderTypeSelect.disabled ? 'all' : traderTypeSelect.value;
+                 switch (currentChartMode) {
+                    case 'netPosition':
+                        generateNetPositionInsights(latestData, prevData, effectiveTraderType);
+                        break;
+                    case 'longShortBreakdown':
+                        generateLongShortInsights(latestData, prevData, effectiveTraderType);
+                        break;
+                    case 'openInterest':
+                        generateOpenInterestInsights(latestData, prevData);
+                        break;
+                    case 'weeklyChanges': 
+                         if (latestData && prevData) getWeeklyChangesConfig(latestData, prevData, latestData.date, effectiveTraderType);
+                        break;
+                    case 'percentageBuySell': 
+                        if (latestData) getPercentageBuySellConfig(latestData);
+                        break;
+                }
+            } else {
+                 insightTextContent.innerHTML = 'No data available for the selected instrument.';
+            }
+        }
+    });
+
+
+    // --- Initialization ---
+    function initializeWidget() {
+        Object.keys(cotData).forEach(key => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = instrumentNames[key] || key;
+            instrumentSelect.appendChild(option);
+        });
+        instrumentSelect.value = "GOLD"; 
+        traderTypeSelect.value = "all"; 
+        toggleInsightButtonMain.innerHTML = arrowUpChar; 
+        toggleInsightButtonMain.title = "Sembunyikan Insight";
+        renderChart(); 
+    }
+
+    initializeWidget();
 
 </script>
 </body>
