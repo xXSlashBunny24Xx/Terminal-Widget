@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>COTX - CFTC Positioning Explorer - Resizable</title>
+    <title>COTX - CFTC Positioning Explorer - Highly Resizable</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
@@ -17,13 +17,12 @@
             font-family: 'Source Code Pro', monospace;
             height: 100%; /* Takes full height of its container (iframe) */
             width: 100%;  /* Takes full width of its container (iframe) */
-            overflow: hidden; /* Prevent scrollbars on body itself, manage scrolling in specific containers */
+            overflow: hidden; /* Prevent scrollbars on body itself */
         }
 
         body {
             display: flex; /* Use flexbox for layout */
             flex-direction: column; /* Stack children vertically */
-            /* height: 100%; is inherited or already set, explicit for clarity */
         }
 
         .widget-container {
@@ -33,14 +32,14 @@
             padding: 0;
             box-sizing: border-box;
             background-color: #000;
-            border: 1px solid #222; /* This border is part of the widget look */
+            border: 1px solid #222; 
             border-radius: 0; 
-            overflow: hidden; /* Prevent this container from showing scrollbars; children will manage their own */
-            min-height: 0; /* Crucial for flex children to shrink properly and allow internal scrolling */
+            overflow: hidden; /* Prevent this container from showing scrollbars */
+            min-height: 0; /* Crucial for flex children to shrink properly */
         }
 
         .widget-title-bar {
-            height: 30px; /* Fixed height for the title bar */
+            height: 30px; 
             display: flex;
             align-items: center;
             justify-content: flex-start;
@@ -60,9 +59,8 @@
             padding: 16px;
             gap: 15px;
             box-sizing: border-box;
-            overflow: auto; /* Allows scrolling for the entire content area if it overflows */
-                         /* This means if controls + chart + insights are too tall, this wrapper scrolls */
-            min-height: 0; /* Allows shrinking and internal scrolling for children */
+            overflow: hidden; /* MODIFIED: Prevent scrolling here; content must adapt or be clipped */
+            min-height: 0; /* Allows shrinking */
         }
 
         .controls-wrapper {
@@ -70,14 +68,14 @@
             flex-direction: column; 
             gap: 10px; 
             padding-bottom: 10px;
-            flex-shrink: 0; /* Controls have a height based on content, don't shrink */
+            flex-shrink: 0; 
         }
         
         .control-row {
             display: flex;
             align-items: center;
             gap: 10px; 
-            flex-wrap: wrap; /* Allow controls to wrap on smaller widths */
+            flex-wrap: wrap; 
         }
 
         .control-group {
@@ -118,43 +116,40 @@
         }
 
         .canvas-wrapper {
-            flex: 1; /* Key for allowing the canvas area to grow and shrink */
+            flex: 1; /* Allows the canvas area to grow and shrink */
             position: relative;
-            display: flex; /* Helps in managing the canvas element if needed (e.g., centering) */
-            min-height: 0; /* MODIFIED: Allows the canvas wrapper to shrink as much as possible */
-                           /* Chart.js responsive options will handle the chart rendering in small spaces */
+            display: flex; 
+            min-height: 0; /* Ensures wrapper can shrink as much as possible */
             background-color: #0d0d0d; 
             border-radius: 4px;
-            padding:10px; /* Padding around the canvas */
+            padding:10px; 
+            overflow: hidden; /* Prevent canvas from overflowing its wrapper if Chart.js has issues shrinking */
         }
-        /* Global Minimalist macOS–Style Scrollbar Styling */
+        
+        /* Global Minimalist macOS–Style Scrollbar Styling (will only apply if overflow:auto is set somewhere) */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
-
         ::-webkit-scrollbar-track {
             background: transparent;
         }
-
         ::-webkit-scrollbar-thumb {
             background-color: rgba(255,255,255,0.1);
             border-radius: 4px;
         }
-
         ::-webkit-scrollbar-thumb:hover {
             background-color: rgba(255,255,255,0.2);
         }
-        /* For Firefox */
-        html {
+        html { /* For Firefox */
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
         
         canvas#cotChart {
-            max-width: 100%;  /* Ensures canvas does not exceed its wrapper's width */
-            max-height: 100%; /* Ensures canvas does not exceed its wrapper's height */
-            display: block;   /* Removes extra space below the canvas if it were inline */
+            max-width: 100%;  
+            max-height: 100%; 
+            display: block;   
         }
         #insight-area {
             font-size: 12px;
@@ -163,7 +158,9 @@
             border-top: 1px solid #222;
             margin-top:10px;
             line-height: 1.6;
-            flex-shrink: 0; /* Insight area height is based on content */
+            flex-shrink: 0; 
+            overflow-y: auto; /* Allow insights to scroll if they are too long for the available space */
+            max-height: 100px; /* Example max-height, adjust as needed or make it more dynamic if required */
         }
          #insight-area strong {
             color: #ff8000;
