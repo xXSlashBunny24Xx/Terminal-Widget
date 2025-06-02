@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Retail Trader Overview Dashboard</title>
+    <title>Retail Trader Overview Dashboard - Highly Resizable</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
@@ -16,25 +16,27 @@
             font-family: 'Source Code Pro', monospace;
             height: 100%;
             width: 100%;
+            overflow: hidden; /* Prevent scrollbars at the highest level */
         }
 
         body {
             display: flex;
             flex-direction: column;
             height: 100%; 
+            overflow: hidden; /* Ensure body itself doesn't scroll */
         }
 
         .dashboard-container {
             display: flex;
             flex-direction: column;
-            flex: 1;
+            flex: 1; /* Takes available space */
             padding: 0;
             box-sizing: border-box;
             background-color: #000;
             border: 1px solid #222;
             border-radius: 0;
-            overflow: hidden; 
-            min-height: 0;
+            overflow: hidden; /* Prevents this container from scrolling */
+            min-height: 0; /* Essential for flex children to shrink and allow internal scroll */
         }
 
         .dashboard-title-bar {
@@ -48,26 +50,48 @@
             font-weight: bold;
             border-bottom: 1px solid #222;
             padding-left: 12px;
-            flex-shrink: 0;
+            flex-shrink: 0; /* Title bar should not shrink */
         }
 
         .dashboard-content-wrapper {
-            flex: 1;
-            padding: 10px; /* Sedikit mengurangi padding wrapper */
+            flex: 1; /* Takes remaining space after title bar */
+            padding: 10px; 
             box-sizing: border-box;
-            overflow-y: auto; 
-            min-height: 0;
+            overflow-y: auto; /* Allows vertical scrolling for the table content */
+            overflow-x: auto; /* Allows horizontal scrolling for wide table content */
+            min-height: 0; /* Essential for flexbox to allow scrolling within this container */
+        }
+        
+        /* Minimalist macOS–Style Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        /* For Firefox */
+        html { /* Apply to html for consistency */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 10px; /* Mengurangi font size tabel lagi */
+            font-size: 12px; /* MODIFIED: Increased font size for table content */
         }
 
         th, td {
-            border: 1px solid #1c1c1c; /* Border lebih gelap sedikit */
-            padding: 5px; /* Mengurangi padding sel lagi */
+            border: 1px solid #1c1c1c; 
+            padding: 6px; /* Adjusted padding slightly for new font size */
             text-align: left;
             vertical-align: middle;
         }
@@ -75,35 +99,38 @@
         th {
             background-color: #1a1a1a; 
             color: #ff8000;
-            position: sticky;
+            position: sticky; /* Makes table headers sticky during vertical scroll */
             top: 0; 
-            z-index: 10;
+            z-index: 10; /* Ensures headers stay above scrolling content */
             white-space: nowrap; 
+            font-size: 13px; /* MODIFIED: Header font slightly larger */
         }
         
         td {
-            color: #aaa; /* Warna teks data lebih lembut lagi */
-             white-space: nowrap; 
+            color: #bbb; /* MODIFIED: Slightly brighter data text */
+            white-space: nowrap; 
         }
         td:not(:first-child) { 
             text-align: right;
         }
         
         tr:nth-child(even) {
-            background-color: #060606; /* Background baris genap lebih gelap */
+            background-color: #080808; /* MODIFIED: Slightly darker even row for better contrast */
         }
         tr:hover {
-            background-color: #111; 
+            background-color: #151515; 
         }
 
         .chart-cell {
-            width: 80px; /* Lebar sel chart diperkecil lagi */
-            height: 40px; /* Tinggi sel chart diperkecil lagi */
-            padding: 1px; /* Padding minimal untuk chart cell */
+            width: 80px; 
+            height: 40px; 
+            padding: 2px; /* MODIFIED: Slightly increased padding for chart cell */
+            box-sizing: border-box;
         }
         .chart-cell canvas {
             max-width: 100%;
             max-height: 100%;
+            display: block;
         }
         .positive-change, .positive-value {
             color: #4CAF50; 
@@ -113,7 +140,7 @@
         }
         .instrument-name {
             font-weight: bold;
-            color: #d0d0d0; /* Warna nama instrumen sedikit lebih terang */
+            color: #e0e0e0; 
         }
     </style>
 </head>
@@ -143,9 +170,9 @@
 <script>
     // --- Helper untuk menghasilkan data retail acak (sama seperti widget sebelumnya) ---
     function generateRetailDataEntry(baseDate, weekOffset, instrumentKey) {
-        const date = new Date(baseDate);
-        date.setDate(date.getDate() + weekOffset * 7);
-        const dateString = date.toISOString().split('T')[0];
+        const date = new Date(baseDate); // Use the passed baseDate for each entry
+        // date.setDate(date.getDate() + weekOffset * 7); // weekOffset is now relative to the series start
+        const dateString = date.toISOString().split('T')[0]; // For labels if needed, though chart uses Date obj
 
         let basePrice = 1.1000; 
         let priceVolatility = 0.0050;
@@ -170,35 +197,37 @@
         const percLong = totalPos > 0 ? (longPos / totalPos) * 100 : 0;
         const percShort = totalPos > 0 ? (shortPos / totalPos) * 100 : 0;
 
-        const longVol = Math.floor(volumeBase * (percLong / 100 + 0.5) * (0.8 + Math.random() * 0.4));
-        const shortVol = Math.floor(volumeBase * (percShort / 100 + 0.5) * (0.8 + Math.random() * 0.4));
+        // const longVol = Math.floor(volumeBase * (percLong / 100 + 0.5) * (0.8 + Math.random() * 0.4)); // Not used in table
+        // const shortVol = Math.floor(volumeBase * (percShort / 100 + 0.5) * (0.8 + Math.random() * 0.4)); // Not used in table
         
-        const avgLongPrice = currentPrice * (1 - Math.random() * (priceVolatility / basePrice) * 0.5);
-        const avgShortPrice = currentPrice * (1 + Math.random() * (priceVolatility / basePrice) * 0.5);
+        // const avgLongPrice = currentPrice * (1 - Math.random() * (priceVolatility / basePrice) * 0.5); // Not used in table
+        // const avgShortPrice = currentPrice * (1 + Math.random() * (priceVolatility / basePrice) * 0.5); // Not used in table
 
         return {
-            date: dateString,
+            date: date, // Store actual Date object for time series chart
             percentageShort: percShort,
             percentageLong: percLong,
-            shortVolume: Math.max(0, shortVol), 
-            longVolume: Math.max(0, longVol),   
+            // shortVolume: Math.max(0, shortVol), 
+            // longVolume: Math.max(0, longVol),   
             longPosition: Math.max(0, longPos),
             shortPosition: Math.max(0, shortPos),
             totalPosition: Math.max(0, totalPos),
-            averageShortPrice: avgShortPrice, 
-            averageLongPrice: avgLongPrice,   
+            // averageShortPrice: avgShortPrice, 
+            // averageLongPrice: avgLongPrice,   
         };
     }
 
     function generateHistoricalRetailData(instrumentKey, numEntries = 30) {
         const data = [];
-        const reportDayOffset = 2; 
-        let baseDate = new Date(); 
-        baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
-        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
+        const reportDayOffset = 2; // Tuesday, for example
+        let seriesStartDate = new Date(); 
+        seriesStartDate.setDate(seriesStartDate.getDate() - (seriesStartDate.getDay() - reportDayOffset + 7) % 7); // Most recent Tuesday
+        seriesStartDate.setDate(seriesStartDate.getDate() - (numEntries - 1) * 7); // Go back (numEntries - 1) weeks to get the start date
 
         for (let i = 0; i < numEntries; i++) {
-            data.push(generateRetailDataEntry(baseDate, i, instrumentKey));
+            const entryDate = new Date(seriesStartDate);
+            entryDate.setDate(seriesStartDate.getDate() + i * 7); // Increment date for each entry
+            data.push(generateRetailDataEntry(entryDate, i, instrumentKey)); // Pass 'i' as weekOffset relative to series start
         }
         return data;
     }
@@ -214,24 +243,24 @@
     });
 
     const retailDashboardColors = {
-        netPositionLinePositive: 'rgba(34, 177, 76, 0.8)', // Sedikit lebih transparan untuk garis
-        netPositionFillPositive: 'rgba(34, 177, 76, 0.1)', // Fill lebih transparan lagi
+        netPositionLinePositive: 'rgba(34, 177, 76, 0.8)', 
+        netPositionFillPositive: 'rgba(34, 177, 76, 0.1)', 
         netPositionLineNegative: 'rgba(237, 28, 36, 0.8)', 
         netPositionFillNegative: 'rgba(237, 28, 36, 0.1)', 
         long: 'rgba(34, 177, 76, 0.8)',      
-        short: 'rgba(237, 28, 36, 0.8)',    
+        short: 'rgba(237, 28, 36, 0.8)',     
     };
 
     let miniChartInstances = {}; 
 
     function formatRetailDashNumber(num, isPercentage = false) {
         if (isPercentage) {
-            return num.toFixed(0) + '%'; // Persentase tanpa desimal untuk ruang
+            return num.toFixed(0) + '%'; 
         }
         if (Math.abs(num) >= 1000000) {
             return (num / 1000000).toFixed(1) + 'M';
         } else if (Math.abs(num) >= 1000) {
-            return (num / 1000).toFixed(0) + 'K'; // Ribuan tanpa desimal
+            return (num / 1000).toFixed(0) + 'K'; 
         }
         return num.toLocaleString('en-US');
     }
@@ -308,7 +337,7 @@
         if (!element) return;
         const ctx = element.getContext('2d');
         const netPositions = historicalData.map(d => d.longPosition - d.shortPosition);
-        const labels = historicalData.map(d => d.date);
+        const labels = historicalData.map(d => d.date); // Using Date objects directly
 
         miniChartInstances[canvasId] = new Chart(ctx, { 
             type: 'line',
@@ -317,7 +346,7 @@
                 datasets: [{
                     label: 'Net Position', 
                     data: netPositions,
-                    borderWidth: 1, // Garis lebih tipis
+                    borderWidth: 1, 
                     pointRadius: 0, 
                     fill: true, 
                     tension: 0.4,
@@ -344,7 +373,7 @@
                 datasets: [{
                     data: [totalLong, totalShort], 
                     backgroundColor: [retailDashboardColors.long, retailDashboardColors.short],
-                    borderColor: '#060606', // Warna border disamakan dengan bg baris genap
+                    borderColor: '#060606', 
                     borderWidth: 1, 
                     hoverOffset: 1 
                 }]
@@ -352,18 +381,18 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '50%', // Lubang lebih kecil (donat lebih tebal)
+                cutout: '50%', // Adjusted for a thicker doughnut
                 plugins: {
                     legend: { display: false }, 
                     tooltip: { 
                         enabled: true, 
                         displayColors: false, 
                         callbacks: {
-                             title: () => null, 
-                             label: function(context) {
+                            title: () => null, 
+                            label: function(context) {
                                 const type = context.dataIndex === 0 ? 'Long' : 'Short';
                                 const percentage = context.dataIndex === 0 ? percLong : (100 - percLong);
-                                return `${type}: ${percentage.toFixed(0)}%`; // Hanya persentase di tooltip
+                                return `${type}: ${percentage.toFixed(0)}%`; 
                             }
                         }
                     }
@@ -386,7 +415,7 @@
                     mode: 'index', 
                     intersect: false,
                     displayColors: false,
-                    padding: 4, // Padding tooltip lebih kecil
+                    padding: 4, 
                     callbacks: {
                         title: () => null,
                         label: function(context) {
@@ -405,7 +434,11 @@
         };
         if (isTimeSeries) {
             options.scales.x.type = 'time';
-            options.scales.x.time = { parser: 'yyyy-MM-dd', unit: 'week' };
+            // Ensure date objects are used for labels if type is 'time'
+            options.scales.x.time = { 
+                // parser: 'yyyy-MM-dd', // No longer needed if labels are Date objects
+                unit: 'week' 
+            };
         }
         return options;
     }
