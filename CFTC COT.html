@@ -23,51 +23,74 @@
         body {
             display: flex; /* Use flexbox for layout */
             flex-direction: column; /* Stack children vertically */
+            height: 100%; 
         }
 
         .widget-container {
             display: flex;
             flex-direction: column;
-            flex: 1; /* Allows this container to grow and shrink to fill available space in body */
+            flex: 1; 
             padding: 0;
             box-sizing: border-box;
             background-color: #000;
             border: 1px solid #222; 
             border-radius: 0; 
-            overflow: hidden; /* Prevent this container from showing scrollbars */
-            min-height: 0; /* Crucial for flex children to shrink properly */
+            overflow: hidden; 
+            min-height: 0; 
+            /* position: relative; Removed as button is no longer absolutely positioned relative to this */
+        }
+
+        /* Styling for the toggle button in its new location */
+        #toggle-insight-button-main { 
+            margin-left: auto; /* Pushes the button to the far right of the flex row */
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: #eee;
+            padding: 4px 10px; 
+            font-size: 11px;
+            font-family: 'Source Code Pro', monospace;
+            cursor: pointer;
+            border-radius: 4px;
+            line-height: 1.4; 
+            /* Removed position: absolute, top, right, z-index */
+        }
+        #toggle-insight-button-main:hover {
+            background-color: #3a3a3a;
+            border-color: #ff8000;
         }
 
         .widget-title-bar {
             height: 30px; 
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: flex-start; 
             background-color: #1a1a1a;
             color: #fff;
             font-size: 14px;
             font-weight: bold;
             border-bottom: 1px solid #222;
             padding-left: 12px;
-            flex-shrink: 0; /* Prevents the title bar from shrinking */
+            /* padding-right: 120px; Removed as button is no longer in the title bar */
+            flex-shrink: 0; 
+            box-sizing: border-box;
         }
 
         .content-wrapper {
             display: flex;
             flex-direction: column;
-            flex: 1; /* Takes remaining space in .widget-container */
+            flex: 1; 
             padding: 16px;
             gap: 15px;
             box-sizing: border-box;
             overflow: hidden; 
-            min-height: 0; /* Allows shrinking */
+            min-height: 0; 
         }
 
         .controls-wrapper {
             display: flex;
             flex-direction: column; 
             gap: 10px; 
-            padding-bottom: 10px;
+            padding-bottom: 10px; 
             flex-shrink: 0; 
         }
         
@@ -89,7 +112,7 @@
             color: #ccc;
         }
 
-        .controls-wrapper select, .controls-wrapper button {
+        .controls-wrapper select, .controls-wrapper button:not(#toggle-insight-button-main) { /* Exclude the toggle button from general button styling if it has its own specific one */
             background-color: #1a1a1a;
             border: 1px solid #333;
             border-radius: 5px;
@@ -104,22 +127,16 @@
             justify-content: center;
         }
         
-        .controls-wrapper button#toggle-insight-button-main { 
-            padding: 4px 8px; 
-            min-width: 30px; 
-            font-size: 14px; 
-            line-height: 1; 
-        }
         .controls-wrapper select:disabled {
             background-color: #111;
             color: #555;
             cursor: not-allowed;
         }
 
-        .controls-wrapper select:hover:not(:disabled), .controls-wrapper button:hover {
+        .controls-wrapper select:hover:not(:disabled), .controls-wrapper button:not(#toggle-insight-button-main):hover {
             border-color: #ff8000;
         }
-        .controls-wrapper button.active {
+        .controls-wrapper button.active { /* This applies to chart mode buttons */
             background-color: #ff8000;
             color: #000;
             border-color: #ff8000;
@@ -162,17 +179,16 @@
         }
 
         #insight-area {
-            /* position: relative; Dihapus karena tombol tidak lagi di dalam sini */
             font-size: 12px;
             color: #ccc;
             border-top: 1px solid #222;
-            margin-top:10px;
+            margin-top:10px; 
             flex-shrink: 0; 
             display: flex; 
             flex-direction: column;
         }
         #insight-area.hidden {
-            display: none !important;
+            display: none !important; 
         }
         #insight-area strong {
             color: #ff8000;
@@ -180,12 +196,10 @@
         
         #insight-text-content {
             padding: 10px; 
-            /* padding-top: 30px; Dihapus karena tombol tidak lagi di dalam sini */
             overflow-y: auto; 
             max-height: 100px; 
             line-height: 1.6;
         }
-        /* #insight-area.hidden #insight-text-content { Dihapus karena #insight-area.hidden sudah cukup } */
 
     </style>
 </head>
@@ -208,7 +222,7 @@
                         <option value="dealer">Dealer</option>
                     </select>
                 </div>
-            </div>
+                <button id="toggle-insight-button-main" title="Sembunyikan Insight">Hide Insight</button> </div>
             <div class="control-row" id="chart-mode-buttons">
                 <button data-mode="netPosition" class="active">Net Positioning</button>
                 <button data-mode="longShortBreakdown">Long/Short Breakdown</button>
@@ -216,16 +230,13 @@
                 <button data-mode="weeklyChanges">Weekly Changes</button>
                 <button data-mode="percentageBuySell">Buy/Sell %</button>
             </div>
-            <div class="control-row">
-                <button id="toggle-insight-button-main" title="Sembunyikan Insight">▲</button>
-            </div>
         </div>
         <div class="canvas-wrapper">
             <canvas id="cotChart"></canvas>
         </div>
         <div id="insight-area">
             <div id="insight-text-content">
-                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -237,13 +248,9 @@
     const chartModeButtonsContainer = document.getElementById('chart-mode-buttons');
     const insightArea = document.getElementById('insight-area');
     const insightTextContent = document.getElementById('insight-text-content'); 
-    const toggleInsightButtonMain = document.getElementById('toggle-insight-button-main'); // Tombol baru di area kontrol
+    const toggleInsightButtonMain = document.getElementById('toggle-insight-button-main');
     let cotChartInstance = null;
     let currentChartMode = 'netPosition';
-
-    const arrowUpChar = '▲';    
-    const arrowDownChar = '▼';  
-
 
     // --- Helper to generate dates and random COT data (Unchanged) ---
     function generateRandomCotEntry(baseDate, weekOffset, instrumentType) {
@@ -318,7 +325,7 @@
         leveragedFund: 'rgba(255, 99, 132, 0.7)', 
         assetManager: 'rgba(75, 192, 192, 0.7)',  
         openInterest: 'rgba(255, 159, 64, 0.7)',  
-        long: 'rgba(75, 192, 75, 0.7)',           
+        long: 'rgba(75, 192, 75, 0.7)',            
         short: 'rgba(255, 99, 75, 0.7)',          
         dealerBorder: 'rgb(54, 162, 235)',
         leveragedFundBorder: 'rgb(255, 99, 132)',
@@ -439,15 +446,15 @@
              options: {
                  ...commonChartOptions(`Long/Short Gross: ${traderDisplayNames[selectedTrader]}`, 'Number of Contracts', labels.length > 1),
                  scales: {
-                     y: { stacked: false, ticks: { callback: function(value) { return formatNumber(Math.abs(value)); } } },
-                     x: { stacked: true }
+                     y: { stacked: false, ticks: { callback: function(value) { return formatNumber(Math.abs(value)); } } }, 
+                     x: { stacked: true } 
                  },
                  plugins: { tooltip: { callbacks: { label: function(context) {
-                     let label = context.dataset.label || '';
-                     if (label) { label += ': '; }
-                     if (context.parsed.y !== null) { label += formatNumber(Math.abs(context.parsed.y)); }
-                     return label;
-                 }}}}
+                    let label = context.dataset.label || '';
+                    if (label) { label += ': '; }
+                    if (context.parsed.y !== null) { label += formatNumber(Math.abs(context.parsed.y)); }
+                    return label;
+                }}}}
             }
         };
     }
@@ -680,13 +687,13 @@
         }
     });
 
-    toggleInsightButtonMain.addEventListener('click', () => { // Menggunakan ID tombol yang baru
+    toggleInsightButtonMain.addEventListener('click', () => {
         insightArea.classList.toggle('hidden');
         if (insightArea.classList.contains('hidden')) {
-            toggleInsightButtonMain.innerHTML = arrowDownChar; 
+            toggleInsightButtonMain.textContent = "Show Insight"; 
             toggleInsightButtonMain.title = "Tampilkan Insight";
         } else {
-            toggleInsightButtonMain.innerHTML = arrowUpChar; 
+            toggleInsightButtonMain.textContent = "Hide Insight"; 
             toggleInsightButtonMain.title = "Sembunyikan Insight";
             
             const data = getSelectedInstrumentData();
@@ -705,10 +712,10 @@
                         generateOpenInterestInsights(latestData, prevData);
                         break;
                     case 'weeklyChanges': 
-                         if (latestData && prevData) getWeeklyChangesConfig(latestData, prevData, latestData.date, effectiveTraderType);
+                         if (latestData && prevData) getWeeklyChangesConfig(latestData, prevData, latestData.date, effectiveTraderType); 
                         break;
                     case 'percentageBuySell': 
-                        if (latestData) getPercentageBuySellConfig(latestData);
+                        if (latestData) getPercentageBuySellConfig(latestData); 
                         break;
                 }
             } else {
@@ -728,7 +735,8 @@
         });
         instrumentSelect.value = "GOLD"; 
         traderTypeSelect.value = "all"; 
-        toggleInsightButtonMain.innerHTML = arrowUpChar; 
+        
+        toggleInsightButtonMain.textContent = "Hide Insight"; 
         toggleInsightButtonMain.title = "Sembunyikan Insight";
         renderChart(); 
     }
