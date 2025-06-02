@@ -3,42 +3,44 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>COT Historical Data Table</title>
+    <title>COT Historical Data Table - Resizable</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Ensure html and body take full viewport height and width of the iframe */
         html, body {
             margin: 0;
             padding: 0;
             background-color: #000;
             color: #f0f0f0;
             font-family: 'Source Code Pro', monospace;
-            height: 100%;
-            width: 100%;
+            height: 100%; /* Takes full height of its container (iframe) */
+            width: 100%;  /* Takes full width of its container (iframe) */
+            overflow: hidden; /* Prevent scrollbars on body itself, manage scrolling in specific containers */
         }
 
         body {
-            display: flex;
-            flex-direction: column;
-            height: 100%; 
+            display: flex; /* Use flexbox for layout */
+            flex-direction: column; /* Stack children vertically */
+            /* height: 100%; redundant as html,body already has it, but explicit for clarity */
         }
 
         .widget-container {
             display: flex;
             flex-direction: column;
-            flex: 1;
+            flex: 1; /* Allows this container to grow and shrink to fill available space in body */
             padding: 0;
             box-sizing: border-box;
             background-color: #000;
-            border: 1px solid #222;
-            border-radius: 0;
-            overflow: hidden; 
-            min-height: 0;
+            border: 1px solid #222; /* This border is part of the widget look */
+            border-radius: 0; /* Assuming this is desired for iframe content */
+            overflow: hidden; /* Prevent this container from showing scrollbars; children will manage their own */
+            min-height: 0; /* Crucial for flex children to shrink properly and allow internal scrolling */
         }
 
         .widget-title-bar {
-            height: 30px;
+            height: 30px; /* Fixed height for the title bar */
             display: flex;
             align-items: center;
             justify-content: flex-start;
@@ -48,18 +50,18 @@
             font-weight: bold;
             border-bottom: 1px solid #222;
             padding-left: 12px;
-            flex-shrink: 0;
+            flex-shrink: 0; /* Prevents the title bar from shrinking */
         }
 
         .content-wrapper {
             display: flex;
             flex-direction: column;
-            flex: 1;
+            flex: 1; /* Takes remaining space in .widget-container */
             padding: 16px;
             gap: 15px;
             box-sizing: border-box;
-            overflow: hidden; /* Wrapper utama tidak scroll, tabel di dalamnya yang scroll */
-            min-height: 0;
+            overflow: hidden; /* Wrapper itself doesn't scroll; table-container will */
+            min-height: 0; /* Allows shrinking and internal scrolling for children */
         }
 
         .controls-wrapper {
@@ -67,8 +69,8 @@
             align-items: center;
             gap: 15px; 
             padding-bottom: 10px;
-            flex-shrink: 0;
-            flex-wrap: wrap;
+            flex-shrink: 0; /* Controls have a fixed height based on content */
+            flex-wrap: wrap; /* Allow controls to wrap on smaller widths */
         }
 
         .control-group {
@@ -98,40 +100,38 @@
             border-color: #ff8000;
         }
 
-         /* Global Minimalist macOS–Style Scrollbar Styling */
+        /* Minimalist macOS–Style Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
-
         ::-webkit-scrollbar-track {
             background: transparent;
         }
-
         ::-webkit-scrollbar-thumb {
             background-color: rgba(255,255,255,0.1);
             border-radius: 4px;
         }
-
         ::-webkit-scrollbar-thumb:hover {
             background-color: rgba(255,255,255,0.2);
         }
-
+        /* For Firefox */
         html {
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
         
         .table-container {
-            flex: 1;
-            overflow-y: auto; /* Memungkinkan scroll vertikal untuk tabel */
-            min-height: 0; /* Penting untuk flexbox agar scroll bekerja */
+            flex: 1; /* Takes all available vertical space in .content-wrapper */
+            overflow-y: auto; /* Allows vertical scrolling for the table content if it overflows */
+            overflow-x: auto; /* Allows horizontal scrolling if table content is too wide */
+            min-height: 0; /* Essential for flexbox to allow scrolling within this container */
             border: 1px solid #222;
             border-radius: 4px;
         }
 
         table {
-            width: 100%;
+            width: 100%; /* Table takes full width of its container */
             border-collapse: collapse;
             font-size: 11px; 
         }
@@ -140,25 +140,24 @@
             border-bottom: 1px solid #222; 
             border-left: 1px solid #222;
             padding: 7px; 
-            text-align: right; /* Data angka rata kanan */
+            text-align: right; 
             vertical-align: middle;
-            white-space: nowrap; 
+            white-space: nowrap; /* Prevents text wrapping in cells, good for tabular data */
         }
         th:first-child, td:first-child {
-            text-align: left; /* Kolom Tanggal rata kiri */
-            border-left: none;
+            text-align: left; /* Date column left-aligned */
+            border-left: none; /* Remove double border on the left */
         }
          td:first-child {
-            color: #e0e0e0;
+            color: #e0e0e0; /* Date color */
          }
-
 
         th {
             background-color: #1a1a1a; 
             color: #ff8000;
-            position: sticky;
+            position: sticky; /* Makes table headers sticky during vertical scroll */
             top: 0; 
-            z-index: 10;
+            z-index: 10; /* Ensures headers stay above scrolling content */
         }
         
         td {
@@ -171,8 +170,8 @@
         tr:hover {
             background-color: #151515; 
         }
-        .positive { color: #4CAF50; }
-        .negative { color: #F44336; }
+        .positive { color: #4CAF50; } /* Green for positive numbers */
+        .negative { color: #F44336; } /* Red for negative numbers */
 
     </style>
 </head>
@@ -218,7 +217,7 @@
     const traderTypeSelect = document.getElementById('trader-type-select');
     const historicalTableBody = document.getElementById('cot-historical-table').getElementsByTagName('tbody')[0];
 
-    // --- Data Generation (Sama seperti sebelumnya) ---
+    // --- Data Generation Functions (Unchanged) ---
     function generateRandomCotEntry(baseDate, weekOffset, instrumentType) {
         const date = new Date(baseDate);
         date.setDate(date.getDate() + weekOffset * 7);
@@ -276,9 +275,11 @@
 
     function generateHistoricalData(instrumentKey, numEntries = 30) {
         const data = [];
-        const reportDayOffset = 2; 
+        const reportDayOffset = 2; // Tuesday
         let baseDate = new Date(); 
+        // Set to the most recent Tuesday
         baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
+        // Go back (numEntries - 1) weeks from that Tuesday
         baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
 
         for (let i = 0; i < numEntries; i++) {
@@ -303,11 +304,11 @@
         } else if (Math.abs(num) >= 1000) {
             return (num / 1000).toFixed(1) + 'K';
         }
-        return num.toLocaleString('en-US');
+        return num.toLocaleString('en-US'); // Standard formatting for smaller numbers
     }
     
     function populateHistoricalDataTable() {
-        historicalTableBody.innerHTML = ''; // Bersihkan tabel
+        historicalTableBody.innerHTML = ''; // Clear previous table rows
         const selectedInstrumentKey = instrumentSelect.value;
         const selectedTraderType = traderTypeSelect.value;
         const instrumentData = cotDataStore[selectedInstrumentKey];
@@ -315,13 +316,13 @@
         if (!instrumentData || instrumentData.length === 0) {
             const row = historicalTableBody.insertRow();
             const cell = row.insertCell();
-            cell.colSpan = 5; // Sesuaikan dengan jumlah kolom
+            cell.colSpan = 5; // Adjust to the number of columns
             cell.textContent = 'No data available for this instrument.';
             cell.style.textAlign = 'center';
             return;
         }
 
-        // Data ditampilkan dari yang terbaru ke terlama
+        // Display data from newest to oldest
         const reversedData = [...instrumentData].reverse(); 
 
         reversedData.forEach(report => {
@@ -350,26 +351,27 @@
     }
 
 
-    // --- Inisialisasi ---
+    // --- Initialization ---
     function initializeWidget() {
-        // Isi dropdown instrumen
+        // Populate instrument dropdown
         Object.keys(instruments).forEach(key => {
             const option = document.createElement('option');
             option.value = key;
             option.textContent = instruments[key];
             instrumentSelect.appendChild(option);
         });
-        instrumentSelect.value = "EURUSD"; // Pilihan default
-        traderTypeSelect.value = "all"; // Pilihan default
+        instrumentSelect.value = "EURUSD"; // Default selection
+        traderTypeSelect.value = "all"; // Default selection
 
-        // Tambahkan event listener
+        // Add event listeners
         instrumentSelect.addEventListener('change', populateHistoricalDataTable);
         traderTypeSelect.addEventListener('change', populateHistoricalDataTable);
 
-        // Muat data tabel awal
+        // Load initial table data
         populateHistoricalDataTable();
     }
 
+    // Initialize the widget when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', initializeWidget);
 
 </script>
