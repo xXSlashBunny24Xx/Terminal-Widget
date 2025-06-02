@@ -3,43 +3,44 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>COTX - CFTC Positioning Explorer</title>
+    <title>COTX - CFTC Positioning Explorer - Resizable</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Ensure html and body take full viewport height and width of the iframe */
         html, body {
             margin: 0;
             padding: 0;
             background-color: #000;
             color: #f0f0f0;
             font-family: 'Source Code Pro', monospace;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
+            height: 100%; /* Takes full height of its container (iframe) */
+            width: 100%;  /* Takes full width of its container (iframe) */
+            overflow: hidden; /* Prevent scrollbars on body itself, manage scrolling in specific containers */
         }
 
         body {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
+            display: flex; /* Use flexbox for layout */
+            flex-direction: column; /* Stack children vertically */
+            /* height: 100%; is inherited or already set, explicit for clarity */
         }
 
         .widget-container {
             display: flex;
             flex-direction: column;
-            flex: 1;
+            flex: 1; /* Allows this container to grow and shrink to fill available space in body */
             padding: 0;
             box-sizing: border-box;
             background-color: #000;
-            border: 1px solid #222;
-            border-radius: 0;
-            overflow: hidden;
-            min-height: 0;
+            border: 1px solid #222; /* This border is part of the widget look */
+            border-radius: 0; 
+            overflow: hidden; /* Prevent this container from showing scrollbars; children will manage their own */
+            min-height: 0; /* Crucial for flex children to shrink properly and allow internal scrolling */
         }
 
         .widget-title-bar {
-            height: 30px;
+            height: 30px; /* Fixed height for the title bar */
             display: flex;
             align-items: center;
             justify-content: flex-start;
@@ -49,18 +50,19 @@
             font-weight: bold;
             border-bottom: 1px solid #222;
             padding-left: 12px;
-            flex-shrink: 0;
+            flex-shrink: 0; /* Prevents the title bar from shrinking */
         }
 
         .content-wrapper {
             display: flex;
             flex-direction: column;
-            flex: 1;
+            flex: 1; /* Takes remaining space in .widget-container */
             padding: 16px;
             gap: 15px;
             box-sizing: border-box;
-            overflow: auto; 
-            min-height: 0;
+            overflow: auto; /* Allows scrolling for the entire content area if it overflows */
+                         /* This means if controls + chart + insights are too tall, this wrapper scrolls */
+            min-height: 0; /* Allows shrinking and internal scrolling for children */
         }
 
         .controls-wrapper {
@@ -68,14 +70,14 @@
             flex-direction: column; 
             gap: 10px; 
             padding-bottom: 10px;
-            flex-shrink: 0;
+            flex-shrink: 0; /* Controls have a height based on content, don't shrink */
         }
         
         .control-row {
             display: flex;
             align-items: center;
             gap: 10px; 
-            flex-wrap: wrap;
+            flex-wrap: wrap; /* Allow controls to wrap on smaller widths */
         }
 
         .control-group {
@@ -116,15 +118,16 @@
         }
 
         .canvas-wrapper {
-            flex: 1;
+            flex: 1; /* Key for allowing the canvas area to grow and shrink */
             position: relative;
-            display: flex; 
-            min-height: 300px; 
+            display: flex; /* Helps in managing the canvas element if needed (e.g., centering) */
+            min-height: 0; /* MODIFIED: Allows the canvas wrapper to shrink as much as possible */
+                           /* Chart.js responsive options will handle the chart rendering in small spaces */
             background-color: #0d0d0d; 
             border-radius: 4px;
-            padding:10px;
+            padding:10px; /* Padding around the canvas */
         }
-         /* Global Minimalist macOS–Style Scrollbar Styling */
+        /* Global Minimalist macOS–Style Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -142,16 +145,16 @@
         ::-webkit-scrollbar-thumb:hover {
             background-color: rgba(255,255,255,0.2);
         }
-
+        /* For Firefox */
         html {
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
         
         canvas#cotChart {
-            max-width: 100%;
-            max-height: 100%;
-            display: block;
+            max-width: 100%;  /* Ensures canvas does not exceed its wrapper's width */
+            max-height: 100%; /* Ensures canvas does not exceed its wrapper's height */
+            display: block;   /* Removes extra space below the canvas if it were inline */
         }
         #insight-area {
             font-size: 12px;
@@ -160,10 +163,11 @@
             border-top: 1px solid #222;
             margin-top:10px;
             line-height: 1.6;
+            flex-shrink: 0; /* Insight area height is based on content */
         }
          #insight-area strong {
             color: #ff8000;
-        }
+         }
     </style>
 </head>
 <body>
@@ -205,13 +209,13 @@
 <script>
     const ctxCot = document.getElementById('cotChart').getContext('2d');
     const instrumentSelect = document.getElementById('instrument-select');
-    const traderTypeSelect = document.getElementById('trader-type-select'); // New selector
+    const traderTypeSelect = document.getElementById('trader-type-select'); 
     const chartModeButtonsContainer = document.getElementById('chart-mode-buttons');
     const insightArea = document.getElementById('insight-area');
     let cotChartInstance = null;
     let currentChartMode = 'netPosition';
 
-    // --- Helper to generate dates and random COT data ---
+    // --- Helper to generate dates and random COT data (Unchanged) ---
     function generateRandomCotEntry(baseDate, weekOffset, instrumentType) {
         const date = new Date(baseDate);
         date.setDate(date.getDate() + weekOffset * 7);
@@ -254,7 +258,7 @@
 
     function generateHistoricalData(instrumentKey, numEntries = 30) {
         const data = [];
-        const reportDayOffset = 2; 
+        const reportDayOffset = 2; // Tuesday
         let baseDate = new Date(); 
         baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
         baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
@@ -310,10 +314,9 @@
         const data = getSelectedInstrumentData();
         const selectedTraderType = traderTypeSelect.value;
 
-        // Disable/Enable traderTypeSelect based on chart mode
         if (currentChartMode === 'openInterest' || currentChartMode === 'percentageBuySell') {
             traderTypeSelect.disabled = true;
-            if (selectedTraderType !== 'all') traderTypeSelect.value = 'all'; // Reset if not applicable
+            if (selectedTraderType !== 'all') traderTypeSelect.value = 'all'; 
         } else {
             traderTypeSelect.disabled = false;
         }
@@ -341,17 +344,15 @@
                 chartConfig = getLongShortBreakdownConfig(data, labels, effectiveTraderType);
                 generateLongShortInsights(latestData, prevData, effectiveTraderType);
                 break;
-            case 'openInterest': // Not affected by trader type filter
+            case 'openInterest': 
                 chartConfig = getOpenInterestConfig(data, labels);
                 generateOpenInterestInsights(latestData, prevData);
                 break;
             case 'weeklyChanges':
                 chartConfig = getWeeklyChangesConfig(latestData, prevData, latestData.date, effectiveTraderType);
-                // generateWeeklyChangesInsights is implicitly called by getWeeklyChangesConfig
                 break;
-            case 'percentageBuySell': // Not affected by trader type filter
+            case 'percentageBuySell': 
                 chartConfig = getPercentageBuySellConfig(latestData);
-                // generatePercentageBuySellInsights implicitly called
                 break;
             default:
                 console.error('Unknown chart mode:', currentChartMode);
@@ -400,22 +401,22 @@
             type: 'bar',
             data: { labels: labels, datasets: datasets },
              options: {
-                ...commonChartOptions(`Long/Short Gross: ${traderDisplayNames[selectedTrader]}`, 'Number of Contracts', labels.length > 1),
-                scales: {
-                    y: { stacked: false, ticks: { callback: function(value) { return formatNumber(Math.abs(value)); } } },
-                    x: { stacked: true }
-                },
-                plugins: { tooltip: { callbacks: { label: function(context) {
-                    let label = context.dataset.label || '';
-                    if (label) { label += ': '; }
-                    if (context.parsed.y !== null) { label += formatNumber(Math.abs(context.parsed.y)); }
-                    return label;
-                }}}}
+                 ...commonChartOptions(`Long/Short Gross: ${traderDisplayNames[selectedTrader]}`, 'Number of Contracts', labels.length > 1),
+                 scales: {
+                     y: { stacked: false, ticks: { callback: function(value) { return formatNumber(Math.abs(value)); } } },
+                     x: { stacked: true }
+                 },
+                 plugins: { tooltip: { callbacks: { label: function(context) {
+                     let label = context.dataset.label || '';
+                     if (label) { label += ': '; }
+                     if (context.parsed.y !== null) { label += formatNumber(Math.abs(context.parsed.y)); }
+                     return label;
+                 }}}}
             }
         };
     }
     
-    function getOpenInterestConfig(data, labels) { // Not filtered by trader type
+    function getOpenInterestConfig(data, labels) { 
         return {
             type: 'line',
             data: {
@@ -455,14 +456,14 @@
                 &nbsp;&nbsp;Shorts: ${formatNumber(changes[catKey].short)} (Now: ${formatNumber(latest[catKey].short)})<br/>
                 &nbsp;&nbsp;Net: ${formatNumber(changes[catKey].net)} (Now: ${formatNumber(latest[catKey].long - latest[catKey].short)})<br/>`;
 
-                const shortName = displayName.substring(0,2).toUpperCase(); // e.g., DE, LF, AM
+                const shortName = displayName.substring(0,2).toUpperCase(); 
                 chartChangeLabels.push(`${shortName} L Δ`, `${shortName} S Δ`, `${shortName} N Δ`);
                 chartChangeData.push(changes[catKey].long, changes[catKey].short, changes[catKey].net);
             }
         });
         insightArea.innerHTML = insightText; 
 
-        if (chartChangeData.length === 0) { // No specific trader data found for a non-'all' selection (should not happen with current setup)
+        if (chartChangeData.length === 0) { 
              insightArea.innerHTML = `No weekly change data for ${traderDisplayNames[selectedTrader]}.`;
              return null;
         }
@@ -481,7 +482,7 @@
         };
     }
 
-    function getPercentageBuySellConfig(latest) { // Not filtered by trader type
+    function getPercentageBuySellConfig(latest) { 
         const totalLongs = latest.dealer.long + latest.leveragedFund.long + latest.assetManager.long;
         const totalShorts = latest.dealer.short + latest.leveragedFund.short + latest.assetManager.short;
         const grandTotal = totalLongs + totalShorts;
@@ -530,7 +531,7 @@
     function commonChartOptions(titleText, yAxisLabel, isTimeSeries = true) {
         const options = {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: false, // Allows chart to fill container height/width
             plugins: {
                 title: { display: true, text: titleText + ` - ${instrumentNames[instrumentSelect.value]}`, color: '#f0f0f0', font: {size: 14}},
                 legend: { position: 'top', labels: { color: '#f0f0f0' } },
@@ -618,7 +619,7 @@
          insightArea.innerHTML = text;
     }
     
-    function generateOpenInterestInsights(latest, prev) { // Not filtered
+    function generateOpenInterestInsights(latest, prev) { 
         let text = `<strong>Open Interest Insights (${latest.date}):</strong><br/>
         Total Open Interest: ${formatNumber(latest.openInterest)}`;
         if (prev) {
@@ -630,14 +631,14 @@
 
     // --- Event Listeners ---
     instrumentSelect.addEventListener('change', renderChart);
-    traderTypeSelect.addEventListener('change', renderChart); // Listener for new dropdown
+    traderTypeSelect.addEventListener('change', renderChart);
 
     chartModeButtonsContainer.addEventListener('click', (event) => {
         if (event.target.tagName === 'BUTTON') {
             chartModeButtonsContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             currentChartMode = event.target.dataset.mode;
-            renderChart(); // Re-render chart on mode change
+            renderChart(); 
         }
     });
 
@@ -650,7 +651,7 @@
             instrumentSelect.appendChild(option);
         });
         instrumentSelect.value = "GOLD"; 
-        traderTypeSelect.value = "all"; // Default trader type
+        traderTypeSelect.value = "all"; 
         renderChart(); 
     }
 
