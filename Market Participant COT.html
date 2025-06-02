@@ -3,38 +3,40 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>COT Overview Dashboard</title>
+    <title>COT Overview Dashboard - Highly Resizable</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Ensure html and body take full viewport height and width of the iframe */
         html, body {
             margin: 0;
             padding: 0;
             background-color: #000;
             color: #f0f0f0;
             font-family: 'Source Code Pro', monospace;
-            height: 100%;
-            width: 100%;
+            height: 100%; /* Takes full height of its container (iframe) */
+            width: 100%;  /* Takes full width of its container (iframe) */
+            overflow: hidden; /* Prevent scrollbars on body/html itself */
         }
 
         body {
-            display: flex;
-            flex-direction: column;
-            height: 100%; 
+            display: flex; /* Use flexbox for layout */
+            flex-direction: column; /* Stack children vertically */
+            height: 100%; /* Ensure body takes full height */
         }
 
         .dashboard-container {
             display: flex;
             flex-direction: column;
-            flex: 1;
+            flex: 1; /* Allows this container to grow and shrink to fill available space in body */
             padding: 0;
             box-sizing: border-box;
             background-color: #000;
             border: 1px solid #222;
             border-radius: 0;
-            overflow: hidden; 
-            min-height: 0;
+            overflow: hidden; /* Prevent this container from showing scrollbars */
+            min-height: 0; /* Crucial for flex children to shrink properly */
         }
 
         .dashboard-title-bar {
@@ -48,19 +50,42 @@
             font-weight: bold;
             border-bottom: 1px solid #222;
             padding-left: 12px;
-            flex-shrink: 0;
+            flex-shrink: 0; /* Prevents the title bar from shrinking */
         }
 
         .dashboard-content-wrapper {
-            flex: 1;
+            flex: 1; /* Takes remaining space in .dashboard-container */
             padding: 12px; 
             box-sizing: border-box;
-            overflow-y: auto; 
-            min-height: 0;
+            overflow-y: auto; /* Allows vertical scrolling for the table content */
+            overflow-x: auto; /* Allows horizontal scrolling for the table content */
+            min-height: 0; /* Essential for flexbox to allow scrolling within this container */
         }
 
+        /* Minimalist macOS–Style Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        /* For Firefox */
+        html { /* Apply to html for consistency, though scrollbar on body is hidden */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+
+
         table {
-            width: 100%;
+            width: 100%; /* Table takes full width of its container */
             border-collapse: collapse;
             font-size: 11px; 
         }
@@ -75,15 +100,15 @@
         th {
             background-color: #1a1a1a; 
             color: #ff8000;
-            position: sticky;
+            position: sticky; /* Makes table headers sticky during vertical scroll */
             top: 0; 
-            z-index: 10;
+            z-index: 10; /* Ensures headers stay above scrolling content */
             white-space: nowrap; 
         }
         
         td {
             color: #bbb; 
-             white-space: nowrap; 
+            white-space: nowrap; 
         }
         
         tr:nth-child(even) {
@@ -94,13 +119,15 @@
         }
 
         .chart-cell {
-            width: 100px; 
-            height: 50px; 
+            width: 100px; /* Fixed width for chart cells */
+            height: 50px; /* Fixed height for chart cells */
             padding: 2px; 
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
         }
         .chart-cell canvas {
             max-width: 100%;
             max-height: 100%;
+            display: block; /* Remove extra space below canvas */
         }
         .positive-change {
             color: #4CAF50; 
@@ -142,7 +169,7 @@
     function generateRandomCotEntry(baseDate, weekOffset, instrumentType) {
         const date = new Date(baseDate);
         date.setDate(date.getDate() + weekOffset * 7);
-        const dateString = date.toISOString().split('T')[0];
+        // const dateString = date.toISOString().split('T')[0]; // Not used in this version of script
 
         let lfLongBase = 150000, amLongBase = 200000, dLongBase = 250000;
         let lfShortBase = 150000, amShortBase = 200000, dShortBase = 250000;
@@ -186,7 +213,7 @@
         const openInterest = lfLong + amLong + dLong + lfShort + amShort + dShort;
 
         return {
-            date: dateString,
+            date: date, // Store actual Date object for time series chart
             leveragedFund: { long: Math.max(0, lfLong), short: Math.max(0, lfShort) },
             assetManager: { long: Math.max(0, amLong), short: Math.max(0, amShort) },
             dealer: { long: Math.max(0, dLong), short: Math.max(0, dShort) },
@@ -196,13 +223,16 @@
 
     function generateHistoricalData(instrumentKey, numEntries = 30) {
         const data = [];
-        const reportDayOffset = 2; 
+        const reportDayOffset = 2; // Tuesday
         let baseDate = new Date(); 
         baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
-        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
+        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7); // Start from the oldest date
 
         for (let i = 0; i < numEntries; i++) {
-            data.push(generateRandomCotEntry(baseDate, i, instrumentKey));
+            // For each entry, create a new date object based on the offset
+            const entryDate = new Date(baseDate);
+            entryDate.setDate(baseDate.getDate() + i * 7);
+            data.push(generateRandomCotEntry(entryDate, 0, instrumentKey)); // weekOffset is 0 as date is calculated directly
         }
         return data;
     }
@@ -229,12 +259,12 @@
         netPositionLineNegative: 'rgba(237, 28, 36, 0.9)', 
         netPositionFillNegative: 'rgba(237, 28, 36, 0.15)', 
         long: 'rgba(34, 177, 76, 0.9)',      
-        short: 'rgba(237, 28, 36, 0.9)',    
+        short: 'rgba(237, 28, 36, 0.9)',     
         axisAndGrid: '#1c1c1c', 
         ticks: '#999' 
     };
 
-    let miniChartInstances = {}; // Objek untuk menyimpan instance grafik mini
+    let miniChartInstances = {}; // Object to store mini chart instances
 
     function formatNumber(num) {
         if (Math.abs(num) >= 1000000) {
@@ -251,11 +281,11 @@
                 miniChartInstances[key].destroy();
             }
         });
-        miniChartInstances = {}; // Reset objek
+        miniChartInstances = {}; // Reset object
     }
 
     function populateTable() {
-        destroyMiniCharts(); // Hancurkan instance grafik lama sebelum menggambar ulang
+        destroyMiniCharts(); // Destroy old chart instances before redrawing
         const tableBody = document.getElementById('cot-overview-table').getElementsByTagName('tbody')[0];
         tableBody.innerHTML = ''; 
 
@@ -304,6 +334,7 @@
             const doughnutCanvasId = `doughnutChart-${instrumentKey}`;
             doughnutChartCell.innerHTML = `<canvas id="${doughnutCanvasId}"></canvas>`;
 
+            // Use a minimal delay to ensure canvas elements are in the DOM
             setTimeout(() => { 
                 renderNetPositionMiniChart(netCanvasId, historicalData);
                 renderBuySellDoughnutMiniChart(doughnutCanvasId, latestAllLong, latestAllShort);
@@ -319,9 +350,9 @@
             (d.dealer.long + d.leveragedFund.long + d.assetManager.long) -
             (d.dealer.short + d.leveragedFund.short + d.assetManager.short)
         );
-        const labels = historicalData.map(d => d.date);
+        const labels = historicalData.map(d => d.date); // Use Date objects for labels
 
-        miniChartInstances[canvasId] = new Chart(ctx, { // Simpan instance
+        miniChartInstances[canvasId] = new Chart(ctx, { // Store instance
             type: 'line',
             data: {
                 labels: labels,
@@ -338,7 +369,7 @@
                     }
                 }]
             },
-            options: miniChartOptions(true) 
+            options: miniChartOptions(true) // Pass true for timeSeries
         });
     }
 
@@ -349,7 +380,7 @@
         const grandTotal = totalLong + totalShort;
         const percLong = grandTotal > 0 ? (totalLong / grandTotal) * 100 : 0;
 
-        miniChartInstances[canvasId] = new Chart(ctx, { // Simpan instance
+        miniChartInstances[canvasId] = new Chart(ctx, { // Store instance
             type: 'doughnut',
             data: {
                 datasets: [{
@@ -363,16 +394,15 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '55%', // Diameter lubang diperkecil (nilai lebih kecil = lubang lebih besar, nilai lebih besar = donat lebih tebal/lubang lebih kecil)
-                                // Jadi, 55% akan membuat donat lebih tebal daripada 60% atau 70%.
+                cutout: '55%', 
                 plugins: {
                     legend: { display: false }, 
                     tooltip: { 
                         enabled: true, 
                         displayColors: false, 
                         callbacks: {
-                             title: () => null, 
-                             label: function(context) {
+                            title: () => null, 
+                            label: function(context) {
                                 const type = context.dataIndex === 0 ? 'Long' : 'Short';
                                 const percentage = context.dataIndex === 0 ? percLong : (100 - percLong);
                                 return `${type}: ${percentage.toFixed(0)}% (${formatNumber(context.parsed)})`;
@@ -414,10 +444,10 @@
                 x: { display: false }
             }
         };
-        // Atur opsi skala x secara kondisional jika isTimeSeries true
+        // Conditionally set x-axis scale options if isTimeSeries is true
         if (isTimeSeries) {
             options.scales.x.type = 'time';
-            options.scales.x.time = { parser: 'yyyy-MM-dd', unit: 'week' };
+            options.scales.x.time = { parser: 'yyyy-MM-dd', unit: 'week' }; // Assuming date strings are yyyy-MM-dd
         }
         return options;
     }
