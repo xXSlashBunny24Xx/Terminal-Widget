@@ -114,13 +114,11 @@
         }
 
         .left-pane {
-            /* width: 57%; Default, will be controlled by JS */
-            /* min-width: 200px; Will be effectively 0 if hidden */
             padding: 20px;
             overflow-y: auto;
             position: relative; 
-            background-color: #0d0d0d; /* Slightly different bg for distinction */
-            display: block; /* Default display */
+            background-color: #0d0d0d;
+            display: block; 
         }
         .left-pane.hidden-pane {
             padding: 0;
@@ -137,7 +135,7 @@
             align-items: center;
             justify-content: center;
             user-select: none; 
-            z-index: 5; /* Ensure resizer is clickable */
+            z-index: 5; 
         }
         .resizer-x::before {
             content: '';
@@ -149,14 +147,12 @@
 
 
         .right-pane {
-            /* width: calc(43% - 8px); Default, will be controlled by JS */
-            /* min-width: 200px; Will be effectively 0 if hidden */
             padding: 20px;
             display: flex;
             flex-direction: column; 
             height: 100%; 
-            position: relative; /* Needed for absolute positioning of pane-loading-overlay */
-            background-color: #0a0a0a; /* Slightly different bg for distinction */
+            position: relative; 
+            background-color: #0a0a0a; 
         }
         .right-pane.hidden-pane {
             padding: 0;
@@ -330,14 +326,12 @@
 
         .chart-outer-container { 
             width: 100%;
-            /* height: 300px; Will be controlled by JS */
-            margin-bottom: 0; /* Adjusted as resizer is below */
+            margin-bottom: 0; 
             background-color: #1a1a1a;
             padding:10px;
             border-radius: 5px;
             position: relative; 
-            /* flex-shrink: 0; Removed, height controlled by JS */
-            overflow: hidden; /* To contain the canvas properly */
+            overflow: hidden; 
         }
         .chart-outer-container.hidden-pane {
             padding: 0;
@@ -355,7 +349,7 @@
              /* Height and width will be set by JS */
         }
         
-        .resizer-y { /* Horizontal resizer for chart/table */
+        .resizer-y { 
             height: 8px;
             background-color: #2a2a2a;
             cursor: row-resize;
@@ -364,8 +358,8 @@
             align-items: center;
             justify-content: center;
             user-select: none;
-            margin-top: 5px; /* Space from chart */
-            margin-bottom: 5px; /* Space to table */
+            margin-top: 5px; 
+            margin-bottom: 5px; 
             z-index: 5;
         }
         .resizer-y::before {
@@ -378,7 +372,6 @@
 
 
         .historical-table-wrapper {
-            /* flex-grow: 1; Removed, height controlled by JS */
             overflow-y: auto; 
             position: relative; 
             border: 1px solid #222; 
@@ -430,35 +423,33 @@
             background-color: #2a2a2a;
         }
         
-        /* Full screen loading overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8); /* Darker overlay */
+            background-color: rgba(0, 0, 0, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1001; /* Higher z-index for full screen */
+            z-index: 1001; 
             display: none; 
         }
 
-        /* Pane-specific loading overlay */
         .pane-loading-overlay {
-            position: absolute; /* Relative to its parent (.right-pane) */
+            position: absolute; 
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.65); /* Slightly less dark or different color */
+            background-color: rgba(0, 0, 0, 0.65); 
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10; /* Lower than full-screen, but above pane content */
-            border-radius: 5px; /* Optional: match parent's border-radius */
-            display: none; /* Initially hidden */
+            z-index: 10; 
+            border-radius: 5px; 
+            display: none; 
         }
 
 
@@ -513,10 +504,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                    <!-- Data rows will be populated by JavaScript -->
+                </tbody>
             </table>
         </div>
-        <div class="resizer-x" id="verticalResizer"></div> <div class="right-pane" id="rightPane">
+        <div class="resizer-x" id="verticalResizer"></div>
+        <div class="right-pane" id="rightPane">
             <div class="pane-loading-overlay" id="rightPaneLoadingOverlay">
                 <div class="loading-spinner"></div>
             </div>
@@ -540,7 +533,8 @@
                     <canvas id="historical-chart"></canvas>
                 </div>
             </div>
-            <div class="resizer-y" id="chartTableResizer"></div> <div class="historical-table-wrapper" id="historicalTableWrapper"> 
+            <div class="resizer-y" id="chartTableResizer"></div>
+            <div class="historical-table-wrapper" id="historicalTableWrapper"> 
                 <table class="historical-data-table">
                     <thead>
                         <tr>
@@ -551,7 +545,8 @@
                         </tr>
                     </thead>
                     <tbody id="historical-data-table-body">
-                        </tbody>
+                        <!-- Historical data rows will be populated by JavaScript -->
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -562,9 +557,11 @@
         const GOOGLE_SHEET_IDS = { 
             USD: '1NSRaFuf5fNwbaZvgXgVKTr97v6aSp8-EXwSgM0ZXKcc',
             EUR: '11SSoWwYCpe1oGJmgkxdsFyFWsHBV_xqhZKOOf6iQj4A',
-            GBP: '1kL2HimpF3llcFS5Pp0ZXY5dPK6GVwTWySuQ3lRdPzjk'
+            GBP: '1kL2HimpF3llcFS5Pp0ZXY5dPK6GVwTWySuQ3lRdPzjk',
+            JPY: '1M8QJNuRbZcJQBSGCcY26K45Z9sfhczEr0tnt33nga6g',
+            AUD: '1X9fMVAyQ039QMGBPN-6cjqVmkcfLLkcV-3Z1LRSnvNk' // <<< DITAMBAHKAN UNTUK AUSTRALIA
         };
-        const GOOGLE_API_KEY = 'AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4'; // Replace with your actual API key if needed for testing outside environment
+        const GOOGLE_API_KEY = 'AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4'; 
 
         // --- DOM Elements ---
         const fullScreenLoadingOverlay = document.querySelector('.loading-overlay'); 
@@ -585,7 +582,6 @@
         const historicalTableWrapper = document.getElementById('historicalTableWrapper');
         const chartTableResizer = document.getElementById('chartTableResizer');
         const customLegendControls = document.getElementById('customLegendControls');
-
 
         const dataPointsInput = document.getElementById('dataPointsInput');
         const showAllDataButton = document.getElementById('showAllDataButton');
@@ -611,11 +607,11 @@
         }
 
         // --- Data Structures ---
-        const countrySpecificConfig = { /* ... existing config ... */
+        const countrySpecificConfig = { 
             USD: { 
                 sheetIdKey: 'USD', latestSheetName: 'United States', latestSheetRange: 'B2:G33', 
                 latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
-                indicatorSetup: [
+                indicatorSetup: [ //KONFIGURASI USD LENGKAP
                     { id: 'gdp-sales-qq', name: 'GDP Sales q/q', dataKey: 'gdpSalesQq', unit: 'q/q', historicalSheet: 'US Source', historicalRanges: { date: 'A3:A', actual: 'B3:B', forecast: 'C3:C', surprise: 'E3:E' } },
                     { id: 'gdp-qq', name: 'GDP q/q', dataKey: 'gdpQq', unit: 'q/q', historicalSheet: 'US Source', historicalRanges: { date: 'G3:G', actual: 'H3:H', forecast: 'I3:I', surprise: 'K3:K' } },
                     { id: 'adp-nonfarm-employment-change', name: 'ADP Nonfarm Employment Change', dataKey: 'adpNonfarmEmploymentChange', unit: 'K', historicalSheet: 'US Source', historicalRanges: { date: 'M3:M', actual: 'N3:N', forecast: 'O3:O', surprise: 'Q3:Q' } },
@@ -650,19 +646,35 @@
                     { id: 'retail-sales-yy', name: 'Retail Sales y/y', dataKey: 'retailSalesYy', unit: '% y/y', historicalSheet: 'US Source', historicalRanges: { date: 'GE3:GE', actual: 'GF3:GF', forecast: 'GG3:GG', surprise: 'GI3:GI' } }
                 ]
             },
-            EUR: {
+            EUR: { //KONFIGURASI EUR LENGKAP
                 sheetIdKey: 'EUR', latestSheetName: 'Overview', latestSheetRange: 'B2:G28', 
                 latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
                 indicatorSetup: [] 
             },
-            GBP: { 
+            GBP: { //KONFIGURASI GBP LENGKAP
                 sheetIdKey: 'GBP', latestSheetName: 'Overview', latestSheetRange: 'B2:G30', 
                 latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
                 indicatorSetup: [] 
+            },
+            JPY: { //KONFIGURASI JPY LENGKAP
+                sheetIdKey: 'JPY',
+                latestSheetName: 'Overview', 
+                latestSheetRange: 'B2:G22', 
+                latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
+                indicatorSetup: [] 
+            },
+            // --- KONFIGURASI AUSTRALIA (AUD) BARU DIMULAI DI SINI ---
+            AUD: {
+                sheetIdKey: 'AUD',
+                latestSheetName: 'Overview', 
+                latestSheetRange: 'B2:G21', // 20 Indikator
+                latestDataColumns: { latest: 0, previous: 1, forecast: 2, surprise: 3, date: 5 }, 
+                indicatorSetup: [] // Akan diisi oleh fungsi generateAudHistoricalConfig
             }
+            // --- KONFIGURASI AUSTRALIA (AUD) BERAKHIR DI SINI ---
         };
-        
-        function generateEurHistoricalConfig() { /* ... existing function ... */
+       
+        function generateEurHistoricalConfig() { 
             const eurIndicatorsBase = [
                 { id: 'gdp-qq-eur', name: 'GDP q/q', dataKey: 'gdpQqEur', unit: 'q/q' }, { id: 'gdp-yy-eur', name: 'GDP y/y', dataKey: 'gdpYyEur', unit: '% y/y' },
                 { id: 'unemployment-rate-eur', name: 'Unemployment Rate', dataKey: 'unemploymentRateEur', unit: '%' }, { id: 'wage-costs-yy-eur', name: 'Wage Costs y/y', dataKey: 'wageCostsYyEur', unit: '% y/y' },
@@ -689,7 +701,7 @@
         }
         generateEurHistoricalConfig(); 
 
-        function generateGbpHistoricalConfig() { /* ... existing function ... */
+        function generateGbpHistoricalConfig() { 
             const gbpIndicatorsBase = [
                 { id: 'gdp-qq-gbp', name: 'GDP q/q', dataKey: 'gdpQqGbp', unit: '% q/q' }, { id: 'gdp-yy-gbp', name: 'GDP y/y', dataKey: 'gdpYyGbp', unit: '% y/y' },
                 { id: 'claimant-count-change-gbp', name: 'Claimant Count Change', dataKey: 'claimantCountChangeGbp', unit: 'K' }, { id: 'employment-change-3m-gbp', name: 'Employment Change 3-months', dataKey: 'employmentChange3mGbp', unit: 'K' },
@@ -717,10 +729,103 @@
         }
         generateGbpHistoricalConfig(); 
 
+        function generateJpyHistoricalConfig() {
+            const jpyIndicatorsBase = [
+                { id: 'gdp-qq-jpy', name: 'GDP q/q', dataKey: 'gdpQqJpy', unit: '% q/q' },
+                { id: 'gdp-yy-jpy', name: 'GDP y/y', dataKey: 'gdpYyJpy', unit: '% y/y' },
+                { id: 'unemployment-rate-jpy', name: 'Unemployment Rate', dataKey: 'unemploymentRateJpy', unit: '%' },
+                { id: 'real-wage-yy-jpy', name: 'Real Wage y/y', dataKey: 'realWageYyJpy', unit: '% y/y' },
+                { id: 'cpi-yy-jpy', name: 'CPI y/y', dataKey: 'cpiYyJpy', unit: '% y/y' },
+                { id: 'cpi-mm-jpy', name: 'CPI m/m', dataKey: 'cpiMmJpy', unit: '% m/m' },
+                { id: 'core-cpi-yy-jpy', name: 'Core CPI y/y', dataKey: 'coreCpiYyJpy', unit: '% y/y' },
+                { id: 'tokyo-cpi-yy-jpy', name: 'Tokyo CPI y/y', dataKey: 'tokyoCpiYyJpy', unit: '% y/y' },
+                { id: 'tokyo-cpi-mm-jpy', name: 'Tokyo CPI m/m', dataKey: 'tokyoCpiMmJpy', unit: '% m/m' },
+                { id: 'tokyo-core-cpi-yy-jpy', name: 'Tokyo Core CPI y/y', dataKey: 'tokyoCoreCpiYyJpy', unit: '% y/y' },
+                { id: 'boj-interest-rate-jpy', name: 'BOJ Interest Rate', dataKey: 'bojInterestRateJpy', unit: '%' },
+                { id: 'current-account-jpy', name: 'Current Account', dataKey: 'currentAccountJpy', unit: 'Billion JPY' },
+                { id: 'trade-balance-jpy', name: 'Trade Balance', dataKey: 'tradeBalanceJpy', unit: 'Billion JPY' },
+                { id: 'jibun-composite-pmi-jpy', name: 'Jibun Bank Composite PMI', dataKey: 'jibunCompositePmiJpy', unit: 'Index' },
+                { id: 'jibun-mfg-pmi-jpy', name: 'Jibun Bank Manufacturing PMI', dataKey: 'jibunMfgPmiJpy', unit: 'Index' },
+                { id: 'jibun-service-pmi-jpy', name: 'Jibun Bank Service PMI', dataKey: 'jibunServicePmiJpy', unit: 'Index' },
+                { id: 'boj-tankan-large-mfg-jpy', name: 'BoJ Tankan Large Mfg Index', dataKey: 'bojTankanLargeMfgJpy', unit: 'Index' },
+                { id: 'boj-tankan-large-nonmfg-jpy', name: 'BoJ Tankan Large Non-Mfg Index', dataKey: 'bojTankanLargeNonMfgJpy', unit: 'Index' },
+                { id: 'consumer-confidence-jpy', name: 'Consumer Confidence', dataKey: 'consumerConfidenceJpy', unit: 'Index' },
+                { id: 'retail-sales-yy-jpy', name: 'Retail Sales y/y', dataKey: 'retailSalesYyJpy', unit: '% y/y' },
+                { id: 'retail-sales-mm-jpy', name: 'Retail Sales m/m', dataKey: 'retailSalesMmJpy', unit: '% m/m' }
+            ];
+
+            countrySpecificConfig.JPY.indicatorSetup = jpyIndicatorsBase.map((indicator, index) => {
+                const baseColIndex = index * 6; 
+                const startRow = 4; 
+                const dateCol = colToExcel(baseColIndex);       
+                const actualCol = colToExcel(baseColIndex + 1); 
+                const forecastCol = colToExcel(baseColIndex + 2);
+                const surpriseCol = colToExcel(baseColIndex + 4);
+                return {
+                    ...indicator,
+                    historicalSheet: 'Historical Data', 
+                    historicalRanges: {
+                        date: `${dateCol}${startRow}:${dateCol}`,
+                        actual: `${actualCol}${startRow}:${actualCol}`,
+                        forecast: `${forecastCol}${startRow}:${forecastCol}`,
+                        surprise: `${surpriseCol}${startRow}:${surpriseCol}`
+                    }
+                };
+            });
+        }
+        generateJpyHistoricalConfig(); 
+        
+        // --- FUNGSI BARU UNTUK GENERATE KONFIGURASI HISTORIS AUSTRALIA ---
+        function generateAudHistoricalConfig() {
+            const audIndicatorsBase = [
+                { id: 'gdp-qq-aud', name: 'GDP q/q', dataKey: 'gdpQqAud', unit: '% q/q' },
+                { id: 'gdp-yy-aud', name: 'GDP y/y', dataKey: 'gdpYyAud', unit: '% y/y' },
+                { id: 'unemployment-rate-aud', name: 'Unemployment Rate', dataKey: 'unemploymentRateAud', unit: '%' },
+                { id: 'employment-change-aud', name: 'Employment Change', dataKey: 'employmentChangeAud', unit: 'K' },
+                { id: 'full-time-employment-change-aud', name: 'Full Time Employment Change', dataKey: 'fullTimeEmploymentChangeAud', unit: 'K' },
+                { id: 'cpi-qq-aud', name: 'CPI q/q', dataKey: 'cpiQqAud', unit: '% q/q' },
+                { id: 'cpi-yy-aud', name: 'CPI y/y', dataKey: 'cpiYyAud', unit: '% y/y' },
+                { id: 'ppi-qq-aud', name: 'PPI q/q', dataKey: 'ppiQqAud', unit: '% q/q' },
+                { id: 'ppi-yy-aud', name: 'PPI y/y', dataKey: 'ppiYyAud', unit: '% y/y' },
+                { id: 'rba-trimmed-mean-cpi-qq-aud', name: 'RBA Trimmed Mean CPI q/q', dataKey: 'rbaTrimmedMeanCpiQqAud', unit: '% q/q' },
+                { id: 'rba-trimmed-mean-cpi-yy-aud', name: 'RBA Trimmed Mean CPI y/y', dataKey: 'rbaTrimmedMeanCpiYyAud', unit: '% y/y' },
+                { id: 'rba-interest-rate-aud', name: 'RBA Interest Rate', dataKey: 'rbaInterestRateAud', unit: '%' },
+                { id: 'current-account-aud', name: 'Current Account', dataKey: 'currentAccountAud', unit: 'Billion AUD' },
+                { id: 'trade-balance-aud', name: 'Trade Balance', dataKey: 'tradeBalanceAud', unit: 'Billion AUD' },
+                { id: 'sp-composite-pmi-aud', name: 'S&P Composite PMI', dataKey: 'spCompositePmiAud', unit: 'Index' },
+                { id: 'sp-manufacturing-pmi-aud', name: 'S&P Manufacturing PMI', dataKey: 'spManufacturingPmiAud', unit: 'Index' },
+                { id: 'sp-service-pmi-aud', name: 'S&P Service PMI', dataKey: 'spServicePmiAud', unit: 'Index' },
+                { id: 'retail-sales-qq-aud', name: 'Retail Sales q/q', dataKey: 'retailSalesQqAud', unit: '% q/q' },
+                { id: 'retail-sales-mm-aud', name: 'Retail Sales m/m', dataKey: 'retailSalesMmAud', unit: '% m/m' },
+                { id: 'westpac-consumer-confidence-aud', name: 'Westpac Consumer Confidence', dataKey: 'westpacConsumerConfidenceAud', unit: 'Index' }
+            ];
+
+            countrySpecificConfig.AUD.indicatorSetup = audIndicatorsBase.map((indicator, index) => {
+                const baseColIndex = index * 6; 
+                const startRow = 4; 
+                const dateCol = colToExcel(baseColIndex);       
+                const actualCol = colToExcel(baseColIndex + 1); 
+                const forecastCol = colToExcel(baseColIndex + 2);
+                const surpriseCol = colToExcel(baseColIndex + 4);
+                return {
+                    ...indicator,
+                    historicalSheet: 'Historical Data', 
+                    historicalRanges: {
+                        date: `${dateCol}${startRow}:${dateCol}`,
+                        actual: `${actualCol}${startRow}:${actualCol}`,
+                        forecast: `${forecastCol}${startRow}:${forecastCol}`,
+                        surprise: `${surpriseCol}${startRow}:${surpriseCol}`
+                    }
+                };
+            });
+        }
+        generateAudHistoricalConfig(); // Panggil fungsi untuk mengisi konfigurasi AUD
+        // --- AKHIR FUNGSI BARU ---
+
 
         const macroeconomicData = {}; 
-        
-        function initializeMacroeconomicData() { /* ... existing function ... */
+       
+        function initializeMacroeconomicData() { 
             Object.keys(countrySpecificConfig).forEach(countryCode => {
                 macroeconomicData[countryCode] = { hasFetchedAllHistoricalData: false };
                 const indicators = countrySpecificConfig[countryCode].indicatorSetup;
@@ -735,7 +840,7 @@
                 }
             });
         }
-        
+       
         // --- Loading Functions ---
         function showFullScreenLoading() { if (fullScreenLoadingOverlay) fullScreenLoadingOverlay.style.display = 'flex'; }
         function hideFullScreenLoading() { if (fullScreenLoadingOverlay) fullScreenLoadingOverlay.style.display = 'none'; }
@@ -743,7 +848,7 @@
         function hideRightPaneLoading() { if (rightPaneLoadingOverlay) rightPaneLoadingOverlay.style.display = 'none'; }
 
         // --- Dynamic Table Population ---
-        function populateMainDataTableHTML(countryCode) { /* ... existing function ... */
+        function populateMainDataTableHTML(countryCode) { 
             mainDataTableBody.innerHTML = ''; 
             const indicators = countrySpecificConfig[countryCode]?.indicatorSetup;
 
@@ -786,7 +891,7 @@
 
 
         // --- Data Fetching Functions ---
-        async function fetchLatestDataFromSheet(countryCode) { /* ... existing function ... */
+        async function fetchLatestDataFromSheet(countryCode) { 
             const config = countrySpecificConfig[countryCode];
             if (!config) { updateMainDataTable(countryCode); return; }
             const sheetId = GOOGLE_SHEET_IDS[config.sheetIdKey];
@@ -813,11 +918,11 @@
                             targetIndicatorData.unit = indicator.unit || ''; 
                         }
                     });
-                } else { /* console.warn(`No latest data returned for ${countryCode}`); */ }
+                } else { console.warn(`No latest data returned for ${countryCode}`); }
             } catch (error) { console.error(`Error fetching latest data for ${countryCode}:`, error); }
         }
         
-        async function fetchAllHistoricalDataForCountry(countryCode) { /* ... existing function ... */
+        async function fetchAllHistoricalDataForCountry(countryCode) { 
             const countryConfig = countrySpecificConfig[countryCode];
             if (!countryConfig || !macroeconomicData[countryCode] || macroeconomicData[countryCode].hasFetchedAllHistoricalData) { return; }
 
@@ -875,20 +980,20 @@
                             targetIndicatorData.historicalSurprises = surprisesRaw.slice(0, dataLength).map(row => (row && row[0] !== undefined && row[0] !== null) ? row[0] : null);
                         } else { targetIndicatorData.historicalValues = []; targetIndicatorData.historicalForecasts = []; targetIndicatorData.historicalSurprises = []; }
                     });
-                } else { /* console.warn(`No valueRanges returned for batch historical data of ${countryCode}.`); */ }
+                } else { console.warn(`No valueRanges returned for batch historical data of ${countryCode}.`); }
             } catch (error) { console.error(`Error fetching batch historical data for ${countryCode}:`, error); }
             finally { macroeconomicData[countryCode].hasFetchedAllHistoricalData = true; }
         }
 
 
         // --- UI Update Functions ---
-        function createHorizontalLineMarker(color, width = 20, height = 3) { /* ... existing function ... */
+        function createHorizontalLineMarker(color, width = 20, height = 3) { 
             const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
             const ctx = canvas.getContext('2d'); ctx.fillStyle = color; ctx.fillRect(0, (height - 2) / 2, width, 2); 
             const image = new Image(); image.src = canvas.toDataURL(); return image;
         }
 
-        function updateMainDataTable(country) { /* ... existing function ... */
+        function updateMainDataTable(country) { 
             const currentCountryData = macroeconomicData[country]; const indicatorsConfig = countrySpecificConfig[country]?.indicatorSetup;
             if (!currentCountryData || !indicatorsConfig) { return; }
             
@@ -913,7 +1018,7 @@
             setActiveIndicatorRow(activeIndicatorId); 
         }
         
-        function getCurrentIndicatorConfig(indicatorId, countryCode) { /* ... existing function ... */
+        function getCurrentIndicatorConfig(indicatorId, countryCode) { 
             const countryConfig = countrySpecificConfig[countryCode];
             if (!countryConfig || !countryConfig.indicatorSetup) return null;
             return countryConfig.indicatorSetup.find(ind => ind.id === indicatorId);
@@ -982,20 +1087,19 @@
                         const row = historicalDataTableBody.insertRow(); row.insertCell().textContent = year; 
                         const actualVal = tableActuals[index]; const forecastVal = tableForecasts[index]; const surpriseVal = tableSurprises[index];
                         const formatDisplayValue = (val) => (val !== null && val !== undefined) ? val : '';
-                        const actualText = `${formatDisplayValue(actualVal)}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
-                        const forecastText = `${formatDisplayValue(forecastVal)}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '') ? '' : ' '}${unitForChartAndTable}`;
+                        const actualText = `${formatDisplayValue(actualVal)}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '' || unitForChartAndTable.includes('JPY') || unitForChartAndTable.includes('AUD')) ? '' : ' '}${unitForChartAndTable}`;
+                        const forecastText = `${formatDisplayValue(forecastVal)}${(unitForChartAndTable.startsWith('%') || unitForChartAndTable === 'Index' || unitForChartAndTable === 'K' || unitForChartAndTable === 'M' || unitForChartAndTable.includes('q/q') || unitForChartAndTable.includes('y/y') || unitForChartAndTable === '' || unitForChartAndTable.includes('JPY') || unitForChartAndTable.includes('AUD')) ? '' : ' '}${unitForChartAndTable}`;
                         row.insertCell().textContent = actualVal !== null && actualVal !== undefined ? actualText : '';
                         row.insertCell().textContent = forecastVal !== null && forecastVal !== undefined ? forecastText : '';
                         row.insertCell().textContent = formatDisplayValue(surpriseVal); 
                     });
                 }
                 
-                // Ensure chart canvas is visible before getting dimensions
                 if (chartOuterContainer.style.display === 'none') {
                      if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
-                     setupLegendButtons(); // Update legend button visibility
+                     setupLegendButtons(); 
                      hideRightPaneLoading();
-                     return; // Don't try to draw chart if its container is hidden
+                     return; 
                 }
 
 
@@ -1008,7 +1112,6 @@
                     historicalChartCanvasEl.style.height = scrollWrapperHeight + 'px'; 
                     historicalChartCanvasEl.height = scrollWrapperHeight * window.devicePixelRatio;
                 } else {
-                    // Fallback or hide chart if container has no dimensions
                      if (historicalChartInstance) { historicalChartInstance.destroy(); historicalChartInstance = null; }
                      setupLegendButtons();
                      hideRightPaneLoading();
@@ -1041,6 +1144,17 @@
                     else { finalDatasetsForChart = datasetsTemplate; }
                 }
 
+                const chartLabelUnit = (unitStr) => {
+                    if (!unitStr) return '';
+                    if (unitStr.includes('JPY') || unitStr.includes('AUD')) return '';
+                    if (unitStr.startsWith('%') || unitStr === 'Index' || unitStr === 'K' || unitStr === 'M' || unitStr.includes('q/q') || unitStr.includes('y/y')) return unitStr;
+                    return ' ' + unitStr;
+                };
+                const chartTitleUnit = (unitStr) => {
+                    if (!unitStr || unitStr.trim() === '') return '(Unit)';
+                    return `(${unitStr.trim()})`;
+                }
+
 
                 const ctx = historicalChartCanvasEl.getContext('2d');
                 historicalChartInstance = new Chart(ctx, {
@@ -1048,7 +1162,7 @@
                     options: {
                         responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false},
                         scales: {
-                            yPrimary: { type: 'linear', display: true, position: 'left', beginAtZero: false, ticks: { color: '#f0f0f0', callback: function(value) { return value + (unitForChartAndTable || ''); }}, grid: { color: 'rgba(255, 255, 255, 0.1)' }, title: { display: true, text: `Value (${unitForChartAndTable.trim() || 'Unit'})`, color: '#f0f0f0'}},
+                            yPrimary: { type: 'linear', display: true, position: 'left', beginAtZero: false, ticks: { color: '#f0f0f0', callback: function(value) { return value + chartLabelUnit(unitForChartAndTable); }}, grid: { color: 'rgba(255, 255, 255, 0.1)' }, title: { display: true, text: `Value ${chartTitleUnit(unitForChartAndTable)}`, color: '#f0f0f0'}},
                             ySurprise: { type: 'linear', display: true, position: 'right', beginAtZero: true, ticks: { color: '#f0f0f0' }, grid: { drawOnChartArea: false, }, title: { display: true, text: 'Surprise Index', color: '#f0f0f0'}},
                             x: { ticks: { color: '#f0f0f0', autoSkip: chartDates.length > 15, maxRotation: chartDates.length > 10 ? 70 : 0, minRotation: chartDates.length > 10 ? 70 : 0 }, grid: { display: false }}
                         },
@@ -1067,14 +1181,14 @@
             }
         }
         
-        function setActiveIndicatorRow(indicatorIdToActivate) { /* ... existing function ... */
+        function setActiveIndicatorRow(indicatorIdToActivate) { 
             mainDataTableBody.querySelectorAll('tr').forEach(row => {
                 row.classList.remove('active-indicator');
                 if (row.dataset.indicator === indicatorIdToActivate) { row.classList.add('active-indicator'); }
             });
         }
 
-        function setupLegendButtons() { /* ... existing function ... */
+        function setupLegendButtons() { 
             const currentLegendButtons = document.querySelectorAll('.right-pane .legend-toggle-button');
             if (!historicalChartInstance || !historicalChartInstance.data || !historicalChartInstance.data.datasets) {
                 currentLegendButtons.forEach(button => { button.classList.remove('active'); button.style.display = 'none'; }); return;
@@ -1095,7 +1209,7 @@
 
                 const isInitiallyVisible = !dataset.hidden;
                 button.classList.toggle('active', isInitiallyVisible);
-                                        
+                                         
                 const newButton = button.cloneNode(true); 
                 if (button.parentNode) {  button.parentNode.replaceChild(newButton, button); }
                 else { return; }
@@ -1120,15 +1234,14 @@
         }
         
         // --- Resizer Logic ---
-        // Vertical Resizer (Left/Right Panes)
         let isResizingX = false;
-        let startX, startLeftWidth;
-        const snapThreshold = 30; // Pixels to snap to full collapse
+        let startX_resizer, startLeftWidth; 
+        const snapThreshold = 30; 
 
         verticalResizer.addEventListener('mousedown', function(e) {
             e.preventDefault(); 
             isResizingX = true;
-            startX = e.clientX;
+            startX_resizer = e.clientX; 
             startLeftWidth = leftPane.offsetWidth;
             document.body.style.cursor = 'col-resize'; 
 
@@ -1138,22 +1251,14 @@
 
         function handleVerticalResizerMouseMove(e) {
             if (!isResizingX) return;
-            const deltaX = e.clientX - startX;
+            const deltaX = e.clientX - startX_resizer; 
             let newLeftWidth = startLeftWidth + deltaX;
             
             const containerWidth = contentContainer.offsetWidth;
             const resizerWidth = verticalResizer.offsetWidth;
 
-            // Snap to fully collapsed left
-            if (newLeftWidth < snapThreshold) {
-                newLeftWidth = 0;
-            }
-            // Snap to fully collapsed right
-            if (containerWidth - (newLeftWidth + resizerWidth) < snapThreshold) {
-                newLeftWidth = containerWidth - resizerWidth;
-            }
-
-            // Boundary checks (should not be strictly needed if snapping works)
+            if (newLeftWidth < snapThreshold) { newLeftWidth = 0; }
+            if (containerWidth - (newLeftWidth + resizerWidth) < snapThreshold) { newLeftWidth = containerWidth - resizerWidth; }
             if (newLeftWidth < 0) newLeftWidth = 0;
             if (newLeftWidth > containerWidth - resizerWidth) newLeftWidth = containerWidth - resizerWidth;
 
@@ -1166,12 +1271,6 @@
 
             rightPane.style.display = newRightWidth === 0 ? 'none' : 'flex';
             rightPane.classList.toggle('hidden-pane', newRightWidth === 0);
-
-
-            // If right pane is visible and its width changed, the chart might need redraw
-            if (newRightWidth > 0 && rightPane.style.display !== 'none') {
-                // Debounce or call on mouseup. For now, mouseup handles it.
-            }
         }
 
         function handleVerticalResizerMouseUp() {
@@ -1188,16 +1287,14 @@
             manageScrollbarEffects();
         }
 
-        // Horizontal Resizer (Chart/Table in Right Pane)
         let isResizingY = false;
-        let startY, startChartHeight;
+        let startY_resizer, startChartHeight; 
 
         chartTableResizer.addEventListener('mousedown', function(e) {
             e.preventDefault();
             isResizingY = true;
-            startY = e.clientY;
+            startY_resizer = e.clientY; 
             startChartHeight = chartOuterContainer.offsetHeight;
-            // startTableHeight = historicalTableWrapper.offsetHeight; // Not needed if calculating based on chart height
             document.body.style.cursor = 'row-resize';
 
             document.addEventListener('mousemove', handleHorizontalResizerMouseMove);
@@ -1206,33 +1303,25 @@
         
         function handleHorizontalResizerMouseMove(e) {
             if (!isResizingY) return;
-            const deltaY = e.clientY - startY;
+            const deltaY = e.clientY - startY_resizer; 
             let newChartHeight = startChartHeight + deltaY;
 
             const rightPanePaddings = (parseFloat(getComputedStyle(rightPane).paddingTop) || 0) + (parseFloat(getComputedStyle(rightPane).paddingBottom) || 0);
             const titleHeight = historicalDataTitleEl.offsetHeight + (parseFloat(getComputedStyle(historicalDataTitleEl).marginBottom) || 0);
             const controlsHeight = customLegendControls.offsetHeight + (parseFloat(getComputedStyle(customLegendControls).marginBottom) || 0);
             const resizerYHeight = chartTableResizer.offsetHeight + 
-                                   (parseFloat(getComputedStyle(chartTableResizer).marginTop) || 0) + 
-                                   (parseFloat(getComputedStyle(chartTableResizer).marginBottom) || 0);
+                                 (parseFloat(getComputedStyle(chartTableResizer).marginTop) || 0) + 
+                                 (parseFloat(getComputedStyle(chartTableResizer).marginBottom) || 0);
 
             const availableHeightForChartAndTable = rightPane.clientHeight - rightPanePaddings - titleHeight - controlsHeight - resizerYHeight;
             
-            // Snap to fully collapsed chart
-            if (newChartHeight < snapThreshold) {
-                newChartHeight = 0;
-            }
-            // Snap to fully collapsed table
-            if ((availableHeightForChartAndTable - newChartHeight) < snapThreshold) {
-                newChartHeight = availableHeightForChartAndTable;
-            }
-
+            if (newChartHeight < snapThreshold) { newChartHeight = 0; }
+            if ((availableHeightForChartAndTable - newChartHeight) < snapThreshold) { newChartHeight = availableHeightForChartAndTable; }
             if (newChartHeight < 0) newChartHeight = 0;
             if (newChartHeight > availableHeightForChartAndTable) newChartHeight = availableHeightForChartAndTable;
             
             let newTableHeight = availableHeightForChartAndTable - newChartHeight;
             if (newTableHeight < 0) newTableHeight = 0;
-
 
             chartOuterContainer.style.height = newChartHeight + 'px';
             historicalTableWrapper.style.height = newTableHeight + 'px';
@@ -1255,20 +1344,16 @@
             if (chartOuterContainer.style.display !== 'none' && activeIndicatorId && selectedCountry) {
                  displayHistoricalData(activeIndicatorId, selectedCountry); 
             } else if (chartOuterContainer.style.display === 'none' && historicalChartInstance) {
-                // Chart is hidden, no need to redraw, but ensure legend buttons are correct
                 setupLegendButtons();
             }
             manageScrollbarEffects();
         }
 
-        // Scrollbar Effects Management
         function manageScrollbarEffects() {
             const scrollablePanes = [];
             if (leftPane.style.display !== 'none') scrollablePanes.push(leftPane);
             if (rightPane.style.display !== 'none') {
-                // For right pane, the table wrapper is the primary scrollable content area usually
                 if (historicalTableWrapper.style.display !== 'none') scrollablePanes.push(historicalTableWrapper);
-                // chartScrollWrapper is overflow:hidden, so not managed here
             }
 
             const isAnyPaneCollapsed = leftPane.style.display === 'none' || 
@@ -1278,16 +1363,13 @@
 
             scrollablePanes.forEach(pane => {
                 if (pane._scrollbarFadeTimeout) clearTimeout(pane._scrollbarFadeTimeout);
-                pane.classList.remove('pane-scrollbar-hidden'); // Default to visible
+                pane.classList.remove('pane-scrollbar-hidden'); 
 
                 if (isAnyPaneCollapsed && (pane.scrollHeight > pane.clientHeight || pane.scrollWidth > pane.clientWidth)) {
-                     // Apply hiding only if this specific pane is part of the "expanded" view
-                     // when another part is collapsed.
-                     let applyHide = false;
-                     if (pane === leftPane && rightPane.style.display === 'none') applyHide = true;
-                     if (pane === historicalTableWrapper && 
+                    let applyHide = false;
+                    if (pane === leftPane && rightPane.style.display === 'none') applyHide = true;
+                    if (pane === historicalTableWrapper && 
                         (leftPane.style.display === 'none' || chartOuterContainer.style.display === 'none')) applyHide = true;
-
 
                     if(applyHide){
                         pane._scrollbarFadeTimeout = setTimeout(() => {
@@ -1300,11 +1382,9 @@
                                 pane.classList.remove('pane-scrollbar-hidden');
                             });
                             pane.addEventListener('mouseleave', () => {
-                                // Re-check collapse condition before hiding again
                                 const stillLeftCollapsed = leftPane.style.display === 'none';
                                 const stillRightCollapsed = rightPane.style.display === 'none';
                                 const stillChartCollapsed = rightPane.style.display !== 'none' && chartOuterContainer.style.display === 'none';
-                                const stillTableCollapsed = rightPane.style.display !== 'none' && historicalTableWrapper.style.display === 'none';
                                 
                                 let currentPaneShouldReHide = false;
                                 if (pane === leftPane && stillRightCollapsed) currentPaneShouldReHide = true;
@@ -1319,23 +1399,19 @@
                             pane._scrollHoverListenersAttached = true;
                         }
                     }
-                } else {
-                     // Not collapsed or not scrollable, ensure listeners are removed if they were attached
-                    if (pane._scrollHoverListenersAttached) {
-                        // Consider if listeners should be removed or just class toggled
-                        // For simplicity, let them be, they only act if class is added.
-                    }
                 }
             });
         }
 
 
         // --- Event Listeners ---
-        countrySelect.addEventListener('change', async (event) => { /* ... existing function ... */
+        countrySelect.addEventListener('change', async (event) => { 
             showFullScreenLoading(); selectedCountry = event.target.value; currentDataPointsToShow = 15; 
             dataPointsInput.value = '15';
             
-            if (!macroeconomicData[selectedCountry] && countrySpecificConfig[selectedCountry]) { initializeMacroeconomicData(); }
+            if (!macroeconomicData[selectedCountry] && countrySpecificConfig[selectedCountry]) { 
+                initializeMacroeconomicData(); // Pastikan data untuk negara baru diinisialisasi jika belum ada
+            }
             else if (!countrySpecificConfig[selectedCountry]) {
                 mainDataTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No configuration for ${selectedCountry}</td></tr>`;
                 activeIndicatorId = ''; historicalDataTitleEl.textContent = 'Historical Data';
@@ -1347,6 +1423,10 @@
             populateMainDataTableHTML(selectedCountry); 
 
             if (!macroeconomicData[selectedCountry] || !macroeconomicData[selectedCountry].hasFetchedAllHistoricalData) {
+                // Jika belum ada data yang di-fetch untuk negara ini, atau belum semua historis, fetch sekarang
+                if (!macroeconomicData[selectedCountry]) { // Tambahan: Inisialisasi jika belum ada sama sekali
+                     initializeMacroeconomicData(); // Ini seharusnya sudah dicover di atas, tapi sebagai safeguard
+                }
                 macroeconomicData[selectedCountry].hasFetchedAllHistoricalData = false; 
                 await fetchLatestDataFromSheet(selectedCountry); 
                 await fetchAllHistoricalDataForCountry(selectedCountry); 
@@ -1364,7 +1444,7 @@
             hideFullScreenLoading();
         });
         
-        async function applyDataPointsFilter() { /* ... existing function ... */
+        async function applyDataPointsFilter() { 
             const numPoints = parseInt(dataPointsInput.value);
             if (!isNaN(numPoints) && numPoints >= (parseInt(dataPointsInput.min) || 1)) { currentDataPointsToShow = numPoints; }
             else if (dataPointsInput.value === '') { currentDataPointsToShow = 15; dataPointsInput.value = '15'; }
@@ -1375,7 +1455,7 @@
         dataPointsInput.addEventListener('input', applyDataPointsFilter);
         dataPointsInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') { applyDataPointsFilter(); } });
 
-        showAllDataButton.addEventListener('click', async () => { /* ... existing function ... */
+        showAllDataButton.addEventListener('click', async () => { 
             currentDataPointsToShow = null; 
             const indicatorConf = getCurrentIndicatorConfig(activeIndicatorId, selectedCountry);
             if (indicatorConf && macroeconomicData[selectedCountry] && macroeconomicData[selectedCountry][indicatorConf.dataKey]) {
@@ -1385,7 +1465,7 @@
             if (activeIndicatorId) await displayHistoricalData(activeIndicatorId, selectedCountry); 
         });
 
-        decreaseDataPointsButton.addEventListener('click', () => { /* ... existing function ... */
+        decreaseDataPointsButton.addEventListener('click', () => { 
             let currentValue = parseInt(dataPointsInput.value) || 15; 
             const minValue = parseInt(dataPointsInput.min) || 1;
             if (currentValue > minValue) { dataPointsInput.value = currentValue - 1; }
@@ -1393,7 +1473,7 @@
             applyDataPointsFilter(); 
         });
 
-        increaseDataPointsButton.addEventListener('click', () => { /* ... existing function ... */
+        increaseDataPointsButton.addEventListener('click', () => { 
             let currentValue = parseInt(dataPointsInput.value) || 15; 
             const indicatorConf = getCurrentIndicatorConfig(activeIndicatorId, selectedCountry);
             let maxPoints = currentValue + 10; 
@@ -1413,13 +1493,11 @@
             showFullScreenLoading();
             initializeMacroeconomicData(); 
             
-            // Set initial pane sizes (optional, can rely on CSS or set explicitly)
             const initialLeftWidth = contentContainer.offsetWidth * 0.57;
             leftPane.style.width = initialLeftWidth + 'px';
             rightPane.style.width = (contentContainer.offsetWidth - initialLeftWidth - verticalResizer.offsetWidth) + 'px';
 
-            // Set initial chart/table heights (optional)
-            const initialChartHeight = 300; // Or calculate based on available space
+            const initialChartHeight = 300; 
              if (rightPane.style.display !== 'none' && chartOuterContainer.style.display !== 'none') {
                 chartOuterContainer.style.height = initialChartHeight + 'px';
                 const rightPanePaddings = (parseFloat(getComputedStyle(rightPane).paddingTop) || 0) + (parseFloat(getComputedStyle(rightPane).paddingBottom) || 0);
@@ -1427,7 +1505,11 @@
                 const controlsHeight = customLegendControls.offsetHeight + (parseFloat(getComputedStyle(customLegendControls).marginBottom) || 0);
                 const resizerYHeight = chartTableResizer.offsetHeight + (parseFloat(getComputedStyle(chartTableResizer).marginTop) || 0) + (parseFloat(getComputedStyle(chartTableResizer).marginBottom) || 0);
                 const availableHeightForChartAndTable = rightPane.clientHeight - rightPanePaddings - titleHeight - controlsHeight - resizerYHeight;
-                historicalTableWrapper.style.height = (availableHeightForChartAndTable - initialChartHeight) + 'px';
+                if (availableHeightForChartAndTable - initialChartHeight > 0) {
+                    historicalTableWrapper.style.height = (availableHeightForChartAndTable - initialChartHeight) + 'px';
+                } else {
+                     historicalTableWrapper.style.height = '0px'; // Hindari nilai negatif
+                }
             }
 
 
@@ -1451,15 +1533,13 @@
                 setupLegendButtons();
             }
             hideFullScreenLoading();
-            manageScrollbarEffects(); // Initial check
+            manageScrollbarEffects(); 
         });
 
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(async () => { 
-                // Recalculate pane widths if needed, or let resizers handle it
-                // For now, mainly for chart redraw if it's not handled by resizer mouseup
                 if (rightPane.style.display !== 'none' && chartOuterContainer.style.display !== 'none' && activeIndicatorId && selectedCountry) {
                     await displayHistoricalData(activeIndicatorId, selectedCountry); 
                 }
