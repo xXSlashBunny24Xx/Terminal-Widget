@@ -14,6 +14,7 @@
             color: #f0f0f0;
             display: flex;
             flex-direction: column;
+            height: 100vh;
         }
 
         .table-container {
@@ -24,6 +25,7 @@
             border: 1px solid #222;
             border-radius: 0;
             overflow: hidden;
+            max-height: 100%;
         }
 
         .title-bar {
@@ -34,11 +36,9 @@
             font-weight: bold;
             text-align: left;
             border-radius: 0;
-            justify-content: left;
-            align-items: left;
-            text-align: left;
             padding-left: 12px;
             border-bottom: 1px solid #222;
+            flex-shrink: 0;
         }
 
         .news-container {
@@ -52,35 +52,61 @@
 
         .news-item {
             background-color: #1a1a1a;
-            padding: 10px;
+            padding: 12px;
             border-radius: 5px;
             border: 1px solid #222;
+            display: flex;
+            flex-direction: column;
         }
 
         .news-title {
             font-size: 14px;
             font-weight: 700;
             color: #eee;
-            margin-bottom: 5px;
-        }
-
-        .news-meta {
-            font-size: 12px;
-            color: #aaa;
-            margin-top: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            flex-direction: column;
+            margin-bottom: 8px;
         }
 
         .news-description {
             font-size: 12px;
             color: #ccc;
             margin-top: 0;
+            margin-bottom: 10px;
+            line-height: 1.4;
         }
 
-        /* Global Minimalist macOS–Style Scrollbar Styling */
+        .news-meta {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: auto;
+            padding-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .news-date {
+            /* Styles for date if needed separately */
+        }
+
+        .source-button {
+            color: #fff;
+            background-color: transparent;
+            border: 1px solid #fff;
+            padding: 4px 8px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .source-button:hover {
+            background-color: #fff;
+            color: #1a1a1a;
+        }
+
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -91,37 +117,24 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background-color: rgba(255,255,255,0.1);
+            background-color: rgba(255,255,255,0.15);
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(255,255,255,0.2);
+            background-color: rgba(255,255,255,0.25);
         }
 
         html {
             scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.1) transparent;
+            scrollbar-color: rgba(255,255,255,0.15) transparent;
         }
-
-        .link-button {
-            color: #aaa;
-            text-decoration: none;
-            font-size: 10px;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            margin-left: 0;
-            display: inline;
-        }
-
-        .link-button:hover {
-            color: #fff;
-        }
-
-        .link-icon::before {
-            content: "🔗";
-             margin-left: 5px;
+        
+        .loading-message, .error-message {
+            color: #888;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
         }
 
     </style>
@@ -130,67 +143,128 @@
     <div class="table-container">
         <div class="title-bar">Market Headlines</div>
         <div class="news-container" id="news-container">
-            </div>
+            <div class="loading-message">Loading news...</div>
+        </div>
     </div>
     <script>
-        const sheetId = "1eY79zSwAPbvquEl2cG8aFme4jbXbAMr_-m4u-lTm3r8";
-        const apiKey = "AIzaSyARkBKvargdD7TRQ_gje61jdRyOiuR08e4";
-        const sheetName = "Financial Juice";
         const newsContainer = document.getElementById("news-container");
+        
+        // URL Web App Google Apps Script Anda
+        const googleAppsScriptUrl = 'https://script.google.com/macros/s/AKfycbxZCe4uD16RQ_WD_IDG7Gx8sYewzAOeSttmzDaFw6cvx5K2Zw6_eV1zT2Qv3ScpbzkA/exec'; 
+
+        function formatPubDate(pubDateString) {
+            // Jika tanggal dari Google Sheet sudah dalam format string yang bisa dikenali Date()
+            // atau jika berupa objek Date dari JSON (jarang terjadi dari GAS JSON output biasa)
+            if (!pubDateString) return 'No date';
+            try {
+                const date = new Date(pubDateString);
+                // Periksa apakah tanggal valid setelah parsing
+                if (isNaN(date.getTime())) {
+                    // Jika tanggal tidak valid (misalnya format string tidak dikenal), kembalikan string asli
+                    console.warn("Invalid date string received:", pubDateString);
+                    return pubDateString; 
+                }
+                return date.toLocaleString(undefined, { 
+                    year: 'numeric', month: 'short', day: 'numeric', 
+                    hour: '2-digit', minute: '2-digit' 
+                });
+            } catch (e) {
+                console.error("Error formatting date:", pubDateString, e);
+                return pubDateString; // Fallback ke string asli jika ada error lain
+            }
+        }
 
         function fetchNews() {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}?key=${apiKey}`;
+            console.log("Attempting to fetch JSON data from Google Apps Script:", googleAppsScriptUrl);
+            newsContainer.innerHTML = '<div class="loading-message">Fetching News</div>';
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.values && data.values.length > 1) {
-                        const header = data.values[0];
-                        const newsItems = data.values.slice(1);
-
-                        newsItems.forEach(item => {
-                            if (item.length >= 4) {
-                                const title = item[1];
-                                let description = item[2];
-                                const date = item[0];
-                                const link = item[3];
-
-                                 // Format description
-                                if (description) {
-                                    description = description.replace(/(\d+\.\s)/g, '<br>&emsp;&bull; '); // Replace numbered lists with bullets
-                                }
-
-                                const newsItemDiv = document.createElement("div");
-                                newsItemDiv.className = "news-item";
-
-                                const titleElement = document.createElement("h2");
-                                titleElement.className = "news-title";
-                                titleElement.textContent = title;
-
-                                const descriptionElement = document.createElement("p");
-                                descriptionElement.className = "news-description";
-                                descriptionElement.innerHTML = description;
-
-                                const metaElement = document.createElement("div");
-                                metaElement.className = "news-meta";
-                                metaElement.textContent = date;
-
-
-
-                                newsItemDiv.appendChild(titleElement);
-                                newsItemDiv.appendChild(descriptionElement);
-                                newsItemDiv.appendChild(metaElement);
-
-                                newsContainer.appendChild(newsItemDiv);
-                            }
+            fetch(googleAppsScriptUrl)
+                .then(response => {
+                    console.log("Response status:", response.status);
+                    console.log("Response ok:", response.ok);
+                    if (!response.ok) {
+                        // Jika GAS mengembalikan error dalam format JSON, kita bisa coba parse
+                        return response.json().then(errData => {
+                            throw new Error(`Network response was not ok. Status: ${response.status}. GAS Error: ${errData.error || JSON.stringify(errData)}`);
+                        }).catch(parseError => {
+                            // Jika parsing JSON error gagal, lempar error umum
+                             throw new Error(`Network response was not ok. Status: ${response.status}. Could not parse error response from JSON.`);
                         });
-                    } else {
-                        newsContainer.innerHTML = "<div class='news-item'>No data found.</div>";
                     }
+                    return response.json(); 
+                })
+                .then(data => {
+                    console.log("JSON data received:", data);
+                    
+                    let itemsToProcess = [];
+                    if (Array.isArray(data)) {
+                        itemsToProcess = data;
+                    } else if (data && data.error) { // Menangani jika GAS mengembalikan JSON error kustom
+                        console.error("Error from Google Apps Script:", data.error, data.details || '');
+                        throw new Error(`Error from Google Apps Script: ${data.error} ${data.details || ''}`);
+                    }
+                     else if (data && Array.isArray(data.items)) { 
+                        itemsToProcess = data.items;
+                    } else {
+                        console.error("Received data is not in the expected array format or recognized error structure.", data);
+                        throw new Error("Format data JSON tidak sesuai harapan.");
+                    }
+
+                    console.log(`Found ${itemsToProcess.length} news items in JSON.`);
+                    newsContainer.innerHTML = ''; 
+
+                    if (itemsToProcess.length === 0) {
+                        newsContainer.innerHTML = '<div class="loading-message">No news items found in the JSON data.</div>';
+                        return;
+                    }
+
+                    itemsToProcess.forEach(item => {
+                        // Nama properti disesuaikan dengan output dari google_apps_script_sheet_to_json
+                        const title = item.title || 'No Title';
+                        const link = item.link || '#';
+                        let description = item.description || 'No Description';
+                        const pubDateString = item.date; // Diambil dari kolom "Date" di Sheet, bukan "pubDate"
+
+                        const formattedDate = formatPubDate(pubDateString);
+
+                        const newsItemDiv = document.createElement("div");
+                        newsItemDiv.className = "news-item";
+
+                        const titleElement = document.createElement("h2");
+                        titleElement.className = "news-title";
+                        titleElement.textContent = title;
+
+                        const descriptionElement = document.createElement("p");
+                        descriptionElement.className = "news-description";
+                        descriptionElement.innerHTML = String(description).replace(/&lt;br\s*\/?&gt;/gi, '<br>'); 
+
+                        const metaElement = document.createElement("div");
+                        metaElement.className = "news-meta";
+
+                        const dateElement = document.createElement("span");
+                        dateElement.className = "news-date";
+                        dateElement.textContent = formattedDate;
+
+                        const sourceLink = document.createElement("a");
+                        sourceLink.className = "source-button";
+                        sourceLink.href = link;
+                        sourceLink.target = "_blank"; 
+                        sourceLink.rel = "noopener noreferrer";
+                        sourceLink.textContent = "Source";
+                        
+                        metaElement.appendChild(dateElement);
+                        metaElement.appendChild(sourceLink);
+
+                        newsItemDiv.appendChild(titleElement);
+                        newsItemDiv.appendChild(descriptionElement);
+                        newsItemDiv.appendChild(metaElement);
+
+                        newsContainer.appendChild(newsItemDiv);
+                    });
                 })
                 .catch(error => {
-                    console.error("Error fetching data:", error);
-                    newsContainer.innerHTML = `<div class='news-item'>Error: ${error.message}</div>`;
+                    console.error("Error fetching or processing JSON data:", error);
+                    newsContainer.innerHTML = `<div class='error-message'>Error fetching news: ${error.message}. Pastikan URL Google Apps Script benar, dapat diakses, dan Google Sheet memiliki data yang sesuai.</div>`;
                 });
         }
 
