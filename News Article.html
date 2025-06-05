@@ -85,10 +85,8 @@
             border-color: #9e9e9e;
         }
 
-
         .filter-label {
             font-size: 14px;
-            /* margin-right: 8px; No need if using gap in .filter-group */
             color: #ddd;
         }
 
@@ -118,7 +116,6 @@
 
         .news-container.grid-layout {
             display: grid;
-            /* Responsive grid: creates as many columns as can fit with a min width of 280px */
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 15px; /* Gap between grid items */
             padding: 15px; /* Slightly more padding for grid */
@@ -131,17 +128,13 @@
             border: 1px solid #222;
             display: flex; 
             flex-direction: column; 
-            /* Adding transition for potential future animations */
             transition: transform 0.2s ease-in-out;
         }
         
         .news-container.grid-layout .news-item {
-            /* Styles specific to items in grid view */
-            /* Example: you might want to set a min-height or aspect-ratio */
-            min-height: 200px; /* Example: ensure grid items have some height */
+            min-height: 200px; 
             justify-content: space-between; /* Pushes meta to bottom */
         }
-
 
         .news-title {
             font-size: 14px;
@@ -166,15 +159,29 @@
             justify-content: space-between; 
             align-items: center;
             flex-wrap: wrap; /* Allow meta items to wrap if space is tight */
-            gap: 5px; /* Gap between date and source in meta */
+            gap: 8px; /* Gap between date, category and source in meta */
         }
         
+        /* MODIFICATION: Added style for Category Tag */
+        .news-item-category-display,
         .news-item-source-display { 
             font-size: 10px;
             color: #fff; 
-            background-color: #333; /* Subtle background for source tag */
             padding: 2px 5px;
             border-radius: 3px;
+            white-space: nowrap; /* Prevent wrapping within the tag */
+        }
+
+        .news-item-category-display {
+            background-color: #00509e; /* Blue for category */
+        }
+        .news-item-source-display { 
+            background-color: #333; /* Original color for source */
+        }
+        .meta-tags-container { /* New container for category and source tags */
+            display: flex;
+            gap: 5px; /* Space between category and source tags */
+            flex-wrap: nowrap; /* Try to keep tags on one line if possible, but allow outer meta to wrap */
         }
 
 
@@ -188,7 +195,6 @@
         }
         
         .news-container.grid-layout .news-description {
-             /* In grid view, you might want to limit the description lines */
             overflow: hidden;
             text-overflow: ellipsis;
             display: -webkit-box;
@@ -197,25 +203,20 @@
             max-height: calc(1.4em * 3); /* line-height * number of lines */
         }
 
-
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
-
         ::-webkit-scrollbar-track {
             background: transparent;
         }
-
         ::-webkit-scrollbar-thumb {
             background-color: rgba(255,255,255,0.15); 
             border-radius: 4px;
         }
-
         ::-webkit-scrollbar-thumb:hover {
             background-color: rgba(255,255,255,0.25);
         }
-
         html { 
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.15) transparent;
@@ -238,27 +239,29 @@
                 <input type="text" id="search-input" placeholder="Search headlines...">
             </div>
             <div class="filter-group"> 
-                <span class="filter-label">Source:</span>
-                <select id="source-filter-select" class="filter-select-css">
-                    <option value="">All Sources</option>
+                <!-- MODIFICATION: Changed label and select ID for Category -->
+                <span class="filter-label">Category:</span>
+                <select id="category-filter-select" class="filter-select-css">
+                    <option value="">All Categories</option>
                 </select>
             </div>
-            <div class="layout-switcher filter-group"> <!-- Layout switcher added here -->
+            <div class="layout-switcher filter-group">
                 <span class="filter-label">View:</span>
-                <button id="list-layout-btn" class="layout-button active">List</button>
-                <button id="grid-layout-btn" class="layout-button">Grid</button>
+                <button id="list-layout-btn" class="layout-button">List</button> <!-- Removed active initially -->
+                <button id="grid-layout-btn" class="layout-button">Grid</button> <!-- Removed active initially -->
             </div>
         </div>
-        <div class="news-container" id="news-container"> <!-- Default is list, no specific class needed initially or add 'list-layout' -->
+        <div class="news-container" id="news-container"> 
             <div class='loading-message'>Loading articles...</div>
         </div>
     </div>
     <script>
-        const DATA_ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbyUeMS5NxqeCGtghA96QO8PRt1ZbD42WjHfsAQ6IvchVvzXs0rPCqFaJt7ATemKeqCI/exec';
+        const DATA_ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbyUeMS5NxqeCGtghA96QO8PRt1ZbD42WjHfsAQ6IvchVvzXs0rPCqFaJt7ATemKeqCI/exec'; // Pastikan URL ini benar
 
         const newsContainer = document.getElementById("news-container");
         const searchInput = document.getElementById('search-input');
-        const sourceFilterSelect = document.getElementById('source-filter-select');
+        // MODIFICATION: Changed to categoryFilterSelect
+        const categoryFilterSelect = document.getElementById('category-filter-select');
         const listLayoutButton = document.getElementById('list-layout-btn');
         const gridLayoutButton = document.getElementById('grid-layout-btn');
         
@@ -268,7 +271,7 @@
         async function fetchNews() {
             newsContainer.innerHTML = "<div class='loading-message'>Fetching articles...</div>";
             try {
-                const response = await fetch(`${DATA_ENDPOINT_URL}`);
+                const response = await fetch(DATA_ENDPOINT_URL); // Removed template literal as it's not needed here
                 
                 if (!response.ok) {
                     let errorText = `Failed to fetch news. Status: ${response.status}`;
@@ -277,7 +280,13 @@
                         errorText += ` - Message: ${errorJson.error || 'No additional details.'}`;
                         if(errorJson.details) errorText += ` Details: ${errorJson.details}`;
                     } catch (e) {
-                        const rawErrorText = await response.text();
+                        // If parsing JSON fails, try to get raw text
+                        let rawErrorText = '';
+                        try {
+                            rawErrorText = await response.text();
+                        } catch (textError) {
+                            // ignore if text also fails
+                        }
                         errorText += ` - Raw response: ${rawErrorText || 'No raw response.'}`;
                     }
                     throw new Error(errorText);
@@ -298,14 +307,17 @@
                     const utcDate = item.date ? new Date(item.date) : null; 
                     return {
                         DateObj: (utcDate && !isNaN(utcDate.getTime())) ? utcDate : null, 
-                        Title: item.title || "No Title",            
-                        Description: item.description || "",      
+                        Title: item.title || "No Title",         
+                        Description: item.description || "",     
                         Link: item.link || "#",
-                        NewsSource: item.newsSource || "N/A" 
+                        NewsSource: item.newsSource || "N/A",
+                        // MODIFICATION: Added Category to news item object
+                        Category: item.category || "Uncategorized" 
                     };
-                }).filter(item => item.DateObj);
+                }).filter(item => item.DateObj); // Keep filtering out items with invalid dates
 
-                populateSourceFilter(allNewsItems); 
+                // MODIFICATION: Populate category filter instead of source filter
+                populateCategoryFilter(allNewsItems); 
                 setLayout(currentLayout, true); // Set initial layout without re-filtering yet
                 applyFilters(); // Apply filters which will also render news
 
@@ -315,17 +327,29 @@
             }
         }
 
-        function populateSourceFilter(newsItems) {
-            const sources = [...new Set(newsItems.map(item => item.NewsSource).filter(source => source && source !== "N/A"))].sort();
-            const currentSelectedValue = sourceFilterSelect.value;
-            while (sourceFilterSelect.options.length > 1) sourceFilterSelect.remove(1);
-            sources.forEach(source => {
+        // MODIFICATION: Renamed and adapted to populate categories
+        function populateCategoryFilter(newsItems) {
+            const categories = [...new Set(newsItems.map(item => item.Category).filter(category => category && category !== "Uncategorized"))].sort();
+            const currentSelectedValue = categoryFilterSelect.value;
+            
+            // Clear existing options except the first one ("All Categories")
+            while (categoryFilterSelect.options.length > 1) {
+                categoryFilterSelect.remove(1);
+            }
+            
+            categories.forEach(category => {
                 const option = document.createElement('option');
-                option.value = source; option.textContent = source;
-                sourceFilterSelect.appendChild(option);
+                option.value = category; 
+                option.textContent = category;
+                categoryFilterSelect.appendChild(option);
             });
-            if (sources.includes(currentSelectedValue)) sourceFilterSelect.value = currentSelectedValue;
-            else sourceFilterSelect.value = "";
+
+            // Restore selection if possible
+            if (categories.includes(currentSelectedValue)) {
+                categoryFilterSelect.value = currentSelectedValue;
+            } else {
+                categoryFilterSelect.value = ""; // Default to "All Categories"
+            }
         }
         
         function setLayout(newLayout, isInitialSetup = false) {
@@ -346,11 +370,13 @@
 
         function applyFilters() {
             const searchTerm = searchInput.value.toLowerCase().trim();
-            const selectedSource = sourceFilterSelect.value;
+            // MODIFICATION: Get selected category
+            const selectedCategory = categoryFilterSelect.value;
             let filteredNews = allNewsItems;
 
-            if (selectedSource) {
-                filteredNews = filteredNews.filter(item => item.NewsSource === selectedSource);
+            // MODIFICATION: Filter by category
+            if (selectedCategory) {
+                filteredNews = filteredNews.filter(item => item.Category === selectedCategory);
             }
 
             if (searchTerm) {
@@ -377,12 +403,15 @@
                 const dateStr = item.DateObj ? item.DateObj.toLocaleString('en-US', { 
                     year: 'numeric', month: 'long', day: 'numeric',
                     hour: '2-digit', minute: '2-digit', hour12: false, 
-                    timeZone: 'Asia/Jakarta'
+                    timeZone: 'Asia/Jakarta' // Or user's local timezone
                 }) : "Invalid Date";
                 const link = item.Link;
                 const newsSource = item.NewsSource || 'N/A';
+                // MODIFICATION: Get category
+                const category = item.Category || 'Uncategorized';
 
                 if (description) {
+                    // Basic formatting for numbered lists (example)
                     description = description.replace(/(\d+\.\s)/g, '<br>&emsp;&bull; '); 
                 }
 
@@ -391,6 +420,7 @@
                 newsItemDiv.dataset.title = title; 
                 newsItemDiv.dataset.description = description;
                 newsItemDiv.dataset.source = newsSource;
+                newsItemDiv.dataset.category = category; // Add category to dataset
 
                 const titleElement = document.createElement("h2");
                 titleElement.className = "news-title";
@@ -412,15 +442,31 @@
                 const dateDisplayElement = document.createElement("span");
                 dateDisplayElement.textContent = dateStr;
 
+                // MODIFICATION: Create and add Category tag
+                const categoryDisplayElement = document.createElement("span");
+                categoryDisplayElement.className = "news-item-category-display";
+                categoryDisplayElement.textContent = category;
+                
                 const sourceDisplayElement = document.createElement("span");
                 sourceDisplayElement.className = "news-item-source-display";
-                sourceDisplayElement.textContent = `${newsSource}`; // Menampilkan hanya nama sumber
+                sourceDisplayElement.textContent = newsSource; 
                 
-                metaElement.appendChild(dateDisplayElement); 
-                if (newsSource !== 'N/A' && newsSource.trim() !== '') { // Hanya tampilkan jika ada sumber
-                    metaElement.appendChild(sourceDisplayElement); 
-                }
+                const tagsContainer = document.createElement("div"); // New container for tags
+                tagsContainer.className = "meta-tags-container";
 
+                metaElement.appendChild(dateDisplayElement); 
+                
+                // Append category tag if not 'Uncategorized' (or adjust as needed)
+                if (category.trim() !== '' && category !== 'Uncategorized') {
+                     tagsContainer.appendChild(categoryDisplayElement);
+                }
+                // Append source tag if not 'N/A'
+                if (newsSource.trim() !== '' && newsSource !== 'N/A') {
+                    tagsContainer.appendChild(sourceDisplayElement); 
+                }
+                if (tagsContainer.hasChildNodes()) { // Only add tags container if it has tags
+                    metaElement.appendChild(tagsContainer);
+                }
 
                 newsItemDiv.appendChild(titleElement);
                 if (description.trim() !== "") { 
@@ -435,20 +481,17 @@
         listLayoutButton.addEventListener('click', () => setLayout('list'));
         gridLayoutButton.addEventListener('click', () => setLayout('grid'));
         searchInput.addEventListener('input', applyFilters);
-        sourceFilterSelect.addEventListener('change', applyFilters);
+        // MODIFICATION: Event listener for category filter
+        categoryFilterSelect.addEventListener('change', applyFilters);
 
-        // Set initial layout class after DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            if (currentLayout === 'list') {
-                newsContainer.classList.add('list-layout');
-            } else {
-                newsContainer.classList.add('grid-layout');
-            }
+            // Set initial layout class and button states
+            newsContainer.classList.add(currentLayout + '-layout');
             listLayoutButton.classList.toggle('active', currentLayout === 'list');
             gridLayoutButton.classList.toggle('active', currentLayout === 'grid');
+            fetchNews(); // Fetch news after DOM is ready and initial layout is set
         });
         
-        fetchNews();
     </script>
 </body>
 </html>
