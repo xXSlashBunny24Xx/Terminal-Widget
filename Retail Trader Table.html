@@ -96,7 +96,7 @@
             border-color: #ff8000;
         }
 
-         /* Minimalist macOS–Style Scrollbar Styling */
+        /* Minimalist macOS–Style Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -119,7 +119,7 @@
         
         .table-container {
             flex: 1;
-            overflow-y: auto; 
+            overflow: auto; 
             min-height: 0; 
             border: 1px solid #222;
             border-radius: 4px;
@@ -205,88 +205,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
 </div>
 
 <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5EDnvhXmjSfRKp9AROuG9bDZMuaC_TNDqQbR0oziTFY_9zP20OwygQybxdgG3hkQhtw/exec';
     const retailHistInstrumentSelect = document.getElementById('retail-hist-instrument-select');
     const retailHistoricalTableBody = document.getElementById('retail-historical-table').getElementsByTagName('tbody')[0];
+    let retailDataStore = {}; // Akan diisi dengan data dari JSON
 
-    // --- Data Generation (Sama seperti widget Retail Trader Positioning Explorer) ---
-    function generateRetailDataEntry(baseDate, weekOffset, instrumentKey) {
-        const date = new Date(baseDate);
-        date.setDate(date.getDate() + weekOffset * 7);
-        const dateString = date.toISOString().split('T')[0];
+    function formatRetailHistNumber(numStr, isPrice = false, instrumentKey = '', isPercentage = false) {
+        const num = parseFloat(numStr);
+        if (isNaN(num)) return numStr;
 
-        let basePrice = 1.1000; 
-        let priceVolatility = 0.0050;
-        let positionBase = 5000;
-        let volumeBase = 10000;
-
-        if (instrumentKey === 'GBPUSD') { basePrice = 1.2700; positionBase = 4500; }
-        else if (instrumentKey === 'USDJPY') { basePrice = 157.00; priceVolatility = 0.50; positionBase = 6000; }
-        else if (instrumentKey === 'AUDUSD') { basePrice = 0.6600; positionBase = 4000; }
-        else if (instrumentKey === 'SP500') { basePrice = 5300; priceVolatility = 50; positionBase = 3000; volumeBase = 15000;}
-        else if (instrumentKey === 'GOLD') { basePrice = 2300; priceVolatility = 20; positionBase = 7000; volumeBase = 20000;}
-        else if (instrumentKey === 'OIL') { basePrice = 80; priceVolatility = 2; positionBase = 8000; volumeBase = 25000;}
-
-        const priceTrend = Math.sin(weekOffset / 8) * priceVolatility * 2; 
-        const currentPrice = basePrice + priceTrend + (Math.random() - 0.5) * priceVolatility;
-
-        const longPos = Math.floor(positionBase * (1 + Math.sin(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
-        const shortPos = Math.floor(positionBase * (1 + Math.cos(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
-        const totalPos = longPos + shortPos;
-
-        const percLong = totalPos > 0 ? (longPos / totalPos) * 100 : 0;
-        const percShort = totalPos > 0 ? (shortPos / totalPos) * 100 : 0;
-
-        const longVol = Math.floor(volumeBase * (percLong / 100 + 0.5) * (0.8 + Math.random() * 0.4));
-        const shortVol = Math.floor(volumeBase * (percShort / 100 + 0.5) * (0.8 + Math.random() * 0.4));
-        
-        const avgLongPrice = currentPrice * (1 - Math.random() * (priceVolatility / basePrice) * 0.5);
-        const avgShortPrice = currentPrice * (1 + Math.random() * (priceVolatility / basePrice) * 0.5);
-
-        return {
-            date: dateString,
-            percentageShort: percShort,
-            percentageLong: percLong,
-            shortVolume: Math.max(0, shortVol),
-            longVolume: Math.max(0, longVol),
-            longPosition: Math.max(0, longPos),
-            shortPosition: Math.max(0, shortPos),
-            totalPosition: Math.max(0, totalPos),
-            averageShortPrice: avgShortPrice,
-            averageLongPrice: avgLongPrice,
-        };
-    }
-
-    function generateHistoricalRetailData(instrumentKey, numEntries = 30) {
-        const data = [];
-        const reportDayOffset = 2; 
-        let baseDate = new Date(); 
-        baseDate.setDate(baseDate.getDate() - (baseDate.getDay() - reportDayOffset + 7) % 7);
-        baseDate.setDate(baseDate.getDate() - (numEntries - 1) * 7);
-
-        for (let i = 0; i < numEntries; i++) {
-            data.push(generateRetailDataEntry(baseDate, i, instrumentKey));
-        }
-        return data;
-    }
-
-    const retailInstruments = {
-        EURUSD: "EUR/USD", GBPUSD: "GBP/USD", USDJPY: "USD/JPY", AUDUSD: "AUD/USD",
-        SP500: "S&P 500 Index", GOLD: "Gold", OIL: "Crude Oil"
-    };
-
-    const retailDataStore = {};
-    Object.keys(retailInstruments).forEach(key => {
-        retailDataStore[key] = generateHistoricalRetailData(key);
-    });
-
-    function formatRetailHistNumber(num, isPrice = false, instrumentKey = '', isPercentage = false) {
         if (isPercentage) {
             return num.toFixed(1) + '%';
         }
@@ -303,49 +237,69 @@
     }
     
     function populateRetailHistoricalDataTable() {
-        retailHistoricalTableBody.innerHTML = ''; 
+        retailHistoricalTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">Loading data...</td></tr>';
         const selectedInstrumentKey = retailHistInstrumentSelect.value;
         const instrumentData = retailDataStore[selectedInstrumentKey];
 
         if (!instrumentData || instrumentData.length === 0) {
-            const row = retailHistoricalTableBody.insertRow();
-            const cell = row.insertCell();
-            cell.colSpan = 10; // Sesuaikan dengan jumlah kolom
-            cell.textContent = 'No data available for this instrument.';
-            cell.style.textAlign = 'center';
+            retailHistoricalTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">No data available for this instrument.</td></tr>';
             return;
         }
+        
+        retailHistoricalTableBody.innerHTML = ''; // Kosongkan tabel sebelum diisi
 
-        const reversedData = [...instrumentData].reverse(); 
-
-        reversedData.forEach(report => {
+        // Data sudah di-reverse oleh Google Script, jadi tidak perlu di-reverse lagi di sini
+        instrumentData.forEach(report => {
             const row = retailHistoricalTableBody.insertRow();
-            row.insertCell().textContent = report.date;
-            row.insertCell().textContent = formatRetailHistNumber(report.percentageLong, false, selectedInstrumentKey, true);
-            row.insertCell().textContent = formatRetailHistNumber(report.percentageShort, false, selectedInstrumentKey, true);
+            
+            // Format tanggal
+            const date = new Date(report.Timestamp);
+            const formattedDate = `${date.toLocaleString('default', { month: 'short' })} ${date.getDate()}, ${date.getFullYear()}`;
+            
+            row.insertCell().textContent = formattedDate;
+            row.insertCell().textContent = formatRetailHistNumber(report.longPercentage, false, selectedInstrumentKey, true);
+            row.insertCell().textContent = formatRetailHistNumber(report.shortPercentage, false, selectedInstrumentKey, true);
             row.insertCell().textContent = formatRetailHistNumber(report.longVolume);
             row.insertCell().textContent = formatRetailHistNumber(report.shortVolume);
-            row.insertCell().textContent = formatRetailHistNumber(report.longPosition);
-            row.insertCell().textContent = formatRetailHistNumber(report.shortPosition);
-            row.insertCell().textContent = formatRetailHistNumber(report.totalPosition);
-            row.insertCell().textContent = formatRetailHistNumber(report.averageLongPrice, true, selectedInstrumentKey);
-            row.insertCell().textContent = formatRetailHistNumber(report.averageShortPrice, true, selectedInstrumentKey);
+            row.insertCell().textContent = formatRetailHistNumber(report.longPositions);
+            row.insertCell().textContent = formatRetailHistNumber(report.shortPositions);
+            row.insertCell().textContent = formatRetailHistNumber(report.totalPositions);
+            row.insertCell().textContent = formatRetailHistNumber(report.avgLongPrice, true, selectedInstrumentKey);
+            row.insertCell().textContent = formatRetailHistNumber(report.avgShortPrice, true, selectedInstrumentKey);
         });
     }
 
 
-    // --- Inisialisasi ---
-    function initializeRetailHistWidget() {
-        Object.keys(retailInstruments).forEach(key => {
-            const option = document.createElement('option');
-            option.value = key;
-            option.textContent = retailInstruments[key];
-            retailHistInstrumentSelect.appendChild(option);
-        });
-        retailHistInstrumentSelect.value = "EURUSD"; 
+    async function initializeRetailHistWidget() {
+        try {
+            const response = await fetch(SCRIPT_URL);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch data: ${response.statusText}`);
+            }
+            retailDataStore = await response.json();
 
-        retailHistInstrumentSelect.addEventListener('change', populateRetailHistoricalDataTable);
-        populateRetailHistoricalDataTable();
+            if (!retailDataStore || Object.keys(retailDataStore).length === 0) {
+                 throw new Error("Fetched data is empty.");
+            }
+
+            // Isi dropdown
+            Object.keys(retailDataStore).forEach(key => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = key;
+                retailHistInstrumentSelect.appendChild(option);
+            });
+            retailHistInstrumentSelect.value = "EURUSD"; 
+
+            retailHistInstrumentSelect.addEventListener('change', populateRetailHistoricalDataTable);
+            
+            // Render tabel untuk pertama kali
+            populateRetailHistoricalDataTable();
+
+        } catch(error) {
+            console.error("Initialization failed:", error);
+            retailHistoricalTableBody.innerHTML = `<tr><td colspan="10" style="text-align: center;">Error loading data: ${error.message}</td></tr>`;
+        }
     }
 
     document.addEventListener('DOMContentLoaded', initializeRetailHistWidget);
