@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Retail Trader Overview Dashboard - Highly Resizable</title>
+    <title>Retail Trader Overview Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
@@ -16,27 +16,27 @@
             font-family: 'Source Code Pro', monospace;
             height: 100%;
             width: 100%;
-            overflow: hidden; /* Prevent scrollbars at the highest level */
+            overflow: hidden;
         }
 
         body {
             display: flex;
             flex-direction: column;
             height: 100%; 
-            overflow: hidden; /* Ensure body itself doesn't scroll */
+            overflow: hidden;
         }
 
         .dashboard-container {
             display: flex;
             flex-direction: column;
-            flex: 1; /* Takes available space */
+            flex: 1;
             padding: 0;
             box-sizing: border-box;
             background-color: #000;
             border: 1px solid #222;
             border-radius: 0;
-            overflow: hidden; /* Prevents this container from scrolling */
-            min-height: 0; /* Essential for flex children to shrink and allow internal scroll */
+            overflow: hidden;
+            min-height: 0;
         }
 
         .dashboard-title-bar {
@@ -50,16 +50,15 @@
             font-weight: bold;
             border-bottom: 1px solid #222;
             padding-left: 12px;
-            flex-shrink: 0; /* Title bar should not shrink */
+            flex-shrink: 0;
         }
 
         .dashboard-content-wrapper {
-            flex: 1; /* Takes remaining space after title bar */
+            flex: 1;
             padding: 10px; 
             box-sizing: border-box;
-            overflow-y: auto; /* Allows vertical scrolling for the table content */
-            overflow-x: auto; /* Allows horizontal scrolling for wide table content */
-            min-height: 0; /* Essential for flexbox to allow scrolling within this container */
+            overflow: auto;
+            min-height: 0;
         }
         
         /* Minimalist macOS–Style Scrollbar Styling */
@@ -78,7 +77,7 @@
             background-color: rgba(255,255,255,0.2);
         }
         /* For Firefox */
-        html { /* Apply to html for consistency */
+        html {
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
@@ -86,12 +85,12 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px; /* MODIFIED: Increased font size for table content */
+            font-size: 12px;
         }
 
         th, td {
             border: 1px solid #1c1c1c; 
-            padding: 6px; /* Adjusted padding slightly for new font size */
+            padding: 6px;
             text-align: left;
             vertical-align: middle;
         }
@@ -99,15 +98,15 @@
         th {
             background-color: #1a1a1a; 
             color: #ff8000;
-            position: sticky; /* Makes table headers sticky during vertical scroll */
+            position: sticky;
             top: 0; 
-            z-index: 10; /* Ensures headers stay above scrolling content */
+            z-index: 10;
             white-space: nowrap; 
-            font-size: 13px; /* MODIFIED: Header font slightly larger */
+            font-size: 13px;
         }
         
         td {
-            color: #bbb; /* MODIFIED: Slightly brighter data text */
+            color: #bbb;
             white-space: nowrap; 
         }
         td:not(:first-child) { 
@@ -115,7 +114,7 @@
         }
         
         tr:nth-child(even) {
-            background-color: #080808; /* MODIFIED: Slightly darker even row for better contrast */
+            background-color: #080808;
         }
         tr:hover {
             background-color: #151515; 
@@ -124,7 +123,7 @@
         .chart-cell {
             width: 80px; 
             height: 40px; 
-            padding: 2px; /* MODIFIED: Slightly increased padding for chart cell */
+            padding: 2px;
             box-sizing: border-box;
         }
         .chart-cell canvas {
@@ -146,7 +145,7 @@
 </head>
 <body>
 <div class="dashboard-container">
-    <div class="dashboard-title-bar">Retail Trader Overview Dashboard</div>
+    <div class="dashboard-title-bar">Community Sentiment Overview</div>
     <div class="dashboard-content-wrapper">
         <table id="retail-overview-table">
             <thead>
@@ -157,103 +156,35 @@
                     <th>% Long</th>
                     <th>% Short</th>
                     <th>Weekly Δ Net</th>
-                    <th>Net Pos Trend (30w)</th>
+                    <th>Net Pos Trend</th>
                     <th>Buy/Sell %</th>
                 </tr>
             </thead>
             <tbody>
-                </tbody>
+                <!-- Data akan diisi oleh JavaScript -->
+            </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // --- Helper untuk menghasilkan data retail acak (sama seperti widget sebelumnya) ---
-    function generateRetailDataEntry(baseDate, weekOffset, instrumentKey) {
-        const date = new Date(baseDate); // Use the passed baseDate for each entry
-        // date.setDate(date.getDate() + weekOffset * 7); // weekOffset is now relative to the series start
-        const dateString = date.toISOString().split('T')[0]; // For labels if needed, though chart uses Date obj
-
-        let basePrice = 1.1000; 
-        let priceVolatility = 0.0050;
-        let positionBase = 5000;
-        let volumeBase = 10000;
-
-
-        if (instrumentKey === 'GBPUSD') { basePrice = 1.2700; positionBase = 4500; }
-        else if (instrumentKey === 'USDJPY') { basePrice = 157.00; priceVolatility = 0.50; positionBase = 6000; }
-        else if (instrumentKey === 'AUDUSD') { basePrice = 0.6600; positionBase = 4000; }
-        else if (instrumentKey === 'SP500') { basePrice = 5300; priceVolatility = 50; positionBase = 3000; volumeBase = 15000;}
-        else if (instrumentKey === 'GOLD') { basePrice = 2300; priceVolatility = 20; positionBase = 7000; volumeBase = 20000;}
-        else if (instrumentKey === 'OIL') { basePrice = 80; priceVolatility = 2; positionBase = 8000; volumeBase = 25000;}
-
-        const priceTrend = Math.sin(weekOffset / 8) * priceVolatility * 2; 
-        const currentPrice = basePrice + priceTrend + (Math.random() - 0.5) * priceVolatility;
-
-        const longPos = Math.floor(positionBase * (1 + Math.sin(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
-        const shortPos = Math.floor(positionBase * (1 + Math.cos(weekOffset / 5 + Math.random()) * 0.3 + (Math.random() - 0.4) * 0.2));
-        const totalPos = longPos + shortPos;
-
-        const percLong = totalPos > 0 ? (longPos / totalPos) * 100 : 0;
-        const percShort = totalPos > 0 ? (shortPos / totalPos) * 100 : 0;
-
-        // const longVol = Math.floor(volumeBase * (percLong / 100 + 0.5) * (0.8 + Math.random() * 0.4)); // Not used in table
-        // const shortVol = Math.floor(volumeBase * (percShort / 100 + 0.5) * (0.8 + Math.random() * 0.4)); // Not used in table
-        
-        // const avgLongPrice = currentPrice * (1 - Math.random() * (priceVolatility / basePrice) * 0.5); // Not used in table
-        // const avgShortPrice = currentPrice * (1 + Math.random() * (priceVolatility / basePrice) * 0.5); // Not used in table
-
-        return {
-            date: date, // Store actual Date object for time series chart
-            percentageShort: percShort,
-            percentageLong: percLong,
-            // shortVolume: Math.max(0, shortVol), 
-            // longVolume: Math.max(0, longVol),   
-            longPosition: Math.max(0, longPos),
-            shortPosition: Math.max(0, shortPos),
-            totalPosition: Math.max(0, totalPos),
-            // averageShortPrice: avgShortPrice, 
-            // averageLongPrice: avgLongPrice,   
-        };
-    }
-
-    function generateHistoricalRetailData(instrumentKey, numEntries = 30) {
-        const data = [];
-        const reportDayOffset = 2; // Tuesday, for example
-        let seriesStartDate = new Date(); 
-        seriesStartDate.setDate(seriesStartDate.getDate() - (seriesStartDate.getDay() - reportDayOffset + 7) % 7); // Most recent Tuesday
-        seriesStartDate.setDate(seriesStartDate.getDate() - (numEntries - 1) * 7); // Go back (numEntries - 1) weeks to get the start date
-
-        for (let i = 0; i < numEntries; i++) {
-            const entryDate = new Date(seriesStartDate);
-            entryDate.setDate(seriesStartDate.getDate() + i * 7); // Increment date for each entry
-            data.push(generateRetailDataEntry(entryDate, i, instrumentKey)); // Pass 'i' as weekOffset relative to series start
-        }
-        return data;
-    }
-
-    const retailInstruments = {
-        EURUSD: "EUR/USD", GBPUSD: "GBP/USD", USDJPY: "JPY/USD", AUDUSD: "AUD/USD",
-        SP500: "S&P 500", GOLD: "Gold", OIL: "Crude Oil"
-    };
-
-    const retailDataStore = {};
-    Object.keys(retailInstruments).forEach(key => {
-        retailDataStore[key] = generateHistoricalRetailData(key);
-    });
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5EDnvhXmjSfRKp9AROuG9bDZMuaC_TNDqQbR0oziTFY_9zP20OwygQybxdgG3hkQhtw/exec';
 
     const retailDashboardColors = {
         netPositionLinePositive: 'rgba(34, 177, 76, 0.8)', 
         netPositionFillPositive: 'rgba(34, 177, 76, 0.1)', 
         netPositionLineNegative: 'rgba(237, 28, 36, 0.8)', 
         netPositionFillNegative: 'rgba(237, 28, 36, 0.1)', 
-        long: 'rgba(34, 177, 76, 0.8)',      
-        short: 'rgba(237, 28, 36, 0.8)',     
+        long: 'rgba(34, 177, 76, 0.8)',       
+        short: 'rgba(237, 28, 36, 0.8)',      
     };
 
     let miniChartInstances = {}; 
 
-    function formatRetailDashNumber(num, isPercentage = false) {
+    function formatRetailDashNumber(numStr, isPercentage = false) {
+        const num = parseFloat(numStr);
+        if (isNaN(num)) return numStr;
+
         if (isPercentage) {
             return num.toFixed(0) + '%'; 
         }
@@ -274,70 +205,83 @@
         miniChartInstances = {}; 
     }
 
-    function populateRetailOverviewTable() {
-        destroyMiniCharts(); 
+    async function populateRetailOverviewTable() {
         const tableBody = document.getElementById('retail-overview-table').getElementsByTagName('tbody')[0];
-        tableBody.innerHTML = ''; 
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading data...</td></tr>';
 
-        Object.keys(retailInstruments).forEach(instrumentKey => {
-            const historicalData = retailDataStore[instrumentKey];
-            if (!historicalData || historicalData.length === 0) return;
-
-            const latestReport = historicalData[historicalData.length - 1];
-            const previousReport = historicalData.length > 1 ? historicalData[historicalData.length - 2] : null;
-
-            const latestNetPosition = latestReport.longPosition - latestReport.shortPosition;
-            
-            let weeklyChangeNet = 'N/A';
-            let changeClass = '';
-            if (previousReport) {
-                const prevNetPosition = previousReport.longPosition - previousReport.shortPosition;
-                const change = latestNetPosition - prevNetPosition;
-                weeklyChangeNet = formatRetailDashNumber(change);
-                changeClass = change >= 0 ? 'positive-change' : 'negative-change';
+        try {
+            const response = await fetch(SCRIPT_URL);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch data: ${response.statusText}`);
             }
+            const dataStore = await response.json();
 
-            const row = tableBody.insertRow();
-            
-            const instrumentCell = row.insertCell();
-            instrumentCell.textContent = retailInstruments[instrumentKey];
-            instrumentCell.className = 'instrument-name';
+            destroyMiniCharts(); 
+            tableBody.innerHTML = ''; 
 
-            const netPosCell = row.insertCell();
-            netPosCell.textContent = formatRetailDashNumber(latestNetPosition);
-            netPosCell.className = latestNetPosition >= 0 ? 'positive-value' : 'negative-value';
-            
-            row.insertCell().textContent = formatRetailDashNumber(latestReport.totalPosition);
-            row.insertCell().textContent = formatRetailDashNumber(latestReport.percentageLong, true);
-            row.insertCell().textContent = formatRetailDashNumber(latestReport.percentageShort, true);
-            
-            const changeNetCell = row.insertCell();
-            changeNetCell.textContent = weeklyChangeNet;
-            changeNetCell.className = changeClass;
+            Object.keys(dataStore).forEach(instrumentKey => {
+                const historicalData = dataStore[instrumentKey];
+                if (!historicalData || historicalData.length === 0) return;
 
-            const netPositionChartCell = row.insertCell();
-            netPositionChartCell.className = 'chart-cell';
-            const netCanvasId = `retailNetChart-${instrumentKey}`;
-            netPositionChartCell.innerHTML = `<canvas id="${netCanvasId}"></canvas>`;
-            
-            const doughnutChartCell = row.insertCell();
-            doughnutChartCell.className = 'chart-cell';
-            const doughnutCanvasId = `retailDoughnutChart-${instrumentKey}`;
-            doughnutChartCell.innerHTML = `<canvas id="${doughnutCanvasId}"></canvas>`;
+                const latestReport = historicalData[0]; // Data terbaru dari GAS
+                const previousReport = historicalData.length > 1 ? historicalData[1] : null;
 
-            setTimeout(() => { 
-                renderRetailNetPositionMiniChart(netCanvasId, historicalData);
-                renderRetailBuySellDoughnutMiniChart(doughnutCanvasId, latestReport.longPosition, latestReport.shortPosition);
-            }, 0);
-        });
+                const latestNetPosition = parseFloat(latestReport.longPositions) - parseFloat(latestReport.shortPositions);
+                
+                let weeklyChangeNet = 'N/A';
+                let changeClass = '';
+                if (previousReport) {
+                    const prevNetPosition = parseFloat(previousReport.longPositions) - parseFloat(previousReport.shortPositions);
+                    const change = latestNetPosition - prevNetPosition;
+                    weeklyChangeNet = formatRetailDashNumber(String(change));
+                    changeClass = change >= 0 ? 'positive-change' : 'negative-change';
+                }
+
+                const row = tableBody.insertRow();
+                
+                const instrumentCell = row.insertCell();
+                instrumentCell.textContent = instrumentKey;
+                instrumentCell.className = 'instrument-name';
+
+                const netPosCell = row.insertCell();
+                netPosCell.textContent = formatRetailDashNumber(String(latestNetPosition));
+                netPosCell.className = latestNetPosition >= 0 ? 'positive-value' : 'negative-value';
+                
+                row.insertCell().textContent = formatRetailDashNumber(latestReport.totalPositions);
+                row.insertCell().textContent = formatRetailDashNumber(latestReport.longPercentage, true);
+                row.insertCell().textContent = formatRetailDashNumber(latestReport.shortPercentage, true);
+                
+                const changeNetCell = row.insertCell();
+                changeNetCell.textContent = weeklyChangeNet;
+                changeNetCell.className = changeClass;
+
+                const netPositionChartCell = row.insertCell();
+                netPositionChartCell.className = 'chart-cell';
+                const netCanvasId = `retailNetChart-${instrumentKey}`;
+                netPositionChartCell.innerHTML = `<canvas id="${netCanvasId}"></canvas>`;
+                
+                const doughnutChartCell = row.insertCell();
+                doughnutChartCell.className = 'chart-cell';
+                const doughnutCanvasId = `retailDoughnutChart-${instrumentKey}`;
+                doughnutChartCell.innerHTML = `<canvas id="${doughnutCanvasId}"></canvas>`;
+
+                setTimeout(() => { 
+                    renderRetailNetPositionMiniChart(netCanvasId, historicalData);
+                    renderRetailBuySellDoughnutMiniChart(doughnutCanvasId, parseFloat(latestReport.longPositions), parseFloat(latestReport.shortPositions));
+                }, 0);
+            });
+        } catch(error) {
+            console.error("Failed to populate table:", error);
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Error loading data: ${error.message}</td></tr>`;
+        }
     }
 
     function renderRetailNetPositionMiniChart(canvasId, historicalData) {
         const element = document.getElementById(canvasId);
         if (!element) return;
         const ctx = element.getContext('2d');
-        const netPositions = historicalData.map(d => d.longPosition - d.shortPosition);
-        const labels = historicalData.map(d => d.date); // Using Date objects directly
+        const netPositions = historicalData.map(d => parseFloat(d.longPositions) - parseFloat(d.shortPositions)).reverse(); // Reverse for correct timeline
+        const labels = historicalData.map(d => new Date(d.Timestamp)).reverse(); // Reverse for correct timeline
 
         miniChartInstances[canvasId] = new Chart(ctx, { 
             type: 'line',
@@ -381,7 +325,7 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '50%', // Adjusted for a thicker doughnut
+                cutout: '60%', // Thicker doughnut
                 plugins: {
                     legend: { display: false }, 
                     tooltip: { 
@@ -405,9 +349,7 @@
         const options = {
             responsive: true,
             maintainAspectRatio: false,
-            animation: {
-                duration: 0 
-            },
+            animation: { duration: 0 },
             plugins: {
                 legend: { display: false },
                 tooltip: { 
@@ -420,7 +362,7 @@
                         title: () => null,
                         label: function(context) {
                             if (context.parsed.y !== null) {
-                                return `${formatRetailDashNumber(context.parsed.y)}`;
+                                return `${formatRetailDashNumber(String(context.parsed.y))}`;
                             }
                             return '';
                         }
@@ -434,11 +376,7 @@
         };
         if (isTimeSeries) {
             options.scales.x.type = 'time';
-            // Ensure date objects are used for labels if type is 'time'
-            options.scales.x.time = { 
-                // parser: 'yyyy-MM-dd', // No longer needed if labels are Date objects
-                unit: 'week' 
-            };
+            options.scales.x.time = { unit: 'day' };
         }
         return options;
     }
