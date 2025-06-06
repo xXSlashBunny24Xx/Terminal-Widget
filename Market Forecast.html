@@ -15,13 +15,13 @@
             font-family: 'Source Code Pro', monospace;
             height: 100%;
             width: 100%;
-            overflow: hidden; /* Prevent scrollbars at the highest level */
+            overflow: hidden; /* Mencegah scrollbar di level tertinggi */
         }
 
         body {
             display: flex;
             flex-direction: column;
-            height: 100%; /* Ensure body takes full height */
+            height: 100%; /* Memastikan body mengambil tinggi penuh */
         }
 
         .chart-container {
@@ -33,8 +33,8 @@
             background-color: #000;
             border: 1px solid #222;
             border-radius: 0;
-            overflow: hidden; /* Prevent scrollbars within the main chart container */
-            min-height: 0; /* Allow shrinking */
+            overflow: hidden; /* Mencegah scrollbar di dalam kontainer chart utama */
+            min-height: 0; /* Memungkinkan penyusutan */
         }
 
         .chart-title-bar {
@@ -58,8 +58,8 @@
             padding: 16px;
             gap: 15px;
             box-sizing: border-box;
-            overflow: hidden; /* Content should adapt or be hidden */
-            min-height: 0; /* Allow shrinking */
+            overflow: hidden; /* Konten harus beradaptasi atau disembunyikan */
+            min-height: 0; /* Memungkinkan penyusutan */
         }
 
         .controls-wrapper {
@@ -68,8 +68,8 @@
             align-items: center;
             padding-bottom: 10px;
             flex-shrink: 0;
-            gap: 15px; /* Gap between controls */
-            flex-wrap: wrap; /* Allow wrapping if not enough space */
+            gap: 15px; /* Jarak antar kontrol */
+            flex-wrap: wrap; /* Memungkinkan wrapping jika tidak cukup ruang */
         }
 
         .control-group {
@@ -104,14 +104,20 @@
             position: relative;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Ensure canvas doesn't cause overflow */
-            min-height: 200px; /* Provide a minimum height for the canvas */
+            overflow: hidden; /* Pastikan canvas tidak menyebabkan overflow */
+            min-height: 200px; /* Berikan tinggi minimum untuk canvas */
         }
 
         canvas#forecastChart {
             max-width: 100%;
             max-height: 100%;
             display: block;
+        }
+        .loader {
+            color: #ff8000;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
         }
     </style>
 </head>
@@ -121,125 +127,40 @@
     <div class="content-wrapper">
         <div class="controls-wrapper">
             <div class="control-group">
-                <label for="country-select">Country:</label>
-                <select id="country-select" onchange="updateChart()"></select>
+                <label for="type-select">Type:</label>
+                <select id="type-select" onchange="updateCategoryDropdown()"></select>
             </div>
             <div class="control-group">
-                <label for="category-select">Category:</label>
+                <label for="category-select">Item:</label>
                 <select id="category-select" onchange="updateChart()"></select>
             </div>
         </div>
         <div class="canvas-wrapper">
-            <canvas id="forecastChart"></canvas>
+             <div id="loader" class="loader">Loading data from Google Script...</div>
+            <canvas id="forecastChart" style="display: none;"></canvas>
         </div>
     </div>
 </div>
 
 <script>
     const ctxForecast = document.getElementById('forecastChart').getContext('2d');
+    const typeSelect = document.getElementById('type-select');
+    const categorySelect = document.getElementById('category-select');
+    const loader = document.getElementById('loader');
+    const chartElement = document.getElementById('forecastChart');
+    const googleScriptUrl = 'https://script.google.com/macros/s/AKfycby-DSqTlGHezMWaykFrGxi4KSmC7SsdxYWpzA0Ysv3n5UshUnPbGUjearLuksuAgyPK/exec';
 
-    // Forecast periods
-    const forecastPeriods = ['Q3 2025', 'Q4 2025', 'Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026'];
-
-    // Economic forecast data (sample data)
-    const economicData = {
-        US: {
-            interestRate: { name: 'US (Fed) Interest Rate', unit: '%', data: [5.25, 5.00, 4.75, 4.75, 4.50, 4.25], note: "Federal Reserve target rate forecast." },
-            inflationRate: { name: 'US Inflation Rate (CPI)', unit: '%', data: [3.0, 2.8, 2.5, 2.3, 2.2, 2.2], note: "US CPI YoY forecast." },
-            currency: { name: 'USD Index (DXY)', unit: 'Index', data: [104.5, 104.0, 103.5, 103.0, 102.5, 102.0], note: "US Dollar Index (DXY) forecast." },
-            gdp: { name: 'US GDP Growth', unit: '%', data: [1.8, 1.5, 1.6, 1.7, 1.8, 1.9], note: "US Real GDP Growth YoY forecast." }
-        },
-        EU: { // Eurozone
-            interestRate: { name: 'EU (ECB) Interest Rate', unit: '%', data: [3.75, 3.50, 3.25, 3.00, 3.00, 2.75], note: "ECB main refinancing operations rate forecast." },
-            inflationRate: { name: 'EU Inflation Rate (HICP)', unit: '%', data: [2.5, 2.3, 2.1, 2.0, 2.0, 1.9], note: "EU HICP YoY forecast." },
-            currency: { name: 'EUR/USD Exchange Rate', unit: 'Rate', data: [1.08, 1.09, 1.10, 1.11, 1.12, 1.12], note: "EUR/USD spot rate forecast." },
-            gdp: { name: 'EU GDP Growth', unit: '%', data: [0.8, 0.9, 1.0, 1.1, 1.2, 1.3], note: "EU Real GDP Growth YoY forecast." }
-        },
-        UK: {
-            interestRate: { name: 'UK (BoE) Interest Rate', unit: '%', data: [5.00, 4.75, 4.50, 4.25, 4.00, 4.00], note: "Bank of England bank rate forecast." },
-            inflationRate: { name: 'UK Inflation Rate (CPI)', unit: '%', data: [2.2, 2.0, 1.8, 1.9, 2.0, 2.1], note: "UK CPI YoY forecast." },
-            currency: { name: 'GBP/USD Exchange Rate', unit: 'Rate', data: [1.26, 1.27, 1.28, 1.29, 1.30, 1.30], note: "GBP/USD spot rate forecast." },
-            gdp: { name: 'UK GDP Growth', unit: '%', data: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0], note: "UK Real GDP Growth YoY forecast." }
-        },
-        JP: {
-            interestRate: { name: 'JP (BoJ) Interest Rate', unit: '%', data: [0.10, 0.10, 0.15, 0.20, 0.25, 0.25], note: "Bank of Japan policy rate forecast." },
-            inflationRate: { name: 'JP Inflation Rate (CPI)', unit: '%', data: [1.8, 1.5, 1.3, 1.2, 1.4, 1.5], note: "Japan Core CPI YoY forecast." },
-            currency: { name: 'USD/JPY Exchange Rate', unit: 'JPY', data: [150, 148, 146, 145, 144, 143], note: "USD/JPY spot rate forecast." },
-            gdp: { name: 'JP GDP Growth', unit: '%', data: [0.6, 0.7, 0.8, 0.7, 0.6, 0.5], note: "Japan Real GDP Growth YoY forecast." }
-        },
-        CH: { // Switzerland
-            interestRate: { name: 'CH (SNB) Interest Rate', unit: '%', data: [1.50, 1.25, 1.25, 1.00, 1.00, 0.75], note: "Swiss National Bank policy rate forecast." },
-            inflationRate: { name: 'CH Inflation Rate (CPI)', unit: '%', data: [1.2, 1.0, 0.8, 0.9, 1.1, 1.3], note: "Switzerland CPI YoY forecast." },
-            currency: { name: 'USD/CHF Exchange Rate', unit: 'CHF', data: [0.90, 0.89, 0.88, 0.87, 0.86, 0.85], note: "USD/CHF spot rate forecast." },
-            gdp: { name: 'CH GDP Growth', unit: '%', data: [1.0, 1.1, 1.2, 1.3, 1.4, 1.3], note: "Switzerland Real GDP Growth YoY forecast." }
-        },
-        CA: {
-            interestRate: { name: 'CA (BoC) Interest Rate', unit: '%', data: [4.75, 4.50, 4.25, 4.00, 4.00, 3.75], note: "Bank of Canada policy rate forecast." },
-            inflationRate: { name: 'CA Inflation Rate (CPI)', unit: '%', data: [2.7, 2.5, 2.2, 2.0, 2.1, 2.3], note: "Canada CPI YoY forecast." },
-            currency: { name: 'USD/CAD Exchange Rate', unit: 'CAD', data: [1.36, 1.35, 1.34, 1.33, 1.32, 1.31], note: "USD/CAD spot rate forecast." },
-            gdp: { name: 'CA GDP Growth', unit: '%', data: [1.2, 1.3, 1.4, 1.5, 1.6, 1.5], note: "Canada Real GDP Growth YoY forecast." }
-        },
-        AU: {
-            interestRate: { name: 'AU (RBA) Interest Rate', unit: '%', data: [4.35, 4.10, 3.85, 3.60, 3.60, 3.35], note: "Reserve Bank of Australia cash rate target forecast." },
-            inflationRate: { name: 'AU Inflation Rate (CPI)', unit: '%', data: [3.5, 3.2, 2.9, 2.7, 2.5, 2.6], note: "Australia CPI YoY forecast." },
-            currency: { name: 'AUD/USD Exchange Rate', unit: 'USD', data: [0.66, 0.67, 0.68, 0.69, 0.70, 0.71], note: "AUD/USD spot rate forecast." },
-            gdp: { name: 'AU GDP Growth', unit: '%', data: [1.5, 1.6, 1.7, 1.8, 1.9, 2.0], note: "Australia Real GDP Growth YoY forecast." }
-        },
-        NZ: {
-            interestRate: { name: 'NZ (RBNZ) Interest Rate', unit: '%', data: [5.50, 5.25, 5.00, 4.75, 4.50, 4.50], note: "Reserve Bank of New Zealand OCR forecast." },
-            inflationRate: { name: 'NZ Inflation Rate (CPI)', unit: '%', data: [3.0, 2.8, 2.5, 2.3, 2.1, 2.2], note: "New Zealand CPI YoY forecast." },
-            currency: { name: 'NZD/USD Exchange Rate', unit: 'USD', data: [0.61, 0.62, 0.63, 0.64, 0.65, 0.65], note: "NZD/USD spot rate forecast." },
-            gdp: { name: 'NZ GDP Growth', unit: '%', data: [1.0, 1.2, 1.3, 1.4, 1.5, 1.4], note: "New Zealand Real GDP Growth YoY forecast." }
-        },
-        CN: { // China
-            interestRate: { name: 'CN (PBoC) LPR 1Y', unit: '%', data: [3.45, 3.40, 3.35, 3.30, 3.25, 3.25], note: "PBoC 1-Year Loan Prime Rate (LPR) forecast." },
-            inflationRate: { name: 'CN Inflation Rate (CPI)', unit: '%', data: [1.0, 1.2, 1.5, 1.8, 2.0, 1.9], note: "China CPI YoY forecast." },
-            currency: { name: 'USD/CNY Exchange Rate', unit: 'CNY', data: [7.25, 7.20, 7.15, 7.10, 7.05, 7.00], note: "USD/CNY spot rate forecast." },
-            gdp: { name: 'CN GDP Growth', unit: '%', data: [4.8, 4.5, 4.7, 4.9, 5.0, 4.8], note: "China Real GDP Growth YoY forecast." }
-        },
-        ID: {
-            interestRate: { name: 'ID (BI) 7DRR', unit: '%', data: [6.00, 5.75, 5.50, 5.25, 5.00, 5.00], note: "Bank Indonesia 7-Day Reverse Repo Rate forecast." },
-            inflationRate: { name: 'ID Inflation Rate (CPI)', unit: '%', data: [2.8, 2.7, 2.5, 2.4, 2.3, 2.5], note: "Indonesia CPI YoY forecast." },
-            currency: { name: 'USD/IDR Exchange Rate', unit: 'IDR', data: [16200, 16100, 16000, 15900, 15800, 15750], note: "USD/IDR spot rate forecast." },
-            gdp: { name: 'ID GDP Growth', unit: '%', data: [5.0, 5.1, 5.2, 5.0, 4.9, 5.1], note: "Indonesia Real GDP Growth YoY forecast." }
-        }
-    };
-
-    // Commodity forecast data (sample data) - global
-    const commodityForecasts = {
-        brent: { name: 'Brent Crude Oil', unit: 'USD/barrel', data: [85, 82, 80, 83, 86, 84], note: "Brent crude oil price forecast." },
-        copper: { name: 'Copper', unit: 'USD/tonne', data: [9500, 9200, 9000, 9300, 9600, 9400], note: "LME Copper price forecast." },
-        silver: { name: 'Silver', unit: 'USD/oz', data: [28, 27, 26, 29, 30, 29.5], note: "Silver spot price forecast." },
-        gold: { name: 'Gold', unit: 'USD/oz', data: [2300, 2250, 2200, 2350, 2400, 2380], note: "Gold spot price forecast." },
-        nickel: { name: 'Nickel', unit: 'USD/tonne', data: [18000, 17500, 17000, 18500, 19000, 18800], note: "LME Nickel price forecast." },
-        aluminum: { name: 'Aluminum', unit: 'USD/tonne', data: [2500, 2450, 2400, 2550, 2600, 2580], note: "LME Aluminum price forecast." },
-        ironore: { name: 'Iron Ore 62% Fe', unit: 'USD/dmt', data: [110, 105, 100, 115, 120, 118], note: "Iron Ore 62% Fe, CFR China, forecast." }
-    };
-
-    // Country definitions for dropdown
-    const countries = {
-        US: "United States", EU: "Eurozone", UK: "United Kingdom", JP: "Japan", CH: "Switzerland",
-        CA: "Canada", AU: "Australia", NZ: "New Zealand", CN: "China", ID: "Indonesia"
-    };
-
-    // Category definitions for dropdown
-    const categories = {
-        interestRate: "Central Bank Interest Rate", inflationRate: "Inflation Rate", currency: "Currency", gdp: "GDP",
-        brent: "Commodity: Brent Oil", copper: "Commodity: Copper", silver: "Commodity: Silver", gold: "Commodity: Gold",
-        nickel: "Commodity: Nickel", aluminum: "Commodity: Aluminum", ironore: "Commodity: Iron Ore"
-    };
-    
-    const initialCountryKey = 'US';
-    const initialCategoryKey = 'interestRate';
+    let forecastData = {};
+    let forecastChartInstance;
 
     // Initial Chart.js configuration
     const configForecast = {
         type: 'bar',
         data: {
-            labels: forecastPeriods,
+            labels: [], // Akan diisi dari JSON
             datasets: [{
-                label: '', // Will be filled dynamically
-                data: [],  // Will be filled dynamically
+                label: '', // Akan diisi secara dinamis
+                data: [],  // Akan diisi secara dinamis
                 backgroundColor: '#ff8000',
                 borderColor: '#cc6600',
                 borderWidth: 1,
@@ -255,24 +176,24 @@
                     ticks: { color: '#e1e1e1', autoSkip: false, maxRotation: 0, minRotation: 0 }
                 },
                 y: {
-                    title: { display: true, text: '', color: '#ccc' }, // Will be filled dynamically
+                    title: { display: true, text: '', color: '#ccc' }, // Akan diisi secara dinamis
                     grid: { color: '#2a2a2a', borderColor: '#2a2a2a' },
                     ticks: {
                         color: '#e1e1e1',
-                        callback: function(value, index, values) {
-                            // Format numbers for better readability
-                            if (Math.abs(value) >= 10000) { // For large numbers like IDR
+                        callback: function(value) {
+                            // Format angka untuk keterbacaan yang lebih baik
+                            if (Math.abs(value) >= 1000) {
                                 return value.toLocaleString('en-US');
                             }
-                            if (value % 1 !== 0 && (Math.abs(value) < 1000)) { // If decimal and not a very large number
-                                 return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            if (value % 1 !== 0 && (Math.abs(value) < 1000)) {
+                                 return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
                             }
-                            return value.toLocaleString('en-US'); // Default formatting
+                            return value.toLocaleString('en-US'); // Format default
                         },
                         autoSkip: true,
                         maxTicksLimit: 7
                     },
-                    beginAtZero: false 
+                    beginAtZero: false
                 }
             },
             plugins: {
@@ -290,120 +211,116 @@
                             let label = context.dataset.label || '';
                             if (label) { label += ': '; }
                             if (context.parsed.y !== null) {
-                                const selectedCategoryKey = document.getElementById('category-select').value;
-                                const selectedCountryKey = document.getElementById('country-select').value;
-                                let currentUnit = '';
-                                let dataItem;
-
-                                if (categories[selectedCategoryKey] && categories[selectedCategoryKey].startsWith("Commodity:")) {
-                                    dataItem = commodityForecasts[selectedCategoryKey];
-                                } else if (economicData[selectedCountryKey] && economicData[selectedCountryKey][selectedCategoryKey]) {
-                                    dataItem = economicData[selectedCountryKey][selectedCategoryKey];
-                                }
-                                
-                                if (dataItem) currentUnit = dataItem.unit;
-
-                                if (currentUnit === '%') {
-                                    label += context.parsed.y.toFixed(2) + '%';
-                                } else if (currentUnit === 'IDR') { // Still handle IDR specifically if needed for large numbers
-                                     label += Math.round(context.parsed.y).toLocaleString('en-US') + ' ' + currentUnit;
-                                }
-                                 else {
-                                    label += context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                    if (currentUnit) label += ' ' + currentUnit;
-                                }
+                                label += context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
                             }
                             return label;
                         },
-                        afterBody: function(tooltipItems) {
-                            const selectedCategoryKey = document.getElementById('category-select').value;
-                            const selectedCountryKey = document.getElementById('country-select').value;
-                            let note = '';
-
-                            if (categories[selectedCategoryKey] && categories[selectedCategoryKey].startsWith("Commodity:")) {
-                                if(commodityForecasts[selectedCategoryKey]) note = commodityForecasts[selectedCategoryKey].note;
-                            } else if (economicData[selectedCountryKey] && economicData[selectedCountryKey][selectedCategoryKey]) {
-                                note = economicData[selectedCountryKey][selectedCategoryKey].note;
-                            }
-                            return note ? '\n' + note : '';
-                        }
                     }
                 }
             }
         }
     };
 
-    const forecastChartInstance = new Chart(ctxForecast, configForecast);
-
-    // Function to update the chart based on dropdown selections
-    window.updateChart = function() {
-        const countryKey = document.getElementById('country-select').value;
-        const categoryKey = document.getElementById('category-select').value;
-        let dataItem;
-
-        // Check if the selected category is a commodity
-        if (categories[categoryKey] && categories[categoryKey].startsWith("Commodity:")) {
-            dataItem = commodityForecasts[categoryKey];
-             document.getElementById('country-select').disabled = true; // Disable country selection for commodities
-        } else {
-            dataItem = economicData[countryKey] ? economicData[countryKey][categoryKey] : null;
-            document.getElementById('country-select').disabled = false; // Enable country selection
-        }
-
-        if (dataItem) {
-            forecastChartInstance.data.datasets[0].data = dataItem.data;
-            forecastChartInstance.data.datasets[0].label = dataItem.name;
-            forecastChartInstance.options.scales.y.title.text = dataItem.unit;
-            
-            // Adjust beginAtZero based on data, especially for percentages or indices
-            if (dataItem.unit === '%' || dataItem.unit === 'Index' || (Math.min(...dataItem.data) < 0) ) {
-                 forecastChartInstance.options.scales.y.beginAtZero = false;
-            } else {
-                 // For absolute values like prices or rates, it might be better to start near the minimum data value
-                 // or slightly below it, not always zero, for better visualization.
-                 // However, for simplicity, we can set true or false.
-                 // If minimum data is far from zero, set false.
-                 const minValue = Math.min(...dataItem.data);
-                 forecastChartInstance.options.scales.y.beginAtZero = minValue > 0 && minValue < (Math.max(...dataItem.data) * 0.5);
+    // Fungsi untuk mengambil dan memproses data
+    async function fetchData() {
+        try {
+            const response = await fetch(googleScriptUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            const data = await response.json();
+            forecastData = data;
+            
+            // Sembunyikan loader dan tampilkan chart setelah data dimuat
+            loader.style.display = 'none';
+            chartElement.style.display = 'block';
+            
+            initialize();
+        } catch (error) {
+            loader.textContent = 'Failed to load data. Please try again later.';
+            console.error('Error fetching data:', error);
+        }
+    }
+
+    // Fungsi untuk inisialisasi setelah data diterima
+    function initialize() {
+        populateTypeDropdown();
+        updateCategoryDropdown(); // Ini akan memanggil updateChart secara berantai
+        forecastChartInstance = new Chart(ctxForecast, configForecast);
+        updateChart(); // Panggil sekali untuk memuat chart awal
+    }
+
+    // Fungsi untuk mengisi dropdown 'Type'
+    function populateTypeDropdown() {
+        const types = Object.keys(forecastData).filter(key => key !== 'forecastDates'); // Ambil 'currencies', 'commodities'
+        types.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type.charAt(0).toUpperCase() + type.slice(1); // Kapitalisasi huruf pertama
+            typeSelect.appendChild(option);
+        });
+    }
+
+    // Fungsi untuk memperbarui dropdown 'Category' berdasarkan 'Type' yang dipilih
+    window.updateCategoryDropdown = function() {
+        const selectedType = typeSelect.value;
+        categorySelect.innerHTML = ''; // Kosongkan opsi sebelumnya
+
+        if (forecastData[selectedType]) {
+            const categories = Object.keys(forecastData[selectedType]);
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            });
+        }
+        updateChart(); // Perbarui chart setiap kali kategori berubah
+    }
+
+    // Fungsi untuk memperbarui chart berdasarkan pilihan dropdown
+    window.updateChart = function() {
+        if (!forecastChartInstance) return; // Jangan lakukan apa-apa jika chart belum diinisialisasi
+
+        const selectedType = typeSelect.value;
+        const selectedCategory = categorySelect.value;
+        
+        if (forecastData[selectedType] && forecastData[selectedType][selectedCategory]) {
+            const dataItem = forecastData[selectedType][selectedCategory];
+            const labels = forecastData.forecastDates;
+            const values = labels.map(date => dataItem[date]);
+
+            forecastChartInstance.data.labels = labels;
+            forecastChartInstance.data.datasets[0].data = values;
+            forecastChartInstance.data.datasets[0].label = selectedCategory;
+            
+            // Tentukan unit untuk sumbu Y, ini hanya contoh, bisa disesuaikan jika JSON memiliki info unit
+            let yAxisLabel = 'Value';
+            if (selectedType === 'currencies') {
+                yAxisLabel = 'Exchange Rate';
+            } else if (selectedType === 'commodities') {
+                 yAxisLabel = 'Price (USD)';
+            }
+            forecastChartInstance.options.scales.y.title.text = yAxisLabel;
+            
+            const minValue = Math.min(...values);
+            const maxValue = Math.max(...values);
+            // Mencegah beginAtZero jika data jauh dari nol untuk visualisasi yang lebih baik
+            forecastChartInstance.options.scales.y.beginAtZero = minValue > 0 && minValue < (maxValue * 0.5);
 
             forecastChartInstance.update();
         } else {
-            // If no data, clear the chart or display a message
+            // Jika data tidak tersedia, kosongkan chart
+            forecastChartInstance.data.labels = [];
             forecastChartInstance.data.datasets[0].data = [];
-            forecastChartInstance.data.datasets[0].label = "Data not available";
-            forecastChartInstance.options.scales.y.title.text = "";
+            forecastChartInstance.data.datasets[0].label = 'Data not available';
+            forecastChartInstance.options.scales.y.title.text = '';
             forecastChartInstance.update();
         }
     }
 
-    // Function to populate dropdowns
-    function populateDropdowns() {
-        const countrySelect = document.getElementById('country-select');
-        const categorySelect = document.getElementById('category-select');
-
-        // Populate country dropdown
-        Object.keys(countries).forEach(key => {
-            const option = document.createElement('option');
-            option.value = key;
-            option.textContent = countries[key];
-            if (key === initialCountryKey) option.selected = true;
-            countrySelect.appendChild(option);
-        });
-
-        // Populate category dropdown
-        Object.keys(categories).forEach(key => {
-            const option = document.createElement('option');
-            option.value = key;
-            option.textContent = categories[key];
-            if (key === initialCategoryKey) option.selected = true;
-            categorySelect.appendChild(option);
-        });
-    }
-
-    // Call functions to populate dropdowns and update chart on page load
-    populateDropdowns();
-    updateChart();
+    // Panggil fetchData saat halaman dimuat
+    fetchData();
 
 </script>
 </body>
