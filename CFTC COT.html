@@ -271,13 +271,30 @@
         OI: "Crude Oil (WTI)"
     };
     
-    // Maps the display names used throughout the app
-    const traderDisplayNames = {
+    // Define two sets of names for trader types
+    const currencyTraderNames = {
         all: "All Trader Types",
         leveragedFund: "Leveraged Fund",
         assetManager: "Asset Manager",
         dealer: "Dealer"
     };
+
+    const commodityTraderNames = {
+        all: "All Trader Types",
+        leveragedFund: "Managed Money",
+        assetManager: "Producent Merchant",
+        dealer: "Swap"
+    };
+
+    // Helper function to get the correct display names based on instrument
+    function getTraderDisplayNames() {
+        const selectedInstrumentKey = instrumentSelect.value;
+        if (selectedInstrumentKey === 'GC' || selectedInstrumentKey === 'OI') {
+            return commodityTraderNames;
+        }
+        return currencyTraderNames;
+    }
+
 
     // Color scheme for charts
     const colors = {
@@ -346,6 +363,18 @@
         }
     }
 
+    /**
+     * Updates the text of the Trader Type dropdown options.
+     */
+    function updateTraderTypeDropdown() {
+        const traderOptions = traderTypeSelect.options;
+        const currentTraderNames = getTraderDisplayNames();
+
+        traderOptions[1].textContent = currentTraderNames.leveragedFund;
+        traderOptions[2].textContent = currentTraderNames.assetManager;
+        traderOptions[3].textContent = currentTraderNames.dealer;
+    }
+
 
     function getSelectedInstrumentData() {
         const selectedKey = instrumentSelect.value;
@@ -356,10 +385,7 @@
         if (typeof num !== 'number') return num;
         return num.toLocaleString('en-US');
     }
-    
-    // All chart rendering and insight generation functions remain largely the same,
-    // as they operate on the `cotData` object which is now structured correctly from the fetched data.
-    
+        
     function renderChart() {
         if (cotChartInstance) {
             cotChartInstance.destroy();
@@ -367,6 +393,8 @@
         
         const data = getSelectedInstrumentData();
         const selectedTraderType = traderTypeSelect.value;
+        
+        updateTraderTypeDropdown(); // Ensure dropdown labels are correct
 
         if (currentChartMode === 'openInterest' || currentChartMode === 'percentageBuySell') {
             traderTypeSelect.disabled = true;
@@ -379,7 +407,6 @@
             if (!insightArea.classList.contains('hidden')) { 
                 insightTextContent.innerHTML = 'No data available for the selected instrument.';
             }
-            // Clear canvas if it exists
             const canvas = document.getElementById('cotChart');
             if (canvas) {
                 const chartCtx = canvas.getContext('2d');
@@ -433,41 +460,45 @@
 
     function getNetPositionConfig(data, labels, selectedTrader) {
         const datasets = [];
+        const traderNames = getTraderDisplayNames();
+
         if (selectedTrader === 'all' || selectedTrader === 'dealer') {
-            datasets.push({ label: 'Dealer Net', data: data.map(d => d.dealer.long - d.dealer.short), borderColor: colors.dealerBorder, backgroundColor: colors.dealer, fill: false, tension: 0.1 });
+            datasets.push({ label: `${traderNames.dealer} Net`, data: data.map(d => d.dealer.long - d.dealer.short), borderColor: colors.dealerBorder, backgroundColor: colors.dealer, fill: false, tension: 0.1 });
         }
         if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') {
-            datasets.push({ label: 'Leveraged Fund Net', data: data.map(d => d.leveragedFund.long - d.leveragedFund.short), borderColor: colors.leveragedFundBorder, backgroundColor: colors.leveragedFund, fill: false, tension: 0.1 });
+            datasets.push({ label: `${traderNames.leveragedFund} Net`, data: data.map(d => d.leveragedFund.long - d.leveragedFund.short), borderColor: colors.leveragedFundBorder, backgroundColor: colors.leveragedFund, fill: false, tension: 0.1 });
         }
         if (selectedTrader === 'all' || selectedTrader === 'assetManager') {
-            datasets.push({ label: 'Asset Manager Net', data: data.map(d => d.assetManager.long - d.assetManager.short), borderColor: colors.assetManagerBorder, backgroundColor: colors.assetManager, fill: false, tension: 0.1 });
+            datasets.push({ label: `${traderNames.assetManager} Net`, data: data.map(d => d.assetManager.long - d.assetManager.short), borderColor: colors.assetManagerBorder, backgroundColor: colors.assetManager, fill: false, tension: 0.1 });
         }
         return {
             type: 'line',
             data: { labels: labels, datasets: datasets },
-            options: commonChartOptions(`Net Positions: ${traderDisplayNames[selectedTrader]}`, 'Net Contracts', labels.length > 1)
+            options: commonChartOptions(`Net Positions: ${traderNames[selectedTrader]}`, 'Net Contracts', labels.length > 1)
         };
     }
 
     function getLongShortBreakdownConfig(data, labels, selectedTrader) {
         const datasets = [];
+        const traderNames = getTraderDisplayNames();
+
         if (selectedTrader === 'all' || selectedTrader === 'dealer') {
-            datasets.push({ label: 'Dealer Long', data: data.map(d => d.dealer.long), backgroundColor: colors.long, stack: 'dealer' });
-            datasets.push({ label: 'Dealer Short', data: data.map(d => d.dealer.short * -1), backgroundColor: colors.short, stack: 'dealer' });
+            datasets.push({ label: `${traderNames.dealer} Long`, data: data.map(d => d.dealer.long), backgroundColor: colors.long, stack: 'dealer' });
+            datasets.push({ label: `${traderNames.dealer} Short`, data: data.map(d => d.dealer.short * -1), backgroundColor: colors.short, stack: 'dealer' });
         }
         if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') {
-            datasets.push({ label: 'Leveraged Fund Long', data: data.map(d => d.leveragedFund.long), backgroundColor: colors.long, stack: 'leveragedFund' });
-            datasets.push({ label: 'Leveraged Fund Short', data: data.map(d => d.leveragedFund.short * -1), backgroundColor: colors.short, stack: 'leveragedFund' });
+            datasets.push({ label: `${traderNames.leveragedFund} Long`, data: data.map(d => d.leveragedFund.long), backgroundColor: colors.long, stack: 'leveragedFund' });
+            datasets.push({ label: `${traderNames.leveragedFund} Short`, data: data.map(d => d.leveragedFund.short * -1), backgroundColor: colors.short, stack: 'leveragedFund' });
         }
         if (selectedTrader === 'all' || selectedTrader === 'assetManager') {
-            datasets.push({ label: 'Asset Manager Long', data: data.map(d => d.assetManager.long), backgroundColor: colors.long, stack: 'assetManager' });
-            datasets.push({ label: 'Asset Manager Short', data: data.map(d => d.assetManager.short * -1), backgroundColor: colors.short, stack: 'assetManager' });
+            datasets.push({ label: `${traderNames.assetManager} Long`, data: data.map(d => d.assetManager.long), backgroundColor: colors.long, stack: 'assetManager' });
+            datasets.push({ label: `${traderNames.assetManager} Short`, data: data.map(d => d.assetManager.short * -1), backgroundColor: colors.short, stack: 'assetManager' });
         }
         return {
             type: 'bar',
             data: { labels: labels, datasets: datasets },
              options: {
-                 ...commonChartOptions(`Long/Short Gross: ${traderDisplayNames[selectedTrader]}`, 'Number of Contracts', labels.length > 1),
+                 ...commonChartOptions(`Long/Short Gross: ${traderNames[selectedTrader]}`, 'Number of Contracts', labels.length > 1),
                  scales: {
                      y: { stacked: false, ticks: { callback: function(value) { return formatNumber(Math.abs(value)); } } }, 
                      x: { stacked: true } 
@@ -501,9 +532,14 @@
             return null; 
         }
         
-        const allTraderCategories = {dealer: 'Dealer', leveragedFund: 'Leveraged Fund', assetManager: 'Asset Manager'};
+        const traderNames = getTraderDisplayNames();
+        const allTraderCategories = {
+            dealer: traderNames.dealer, 
+            leveragedFund: traderNames.leveragedFund, 
+            assetManager: traderNames.assetManager
+        };
         const changes = {};
-        let insightText = `<strong>Weekly Changes for ${instrumentNames[instrumentSelect.value]} (${latest.date}) - ${traderDisplayNames[selectedTrader]}:</strong><br/>`;
+        let insightText = `<strong>Weekly Changes for ${instrumentNames[instrumentSelect.value]} (${latest.date}) - ${traderNames[selectedTrader]}:</strong><br/>`;
         
         const traderKeysToProcess = selectedTrader === 'all' ? Object.keys(allTraderCategories) : [selectedTrader];
         const chartChangeLabels = [];
@@ -530,7 +566,7 @@
         if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = insightText; 
 
         if (chartChangeData.length === 0) { 
-             if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = `No weekly change data for ${traderDisplayNames[selectedTrader]}.`;
+             if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = `No weekly change data for ${traderNames[selectedTrader]}.`;
              return null;
         }
 
@@ -539,12 +575,12 @@
             data: {
                 labels: chartChangeLabels,
                 datasets: [{
-                    label: `Weekly Change for ${traderDisplayNames[selectedTrader]} (week ending ${labelForChart})`,
+                    label: `Weekly Change for ${traderNames[selectedTrader]} (week ending ${labelForChart})`,
                     data: chartChangeData,
                     backgroundColor: chartChangeData.map(d => d >= 0 ? colors.long : colors.short),
                 }]
             },
-            options: commonChartOptions(`Weekly Changes: ${traderDisplayNames[selectedTrader]}`, 'Change in Contracts', false)
+            options: commonChartOptions(`Weekly Changes: ${traderNames[selectedTrader]}`, 'Change in Contracts', false)
         };
     }
 
@@ -638,16 +674,19 @@
         return options;
     }
 
-    // --- INSIGHTS GENERATION FUNCTIONS (Unchanged logic, will work with new data) ---
-
     function generateNetPositionInsights(latest, prev, selectedTrader) {
-        let text = `<strong>Net Positioning Insights (${latest.date}) - ${traderDisplayNames[selectedTrader]}:</strong><br/>`;
-        const categories = {};
-        if (selectedTrader === 'all' || selectedTrader === 'dealer') categories['Dealer'] = latest.dealer;
-        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') categories['Leveraged Fund'] = latest.leveragedFund;
-        if (selectedTrader === 'all' || selectedTrader === 'assetManager') categories['Asset Manager'] = latest.assetManager;
+        const traderNames = getTraderDisplayNames();
+        let text = `<strong>Net Positioning Insights (${latest.date}) - ${traderNames[selectedTrader]}:</strong><br/>`;
         
-        const keyMap = { "Dealer": "dealer", "Leveraged Fund": "leveragedFund", "Asset Manager": "assetManager" };
+        const categories = {};
+        if (selectedTrader === 'all' || selectedTrader === 'dealer') categories[traderNames.dealer] = latest.dealer;
+        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') categories[traderNames.leveragedFund] = latest.leveragedFund;
+        if (selectedTrader === 'all' || selectedTrader === 'assetManager') categories[traderNames.assetManager] = latest.assetManager;
+        
+        const keyMap = {};
+        keyMap[traderNames.dealer] = "dealer";
+        keyMap[traderNames.leveragedFund] = "leveragedFund";
+        keyMap[traderNames.assetManager] = "assetManager";
 
         for (const catName in categories) {
             const catData = categories[catName]; 
@@ -669,13 +708,18 @@
     }
 
     function generateLongShortInsights(latest, prev, selectedTrader) {
-        let text = `<strong>Long/Short Breakdown Insights (${latest.date}) - ${traderDisplayNames[selectedTrader]}:</strong><br/>`;
-        const categories = {};
-        if (selectedTrader === 'all' || selectedTrader === 'dealer') categories['Dealer'] = latest.dealer;
-        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') categories['Leveraged Fund'] = latest.leveragedFund;
-        if (selectedTrader === 'all' || selectedTrader === 'assetManager') categories['Asset Manager'] = latest.assetManager;
+        const traderNames = getTraderDisplayNames();
+        let text = `<strong>Long/Short Breakdown Insights (${latest.date}) - ${traderNames[selectedTrader]}:</strong><br/>`;
 
-        const keyMap = { "Dealer": "dealer", "Leveraged Fund": "leveragedFund", "Asset Manager": "assetManager" };
+        const categories = {};
+        if (selectedTrader === 'all' || selectedTrader === 'dealer') categories[traderNames.dealer] = latest.dealer;
+        if (selectedTrader === 'all' || selectedTrader === 'leveragedFund') categories[traderNames.leveragedFund] = latest.leveragedFund;
+        if (selectedTrader === 'all' || selectedTrader === 'assetManager') categories[traderNames.assetManager] = latest.assetManager;
+
+        const keyMap = {};
+        keyMap[traderNames.dealer] = "dealer";
+        keyMap[traderNames.leveragedFund] = "leveragedFund";
+        keyMap[traderNames.assetManager] = "assetManager";
 
         for (const catName in categories) {
             const catData = categories[catName];
@@ -727,7 +771,6 @@
             toggleInsightButtonMain.textContent = "Hide Insight"; 
             toggleInsightButtonMain.title = "Sembunyikan Insight";
             
-            // Re-generate insight text when showing the area
             const data = getSelectedInstrumentData();
             if (data.length > 0) {
                 const latestData = data[data.length - 1];
@@ -762,10 +805,8 @@
         cotData = await fetchAndProcessData();
         loadingIndicator.textContent = ''; // Clear loading text
         
-        // Clear previous options
         instrumentSelect.innerHTML = ''; 
 
-        // Populate dropdown with available instruments from fetched data
         const availableInstruments = Object.keys(cotData);
         if (availableInstruments.length === 0) {
             instrumentSelect.disabled = true;
@@ -783,7 +824,6 @@
         });
         
         instrumentSelect.disabled = false;
-        // Default to the first available instrument, prefer 'GC' (Gold) if available
         instrumentSelect.value = availableInstruments.includes('GC') ? "GC" : availableInstruments[0]; 
         traderTypeSelect.value = "all"; 
         
