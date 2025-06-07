@@ -150,18 +150,19 @@
         <table id="retail-overview-table">
             <thead>
                 <tr>
+                    <!-- UPDATED: Table headers changed to reflect volume -->
                     <th>Instrument</th>
-                    <th>Net Position</th>
+                    <th>Net Volume (Lots)</th>
                     <th>Total Positions</th>
                     <th>% Long</th>
                     <th>% Short</th>
-                    <th>Weekly Δ Net</th>
-                    <th>Net Pos Trend</th>
-                    <th>Buy/Sell %</th>
+                    <th>Weekly Δ Vol.</th>
+                    <th>Net Vol. Trend</th>
+                    <th>Vol. Buy/Sell %</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Data akan diisi oleh JavaScript -->
+                <!-- Data will be populated by JavaScript -->
             </tbody>
         </table>
     </div>
@@ -223,16 +224,18 @@
                 const historicalData = dataStore[instrumentKey];
                 if (!historicalData || historicalData.length === 0) return;
 
-                const latestReport = historicalData[0]; // Data terbaru dari GAS
+                const latestReport = historicalData[0]; // Latest data from GAS
                 const previousReport = historicalData.length > 1 ? historicalData[1] : null;
 
-                const latestNetPosition = parseFloat(latestReport.longPositions) - parseFloat(latestReport.shortPositions);
+                // UPDATED: Net position is now calculated from longVolume and shortVolume
+                const latestNetVolume = parseFloat(latestReport.longVolume) - parseFloat(latestReport.shortVolume);
                 
                 let weeklyChangeNet = 'N/A';
                 let changeClass = '';
                 if (previousReport) {
-                    const prevNetPosition = parseFloat(previousReport.longPositions) - parseFloat(previousReport.shortPositions);
-                    const change = latestNetPosition - prevNetPosition;
+                    // UPDATED: Previous net position is now calculated from longVolume and shortVolume
+                    const prevNetVolume = parseFloat(previousReport.longVolume) - parseFloat(previousReport.shortVolume);
+                    const change = latestNetVolume - prevNetVolume;
                     weeklyChangeNet = formatRetailDashNumber(String(change));
                     changeClass = change >= 0 ? 'positive-change' : 'negative-change';
                 }
@@ -244,8 +247,8 @@
                 instrumentCell.className = 'instrument-name';
 
                 const netPosCell = row.insertCell();
-                netPosCell.textContent = formatRetailDashNumber(String(latestNetPosition));
-                netPosCell.className = latestNetPosition >= 0 ? 'positive-value' : 'negative-value';
+                netPosCell.textContent = formatRetailDashNumber(String(latestNetVolume));
+                netPosCell.className = latestNetVolume >= 0 ? 'positive-value' : 'negative-value';
                 
                 row.insertCell().textContent = formatRetailDashNumber(latestReport.totalPositions);
                 row.insertCell().textContent = formatRetailDashNumber(latestReport.longPercentage, true);
@@ -267,7 +270,8 @@
 
                 setTimeout(() => { 
                     renderRetailNetPositionMiniChart(netCanvasId, historicalData);
-                    renderRetailBuySellDoughnutMiniChart(doughnutCanvasId, parseFloat(latestReport.longPositions), parseFloat(latestReport.shortPositions));
+                    // UPDATED: Doughnut chart now uses volume for its calculation
+                    renderRetailBuySellDoughnutMiniChart(doughnutCanvasId, parseFloat(latestReport.longVolume), parseFloat(latestReport.shortVolume));
                 }, 0);
             });
         } catch(error) {
@@ -280,7 +284,8 @@
         const element = document.getElementById(canvasId);
         if (!element) return;
         const ctx = element.getContext('2d');
-        const netPositions = historicalData.map(d => parseFloat(d.longPositions) - parseFloat(d.shortPositions)).reverse(); // Reverse for correct timeline
+        // UPDATED: Net positions for the mini chart are calculated from volume
+        const netVolumes = historicalData.map(d => parseFloat(d.longVolume) - parseFloat(d.shortVolume)).reverse(); // Reverse for correct timeline
         const labels = historicalData.map(d => new Date(d.Timestamp)).reverse(); // Reverse for correct timeline
 
         miniChartInstances[canvasId] = new Chart(ctx, { 
@@ -288,15 +293,15 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Net Position', 
-                    data: netPositions,
+                    label: 'Net Volume', 
+                    data: netVolumes,
                     borderWidth: 1, 
                     pointRadius: 0, 
                     fill: true, 
                     tension: 0.4,
                     segment: { 
-                        borderColor: ctxSeg => netPositions[ctxSeg.p0DataIndex] >= 0 ? retailDashboardColors.netPositionLinePositive : retailDashboardColors.netPositionLineNegative,
-                        backgroundColor: ctxSeg => netPositions[ctxSeg.p0DataIndex] >= 0 ? retailDashboardColors.netPositionFillPositive : retailDashboardColors.netPositionFillNegative,
+                        borderColor: ctxSeg => netVolumes[ctxSeg.p0DataIndex] >= 0 ? retailDashboardColors.netPositionLinePositive : retailDashboardColors.netPositionLineNegative,
+                        backgroundColor: ctxSeg => netVolumes[ctxSeg.p0DataIndex] >= 0 ? retailDashboardColors.netPositionFillPositive : retailDashboardColors.netPositionFillNegative,
                     }
                 }]
             },
@@ -336,6 +341,7 @@
                             label: function(context) {
                                 const type = context.dataIndex === 0 ? 'Long' : 'Short';
                                 const percentage = context.dataIndex === 0 ? percLong : (100 - percLong);
+                                // The label shows the percentage of volume
                                 return `${type}: ${percentage.toFixed(0)}%`; 
                             }
                         }
