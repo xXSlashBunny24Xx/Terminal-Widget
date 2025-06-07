@@ -59,6 +59,44 @@
             margin-left: 10px;
         }
 
+        /* NEW: Styles for control bar */
+        .controls-bar {
+            padding: 10px;
+            background-color: #0a0a0a;
+            border-bottom: 1px solid #222;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .controls-bar label {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .controls-bar select {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #eee;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-family: 'Source Code Pro', monospace;
+            cursor: pointer;
+            outline: none;
+        }
+        .controls-bar select:hover {
+            border-color: #ff8000;
+        }
+
+
         .dashboard-content-wrapper {
             flex: 1; 
             padding: 10px; 
@@ -151,6 +189,19 @@
 <body>
 <div class="dashboard-container">
     <div class="dashboard-title-bar">COT Overview Dashboard <span id="loading-indicator" class="loader-text"></span></div>
+    
+    <!-- NEW: Controls Bar for Dropdowns -->
+    <div class="controls-bar">
+        <div class="control-group">
+            <label for="instrument-category-select">Asset Class:</label>
+            <select id="instrument-category-select"></select>
+        </div>
+        <div class="control-group">
+            <label for="trader-category-select">Trader Category:</label>
+            <select id="trader-category-select"></select>
+        </div>
+    </div>
+
     <div class="dashboard-content-wrapper">
         <table id="cot-overview-table">
             <thead>
@@ -176,6 +227,10 @@
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwr-JR2ibyM1ExSW6F-Hm6LiSYPOrvUHM8CtSaVPTDobxeQe7bbCM0stpfoqeEllOLj/exec';
     let cotDataStore = {};
     let miniChartInstances = {};
+
+    // Global state for filters
+    let currentInstrumentCategory = 'currencies';
+    let currentTraderCategory = 'leveragedFund';
 
     const instrumentNames = { 
         CA: "Canadian Dollar", CH: "Swiss Franc", GB: "British Pound",
@@ -205,27 +260,39 @@
             
             const rawData = await response.json();
             const transformedData = {};
-            const allSheetKeys = Object.keys(instrumentNames);
 
-            allSheetKeys.forEach(sheetKey => {
+            // Standardize keys for all instruments
+            Object.keys(instrumentNames).forEach(sheetKey => {
                 if (rawData[sheetKey] && Array.isArray(rawData[sheetKey])) {
-                    // Standardize keys regardless of source sheet type
                     transformedData[sheetKey] = rawData[sheetKey].map(entry => ({
-                        date: new Date(entry["Report Date"]), // Store as Date object
+                        date: new Date(entry["Report Date"]),
                         leveragedFund: { 
-                            long: entry["Leveraged Fund Long"] ?? entry["Managed Money Long"], 
-                            short: entry["Leveraged Fund Short"] ?? entry["Managed Money Short"] 
+                            long: entry["Leveraged Fund Long"], 
+                            short: entry["Leveraged Fund Short"] 
                         },
                         assetManager: { 
-                            long: entry["Asset Manager Long"] ?? entry["Producent Merhant Long"], 
-                            short: entry["Asset Manager Short"] ?? entry["Producent Merhant Short"] 
+                            long: entry["Asset Manager Long"], 
+                            short: entry["Asset Manager Short"] 
                         },
                         dealer: { 
-                            long: entry["Dealer Long"] ?? entry["Swap Long"], 
-                            short: entry["Dealer Short"] ?? entry["Swap Short"]
+                            long: entry["Dealer Long"], 
+                            short: entry["Dealer Short"]
+                        },
+                        // Mapped Commodity Keys
+                        managedMoney: {
+                            long: entry["Managed Money Long"],
+                            short: entry["Managed Money Short"]
+                        },
+                        producerMerchant: {
+                            long: entry["Producent Merhant Long"],
+                            short: entry["Producent Merhant Short"]
+                        },
+                        swapDealer: {
+                            long: entry["Swap Long"],
+                            short: entry["Swap Short"]
                         },
                         openInterest: entry["Open Interest"]
-                    })).sort((a, b) => a.date - b.date); // Sort oldest to newest
+                    })).sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort oldest to newest
                 }
             });
             loadingIndicator.textContent = '';
@@ -238,7 +305,7 @@
     }
 
     function formatNumber(num) {
-        if (typeof num !== 'number') return num;
+        if (typeof num !== 'number' || isNaN(num)) return 'N/A';
         if (Math.abs(num) >= 1000000) return (num / 1000000).toFixed(1) + 'M';
         if (Math.abs(num) >= 1000) return (num / 1000).toFixed(0) + 'K';
         return num.toLocaleString('en-US');
@@ -248,69 +315,76 @@
         Object.values(miniChartInstances).forEach(chart => chart.destroy());
         miniChartInstances = {};
     }
-    
+
     /**
-     * Populates the main overview table with data and charts
+     * Populates the main overview table based on the current filter selections
      */
     function populateTable() {
         destroyMiniCharts();
         const tableBody = document.getElementById('cot-overview-table').querySelector('tbody');
         tableBody.innerHTML = ''; 
 
-        // Define the order for display
-        const displayOrder = ['EU', 'GB', 'JP', 'CH', 'CA', 'AU', 'NZ', 'US', 'GC', 'OI'];
+        // Define which instruments to show based on the selected category
+        const instrumentList = {
+            currencies: ['EU', 'GB', 'JP', 'CH', 'CA', 'AU', 'NZ', 'US'],
+            commodities: ['GC', 'OI']
+        };
+
+        const displayOrder = instrumentList[currentInstrumentCategory];
 
         displayOrder.forEach(instrumentKey => {
-            if (!cotDataStore[instrumentKey]) return; // Skip if data doesn't exist
+            if (!cotDataStore[instrumentKey]) return; 
 
             const historicalData = cotDataStore[instrumentKey];
-            if (historicalData.length < 2) return; // Need at least 2 reports for weekly change
+            if (historicalData.length < 2) return; 
 
             const latestReport = historicalData[historicalData.length - 1];
             const previousReport = historicalData[historicalData.length - 2];
 
-            const latestAllLong = (latestReport.dealer.long || 0) + (latestReport.leveragedFund.long || 0) + (latestReport.assetManager.long || 0);
-            const latestAllShort = (latestReport.dealer.short || 0) + (latestReport.leveragedFund.short || 0) + (latestReport.assetManager.short || 0);
-            const latestAllNet = latestAllLong - latestAllShort;
+            // Get data for the selected trader category
+            const latestCategoryData = latestReport[currentTraderCategory] || {};
+            const prevCategoryData = previousReport[currentTraderCategory] || {};
+
+            const latestLong = latestCategoryData.long || 0;
+            const latestShort = latestCategoryData.short || 0;
+            const latestNet = latestLong - latestShort;
             
-            const prevAllLong = (previousReport.dealer.long || 0) + (previousReport.leveragedFund.long || 0) + (previousReport.assetManager.long || 0);
-            const prevAllShort = (previousReport.dealer.short || 0) + (previousReport.leveragedFund.short || 0) + (previousReport.assetManager.short || 0);
-            const prevAllNet = prevAllLong - prevAllShort;
-            const weeklyChangeNetAll = latestAllNet - prevAllNet;
+            const prevLong = prevCategoryData.long || 0;
+            const prevShort = prevCategoryData.short || 0;
+            const prevNet = prevLong - prevShort;
+            const weeklyChangeNet = latestNet - prevNet;
             
             const row = tableBody.insertRow();
             row.innerHTML = `
                 <td class="instrument-name">${instrumentNames[instrumentKey]}</td>
-                <td class="${latestAllNet >= 0 ? 'positive-value' : 'negative-value'}">${formatNumber(latestAllNet)}</td>
+                <td class="${latestNet >= 0 ? 'positive-value' : 'negative-value'}">${formatNumber(latestNet)}</td>
                 <td>${formatNumber(latestReport.openInterest)}</td>
-                <td>${formatNumber(latestAllLong)}</td>
-                <td>${formatNumber(latestAllShort)}</td>
-                <td class="${weeklyChangeNetAll >= 0 ? 'positive-change' : 'negative-change'}">${formatNumber(weeklyChangeNetAll)}</td>
+                <td>${formatNumber(latestLong)}</td>
+                <td>${formatNumber(latestShort)}</td>
+                <td class="${weeklyChangeNet >= 0 ? 'positive-change' : 'negative-change'}">${formatNumber(weeklyChangeNet)}</td>
                 <td class="chart-cell"><canvas id="netChart-${instrumentKey}"></canvas></td>
                 <td class="chart-cell"><canvas id="doughnutChart-${instrumentKey}"></canvas></td>
             `;
 
-            // Defer chart rendering to ensure canvas element exists in DOM
             setTimeout(() => {
-                // Take last 30 entries for the trend chart
                 const trendData = historicalData.slice(-30); 
-                renderNetPositionMiniChart(`netChart-${instrumentKey}`, trendData);
-                renderBuySellDoughnutMiniChart(`doughnutChart-${instrumentKey}`, latestAllLong, latestAllShort);
+                renderNetPositionMiniChart(`netChart-${instrumentKey}`, trendData, currentTraderCategory);
+                renderBuySellDoughnutMiniChart(`doughnutChart-${instrumentKey}`, latestLong, latestShort);
             }, 0);
         });
     }
 
     /**
-     * Renders a mini line chart for net position trend
+     * Renders a mini line chart for net position trend for a specific category
      */
-    function renderNetPositionMiniChart(canvasId, historicalData) {
+    function renderNetPositionMiniChart(canvasId, historicalData, traderCategory) {
         const element = document.getElementById(canvasId);
         if (!element) return;
         const ctx = element.getContext('2d');
-        const netPositionsAll = historicalData.map(d => 
-            ((d.dealer.long || 0) + (d.leveragedFund.long || 0) + (d.assetManager.long || 0)) -
-            ((d.dealer.short || 0) + (d.leveragedFund.short || 0) + (d.assetManager.short || 0))
-        );
+        const netPositions = historicalData.map(d => {
+            const categoryData = d[traderCategory] || { long: 0, short: 0 };
+            return (categoryData.long || 0) - (categoryData.short || 0);
+        });
         const labels = historicalData.map(d => d.date);
 
         miniChartInstances[canvasId] = new Chart(ctx, { 
@@ -319,14 +393,14 @@
                 labels: labels,
                 datasets: [{
                     label: 'Net Position', 
-                    data: netPositionsAll,
+                    data: netPositions,
                     borderWidth: 1.5, 
                     pointRadius: 0, 
                     fill: true, 
                     tension: 0.4,
                     segment: { 
-                        borderColor: ctxSeg => netPositionsAll[ctxSeg.p0DataIndex] >= 0 ? colors.netPositionLinePositive : colors.netPositionLineNegative,
-                        backgroundColor: ctxSeg => netPositionsAll[ctxSeg.p0DataIndex] >= 0 ? colors.netPositionFillPositive : colors.netPositionFillNegative,
+                        borderColor: ctxSeg => netPositions[ctxSeg.p0DataIndex] >= 0 ? colors.netPositionLinePositive : colors.netPositionLineNegative,
+                        backgroundColor: ctxSeg => netPositions[ctxSeg.p0DataIndex] >= 0 ? colors.netPositionFillPositive : colors.netPositionFillNegative,
                     }
                 }]
             },
@@ -378,9 +452,6 @@
         });
     }
 
-    /**
-     * Provides common configuration for mini charts
-     */
     function miniChartOptions(isTimeSeries = false) {
         const options = {
             responsive: true,
@@ -413,10 +484,70 @@
     }
     
     /**
-     * Initializes the dashboard by fetching data and populating the table
+     * Sets up the filter dropdowns and their event listeners
+     */
+    function setupControls() {
+        const instrumentCategorySelect = document.getElementById('instrument-category-select');
+        const traderCategorySelect = document.getElementById('trader-category-select');
+
+        const traderCategories = {
+            currencies: {
+                leveragedFund: 'Leveraged Fund',
+                assetManager: 'Asset Manager',
+                dealer: 'Dealer'
+            },
+            commodities: {
+                managedMoney: 'Managed Money',
+                producerMerchant: 'Producer/Merchant',
+                swapDealer: 'Swap Dealer'
+            }
+        };
+
+        // Populate instrument category dropdown
+        instrumentCategorySelect.innerHTML = `
+            <option value="currencies">Currencies</option>
+            <option value="commodities">Commodities</option>
+        `;
+        instrumentCategorySelect.value = currentInstrumentCategory;
+
+        // Function to update trader category dropdown
+        function updateTraderCategoryDropdown() {
+            const selectedInstrumentCat = instrumentCategorySelect.value;
+            const relevantTraderCats = traderCategories[selectedInstrumentCat];
+            traderCategorySelect.innerHTML = '';
+            Object.keys(relevantTraderCats).forEach(key => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = relevantTraderCats[key];
+                traderCategorySelect.appendChild(option);
+            });
+             // Set the first one as default when changing instrument category
+            traderCategorySelect.value = Object.keys(relevantTraderCats)[0];
+        }
+
+        // Initial population
+        updateTraderCategoryDropdown();
+
+        // Event Listeners
+        instrumentCategorySelect.addEventListener('change', (event) => {
+            currentInstrumentCategory = event.target.value;
+            updateTraderCategoryDropdown(); // Update trader options
+            currentTraderCategory = traderCategorySelect.value; // Reset to the new default
+            populateTable(); // Re-render table
+        });
+
+        traderCategorySelect.addEventListener('change', (event) => {
+            currentTraderCategory = event.target.value;
+            populateTable(); // Re-render table
+        });
+    }
+
+    /**
+     * Initializes the dashboard
      */
     async function initializeDashboard() {
         cotDataStore = await fetchAndProcessData();
+        setupControls(); // Set up filters before populating
         populateTable();
     }
 
