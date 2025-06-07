@@ -174,6 +174,33 @@
             overflow: hidden; 
         }
         
+        /* Styles for doughnut chart containers */
+        .doughnut-container-wrapper {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .doughnut-chart-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+            max-width: 30%;
+        }
+        .doughnut-chart-item h4 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            color: #ff8000;
+            white-space: nowrap;
+        }
+        .doughnut-chart-item canvas {
+            max-width: 100%;
+            max-height: 250px; /* UPDATED: Increased from 150px to make charts larger */
+        }
+        
         #insight-area {
             font-size: 12px;
             color: #ccc;
@@ -297,8 +324,8 @@
                     <button data-mode="percentageBuySell">Buy/Sell %</button>
                 </div>
             </div>
-            <div class="canvas-wrapper">
-                <canvas id="cotChart"></canvas>
+            <div class="canvas-wrapper" id="explorer-canvas-wrapper">
+                <!-- Canvas will be dynamically inserted here -->
             </div>
             <div id="insight-area">
                 <div id="insight-text-content"></div>
@@ -350,7 +377,7 @@
 
     // DOM Elements
     const loadingIndicator = document.getElementById('loading-indicator');
-    const ctxCot = document.getElementById('cotChart').getContext('2d');
+    const explorerCanvasWrapper = document.getElementById('explorer-canvas-wrapper');
     const instrumentSelect = document.getElementById('instrument-select');
     const traderTypeSelect = document.getElementById('trader-type-select'); 
     const chartModeButtonsContainer = document.getElementById('chart-mode-buttons');
@@ -461,7 +488,19 @@
     }
 
     function renderExplorerChart() {
-        if (cotChartInstance) cotChartInstance.destroy();
+        if (cotChartInstance) {
+            cotChartInstance.destroy();
+            cotChartInstance = null;
+        }
+        // Clear any existing doughnut charts
+        Chart.helpers.each(Chart.instances, (instance) => {
+            if (instance.canvas.id.startsWith('doughnut-')) {
+                instance.destroy();
+            }
+        });
+
+        explorerCanvasWrapper.innerHTML = ''; // Clear the wrapper
+
         const data = getSelectedInstrumentData();
         updateTraderTypeDropdown();
         
@@ -470,39 +509,41 @@
 
         if (data.length === 0) return;
         
-        let chartConfig;
-        const labels = data.map(d => d.date);
         const latestData = data[data.length - 1];
         const prevData = data.length > 1 ? data[data.length - 2] : null;
-        const selectedTrader = traderTypeSelect.value;
-        const traderNames = getTraderDisplayNames();
 
         if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = '';
         
-        switch(currentChartMode) {
-             case 'netPosition': 
-                 chartConfig = getNetPositionConfig(data, labels, selectedTrader);
-                 if (!insightArea.classList.contains('hidden')) generateNetPositionInsights(latestData, prevData, selectedTrader);
-                 break;
-             case 'longShortBreakdown':
-                 chartConfig = getLongShortBreakdownConfig(data, labels, selectedTrader);
-                 if (!insightArea.classList.contains('hidden')) generateLongShortInsights(latestData, prevData, selectedTrader);
-                 break;
-             case 'openInterest':
-                 chartConfig = getOpenInterestConfig(data, labels);
-                 if (!insightArea.classList.contains('hidden')) generateOpenInterestInsights(latestData, prevData);
-                 break;
-             case 'weeklyChanges':
-                 chartConfig = getWeeklyChangesConfig(latestData, prevData, selectedTrader);
-                 break;
-             case 'percentageBuySell':
-                 chartConfig = getPercentageBuySellConfig(latestData);
-                 break;
-             default: 
-                chartConfig = getNetPositionConfig(data, labels, selectedTrader);
+        // MODIFIED: Handle doughnut charts separately
+        if (currentChartMode === 'percentageBuySell') {
+            getPercentageBuySellConfig(latestData); // This function now renders the charts directly
+        } else {
+            // Re-create the main canvas for other chart types
+            explorerCanvasWrapper.innerHTML = '<canvas id="cotChart"></canvas>';
+            const ctxCot = document.getElementById('cotChart').getContext('2d');
+            let chartConfig;
+            const labels = data.map(d => d.date);
+            const selectedTrader = traderTypeSelect.value;
+            
+            switch(currentChartMode) {
+                case 'netPosition': 
+                    chartConfig = getNetPositionConfig(data, labels, selectedTrader);
+                    if (!insightArea.classList.contains('hidden')) generateNetPositionInsights(latestData, prevData, selectedTrader);
+                    break;
+                case 'longShortBreakdown':
+                    chartConfig = getLongShortBreakdownConfig(data, labels, selectedTrader);
+                    if (!insightArea.classList.contains('hidden')) generateLongShortInsights(latestData, prevData, selectedTrader);
+                    break;
+                case 'openInterest':
+                    chartConfig = getOpenInterestConfig(data, labels);
+                    if (!insightArea.classList.contains('hidden')) generateOpenInterestInsights(latestData, prevData);
+                    break;
+                case 'weeklyChanges':
+                    chartConfig = getWeeklyChangesConfig(latestData, prevData, selectedTrader);
+                    break;
+            }
+            if (chartConfig) cotChartInstance = new Chart(ctxCot, chartConfig);
         }
-
-        if (chartConfig) cotChartInstance = new Chart(ctxCot, chartConfig);
     }
     
     // --- EXPLORER CHART CONFIGS & INSIGHTS ---
@@ -555,7 +596,7 @@
                 net: (latest[catKey].long - latest[catKey].short) - (previous[catKey].long - previous[catKey].short)
             };
             insightText += `<em>${displayName}:</em> Net: ${formatNumber(change.net)}, Longs: ${formatNumber(change.long)}, Shorts: ${formatNumber(change.short)}<br/>`;
-            chartLabels.push(`${displayName} L Δ`, `${displayName} S Δ`, `${displayName} N Δ`);
+            chartLabels.push(`${displayName.substring(0,3)}.LΔ`, `${displayName.substring(0,3)}.SΔ`, `${displayName.substring(0,3)}.NΔ`);
             chartData.push(change.long, change.short, change.net);
         });
         if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = insightText;
@@ -563,13 +604,61 @@
     }
 
     function getPercentageBuySellConfig(latest) {
-        const totalLongs = latest.dealer.long + latest.leveragedFund.long + latest.assetManager.long;
-        const totalShorts = latest.dealer.short + latest.leveragedFund.short + latest.assetManager.short;
-        const grandTotal = totalLongs + totalShorts;
-        if (grandTotal === 0) { if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = 'No open contracts.'; return null; }
-        const percLong = (totalLongs / grandTotal) * 100, percShort = 100 - percLong;
-        if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = `<strong>Overall Sentiment (${latest.date}):</strong><br/>Longs: ${formatNumber(totalLongs)} (${percLong.toFixed(1)}%)<br/>Shorts: ${formatNumber(totalShorts)} (${percShort.toFixed(1)}%)`;
-        return { type: 'doughnut', data: { labels: [`Longs (${percLong.toFixed(1)}%)`, `Shorts (${percShort.toFixed(1)}%)`], datasets: [{ data: [totalLongs, totalShorts], backgroundColor: [colors.long, colors.short], borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '50%', plugins: { title: { display: true, text: `Percentage Buy/Sell (${latest.date})`, color: '#f0f0f0'}, legend: { position: 'top', labels: { color: '#f0f0f0'}}, tooltip: { callbacks: { label: c => `${c.label}: ${formatNumber(c.parsed)}`}}}}};
+        explorerCanvasWrapper.innerHTML = `<div class="doughnut-container-wrapper"></div>`;
+        const container = explorerCanvasWrapper.querySelector('.doughnut-container-wrapper');
+
+        const traderNames = getTraderDisplayNames();
+        const traderKeys = Object.keys(traderNames).filter(k => k !== 'all');
+        let totalPositionsAvailable = true;
+        let insightText = `<strong>Buy/Sell Percentage (${latest.date}):</strong><br/>`;
+
+        traderKeys.forEach(key => {
+            const traderData = latest[key];
+            if (!traderData || typeof traderData.long !== 'number' || typeof traderData.short !== 'number') {
+                totalPositionsAvailable = false;
+                return;
+            }
+
+            const total = traderData.long + traderData.short;
+            const percLong = total > 0 ? (traderData.long / total) * 100 : 0;
+            const percShort = 100 - percLong;
+            insightText += `<em>${traderNames[key]}:</em> Longs: ${percLong.toFixed(1)}%, Shorts: ${percShort.toFixed(1)}%<br/>`;
+
+            const chartItem = document.createElement('div');
+            chartItem.className = 'doughnut-chart-item';
+            
+            const title = document.createElement('h4');
+            title.textContent = traderNames[key];
+            
+            const canvas = document.createElement('canvas');
+            canvas.id = `doughnut-${key}`;
+            
+            chartItem.appendChild(title);
+            chartItem.appendChild(canvas);
+            container.appendChild(chartItem);
+
+            new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: [`Long (${percLong.toFixed(1)}%)`, `Short (${percShort.toFixed(1)}%)`],
+                    datasets: [{
+                        data: [traderData.long, traderData.short],
+                        backgroundColor: [colors.long, colors.short],
+                        borderWidth: 0, 
+                        hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.label.split(' ')[0]}: ${formatNumber(c.parsed)}`}}}}
+            });
+        });
+
+        if (!totalPositionsAvailable) {
+            if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = 'Data missing for percentage calculation.';
+        } else {
+             if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = insightText;
+        }
+
+        return null;
     }
 
     function generateNetPositionInsights(latest, prev, selectedTrader) {
@@ -588,8 +677,8 @@
         });
         if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = text;
     }
-    function generateLongShortInsights(latest, prev, selectedTrader) { /* ... Similar logic as above ... */ }
-    function generateOpenInterestInsights(latest, prev) { /* ... Similar logic as above ... */ }
+    function generateLongShortInsights(latest, prev, selectedTrader) { /* ... same logic ... */ }
+    function generateOpenInterestInsights(latest, prev) { /* ... same logic ... */ }
 
     // --- COMPARE TAB LOGIC ---
     function setupCompareControls() {
