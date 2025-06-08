@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Country Macroeconomic Data</title>
+    <title>Country Macroeconomic Data (Mobile-Friendly)</title>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -504,8 +504,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Data rows will be populated by JavaScript -->
-                </tbody>
+                    </tbody>
             </table>
         </div>
         <div class="resizer-x" id="verticalResizer"></div>
@@ -545,8 +544,7 @@
                         </tr>
                     </thead>
                     <tbody id="historical-data-table-body">
-                        <!-- Historical data rows will be populated by JavaScript -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </div>
@@ -1233,25 +1231,36 @@
             });
         }
         
-        // --- Resizer Logic ---
+        // --- PERUBAHAN UTAMA: Logika Resizer untuk Mobile dan Desktop ---
         let isResizingX = false;
         let startX_resizer, startLeftWidth; 
-        const snapThreshold = 30; 
+        const snapThreshold = 30;
 
-        verticalResizer.addEventListener('mousedown', function(e) {
+        function startVerticalResize(e) {
             e.preventDefault(); 
             isResizingX = true;
-            startX_resizer = e.clientX; 
+            // Dapatkan koordinat awal dari mouse atau sentuhan
+            startX_resizer = e.touches ? e.touches[0].clientX : e.clientX;
             startLeftWidth = leftPane.offsetWidth;
             document.body.style.cursor = 'col-resize'; 
+            document.body.style.userSelect = 'none'; // Cegah seleksi teks saat menggeser
 
             document.addEventListener('mousemove', handleVerticalResizerMouseMove);
+            document.addEventListener('touchmove', handleVerticalResizerMouseMove, { passive: false });
             document.addEventListener('mouseup', handleVerticalResizerMouseUp);
-        });
+            document.addEventListener('touchend', handleVerticalResizerMouseUp);
+        }
+
+        verticalResizer.addEventListener('mousedown', startVerticalResize);
+        verticalResizer.addEventListener('touchstart', startVerticalResize, { passive: false });
+
 
         function handleVerticalResizerMouseMove(e) {
             if (!isResizingX) return;
-            const deltaX = e.clientX - startX_resizer; 
+            e.preventDefault(); // Penting untuk touchmove
+            // Dapatkan koordinat saat ini dari mouse atau sentuhan
+            const currentX = e.touches ? e.touches[0].clientX : e.clientX;
+            const deltaX = currentX - startX_resizer; 
             let newLeftWidth = startLeftWidth + deltaX;
             
             const containerWidth = contentContainer.offsetWidth;
@@ -1277,9 +1286,12 @@
             if (!isResizingX) return;
             isResizingX = false;
             document.body.style.cursor = 'default'; 
+            document.body.style.userSelect = ''; // Kembalikan seleksi teks
 
             document.removeEventListener('mousemove', handleVerticalResizerMouseMove);
+            document.removeEventListener('touchmove', handleVerticalResizerMouseMove);
             document.removeEventListener('mouseup', handleVerticalResizerMouseUp);
+            document.removeEventListener('touchend', handleVerticalResizerMouseUp);
 
             if (rightPane.style.display !== 'none' && activeIndicatorId && selectedCountry) {
                  displayHistoricalData(activeIndicatorId, selectedCountry); 
@@ -1290,20 +1302,30 @@
         let isResizingY = false;
         let startY_resizer, startChartHeight; 
 
-        chartTableResizer.addEventListener('mousedown', function(e) {
+        function startHorizontalResize(e) {
             e.preventDefault();
             isResizingY = true;
-            startY_resizer = e.clientY; 
+            // Dapatkan koordinat awal dari mouse atau sentuhan
+            startY_resizer = e.touches ? e.touches[0].clientY : e.clientY;
             startChartHeight = chartOuterContainer.offsetHeight;
             document.body.style.cursor = 'row-resize';
+            document.body.style.userSelect = 'none'; // Cegah seleksi teks saat menggeser
 
             document.addEventListener('mousemove', handleHorizontalResizerMouseMove);
+            document.addEventListener('touchmove', handleHorizontalResizerMouseMove, { passive: false });
             document.addEventListener('mouseup', handleHorizontalResizerMouseUp);
-        });
+            document.addEventListener('touchend', handleHorizontalResizerMouseUp);
+        }
+        
+        chartTableResizer.addEventListener('mousedown', startHorizontalResize);
+        chartTableResizer.addEventListener('touchstart', startHorizontalResize, { passive: false });
         
         function handleHorizontalResizerMouseMove(e) {
             if (!isResizingY) return;
-            const deltaY = e.clientY - startY_resizer; 
+            e.preventDefault(); // Penting untuk touchmove
+            // Dapatkan koordinat saat ini dari mouse atau sentuhan
+            const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+            const deltaY = currentY - startY_resizer; 
             let newChartHeight = startChartHeight + deltaY;
 
             const rightPanePaddings = (parseFloat(getComputedStyle(rightPane).paddingTop) || 0) + (parseFloat(getComputedStyle(rightPane).paddingBottom) || 0);
@@ -1337,9 +1359,12 @@
             if (!isResizingY) return;
             isResizingY = false;
             document.body.style.cursor = 'default';
+            document.body.style.userSelect = ''; // Kembalikan seleksi teks
 
             document.removeEventListener('mousemove', handleHorizontalResizerMouseMove);
+            document.removeEventListener('touchmove', handleHorizontalResizerMouseMove);
             document.removeEventListener('mouseup', handleHorizontalResizerMouseUp);
+            document.removeEventListener('touchend', handleHorizontalResizerMouseUp);
 
             if (chartOuterContainer.style.display !== 'none' && activeIndicatorId && selectedCountry) {
                  displayHistoricalData(activeIndicatorId, selectedCountry); 
@@ -1348,6 +1373,7 @@
             }
             manageScrollbarEffects();
         }
+        // --- AKHIR PERUBAHAN ---
 
         function manageScrollbarEffects() {
             const scrollablePanes = [];
