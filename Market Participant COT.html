@@ -52,7 +52,7 @@
             padding-left: 12px;
             flex-shrink: 0;
         }
-        
+       
         .loader-text {
             color: #ff8000;
             font-size: 14px;
@@ -105,7 +105,7 @@
             overflow-x: auto; 
             min-height: 0;
         }
-        
+       
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -147,7 +147,7 @@
             white-space: nowrap; 
             font-size: 13px;
         }
-        
+       
         td {
             color: #bbb;
             white-space: nowrap; 
@@ -155,7 +155,7 @@
         td:not(:first-child) { 
             text-align: right;
         }
-        
+       
         tr:nth-child(even) {
             background-color: #080808;
         }
@@ -189,7 +189,7 @@
 <body>
 <div class="dashboard-container">
     <div class="dashboard-title-bar">COT Overview Dashboard <span id="loading-indicator" class="loader-text"></span></div>
-    
+   
     <!-- NEW: Controls Bar for Dropdowns -->
     <div class="controls-bar">
         <div class="control-group">
@@ -245,7 +245,7 @@
         netPositionLineNegative: 'rgba(237, 28, 36, 0.8)',
         netPositionFillNegative: 'rgba(237, 28, 36, 0.1)',
         long: 'rgba(34, 177, 76, 0.8)',      
-        short: 'rgba(237, 28, 36, 0.8)',     
+        short: 'rgba(237, 28, 36, 0.8)',       
     };
 
     /**
@@ -257,41 +257,42 @@
         try {
             const response = await fetch(SCRIPT_URL);
             if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
-            
+           
             const rawData = await response.json();
             const transformedData = {};
 
             // Standardize keys for all instruments
             Object.keys(instrumentNames).forEach(sheetKey => {
                 if (rawData[sheetKey] && Array.isArray(rawData[sheetKey])) {
+                    // *** DATA PROCESSING FIX: Add || 0 to prevent NaN errors from undefined values ***
                     transformedData[sheetKey] = rawData[sheetKey].map(entry => ({
                         date: new Date(entry["Report Date"]),
                         leveragedFund: { 
-                            long: entry["Leveraged Fund Long"], 
-                            short: entry["Leveraged Fund Short"] 
+                            long: entry["Leveraged Fund Long"] || 0, 
+                            short: entry["Leveraged Fund Short"] || 0 
                         },
                         assetManager: { 
-                            long: entry["Asset Manager Long"], 
-                            short: entry["Asset Manager Short"] 
+                            long: entry["Asset Manager Long"] || 0, 
+                            short: entry["Asset Manager Short"] || 0 
                         },
                         dealer: { 
-                            long: entry["Dealer Long"], 
-                            short: entry["Dealer Short"]
+                            long: entry["Dealer Long"] || 0, 
+                            short: entry["Dealer Short"] || 0
                         },
                         // Mapped Commodity Keys
                         managedMoney: {
-                            long: entry["Managed Money Long"],
-                            short: entry["Managed Money Short"]
+                            long: entry["Managed Money Long"] || 0,
+                            short: entry["Managed Money Short"] || 0
                         },
                         producerMerchant: {
-                            long: entry["Producent Merhant Long"],
-                            short: entry["Producent Merhant Short"]
+                            long: entry["Producent Merhant Long"] || 0,
+                            short: entry["Producent Merhant Short"] || 0
                         },
                         swapDealer: {
-                            long: entry["Swap Long"],
-                            short: entry["Swap Short"]
+                            long: entry["Swap Long"] || 0,
+                            short: entry["Swap Short"] || 0
                         },
-                        openInterest: entry["Open Interest"]
+                        openInterest: entry["Open Interest"] || 0
                     })).sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort oldest to newest
                 }
             });
@@ -347,13 +348,15 @@
 
             const latestLong = latestCategoryData.long || 0;
             const latestShort = latestCategoryData.short || 0;
+            // --- CALCULATION AS PER REQUEST: Direct subtraction for Net Position ---
             const latestNet = latestLong - latestShort;
-            
+           
             const prevLong = prevCategoryData.long || 0;
             const prevShort = prevCategoryData.short || 0;
             const prevNet = prevLong - prevShort;
+            // --- CALCULATION AS PER REQUEST: Direct subtraction for Weekly Change ---
             const weeklyChangeNet = latestNet - prevNet;
-            
+           
             const row = tableBody.insertRow();
             row.innerHTML = `
                 <td class="instrument-name">${instrumentNames[instrumentKey]}</td>
@@ -383,6 +386,7 @@
         const ctx = element.getContext('2d');
         const netPositions = historicalData.map(d => {
             const categoryData = d[traderCategory] || { long: 0, short: 0 };
+            // --- CALCULATION AS PER REQUEST: Direct subtraction for Net Position Trend ---
             return (categoryData.long || 0) - (categoryData.short || 0);
         });
         const labels = historicalData.map(d => d.date);
@@ -482,7 +486,7 @@
         }
         return options;
     }
-    
+   
     /**
      * Sets up the filter dropdowns and their event listeners
      */
