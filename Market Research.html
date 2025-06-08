@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bank Research PDF Viewer</title>
+    <title>Market Research PDF Viewer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
@@ -255,9 +255,9 @@
     <div class="main-container">
         <!-- Panel Kiri untuk Daftar File -->
         <div class="file-list-panel" id="left-panel">
-            <div class="title-bar">Bank Research Archive</div>
+            <div class="title-bar">Market Research</div>
             <div class="view-switcher">
-                <div id="btn-by-source" class="view-button active">By Bank Source</div>
+                <div id="btn-by-source" class="view-button active">By Provider</div>
                 <div id="btn-by-time" class="view-button">By Upload Time</div>
             </div>
             <div id="filter-container" class="filter-container">
@@ -355,7 +355,7 @@
         
         function populateBankFilter() {
             const sources = [...new Set(allFiles.map(file => file.source))].sort();
-            bankFilter.innerHTML = '<option value="all">-- All Banks --</option>';
+            bankFilter.innerHTML = '<option value="all">-- All Provider --</option>';
             sources.forEach(source => {
                 const option = document.createElement('option');
                 option.value = source;
