@@ -90,7 +90,7 @@
         .tab-content.active {
             display: flex; /* Shown when active */
         }
-        
+       
         .content-wrapper { /* Re-purposed for tab content */
             display: flex;
             flex-direction: column;
@@ -107,7 +107,7 @@
             padding-bottom: 10px; 
             flex-shrink: 0; 
         }
-        
+       
         .control-row {
             display: flex;
             align-items: center;
@@ -139,7 +139,7 @@
             cursor: pointer;
             outline: none;
         }
-        
+       
         .controls-wrapper select:disabled, .compare-controls-area select:disabled {
             background-color: #111;
             color: #555;
@@ -173,7 +173,7 @@
             padding:10px; 
             overflow: hidden; 
         }
-        
+       
         /* Styles for doughnut chart containers */
         .doughnut-container-wrapper {
             display: flex;
@@ -200,7 +200,7 @@
             max-width: 100%;
             max-height: 250px; /* UPDATED: Increased from 150px to make charts larger */
         }
-        
+       
         #insight-area {
             font-size: 12px;
             color: #ccc;
@@ -235,7 +235,7 @@
             background-color: #3a3a3a;
             border-color: #ff8000;
         }
-        
+       
         .compare-main-area {
             display: flex;
             gap: 20px;
@@ -295,7 +295,7 @@
             <button class="tab-button" data-tab="compare">Compare</button>
         </div>
     </div>
-    
+   
     <!-- Tab 1: Main Explorer -->
     <div id="tab-explorer" class="tab-content active">
         <div class="content-wrapper">
@@ -387,7 +387,7 @@
     const compareBtn = document.getElementById('compare-btn');
     const calculateNetBtn = document.getElementById('calculate-net-btn');
     const ctxCompare = document.getElementById('compareChart').getContext('2d');
-    
+   
     // Data Definitions
     const instrumentNames = { CA: "Canadian Dollar", CH: "Swiss Franc", GB: "British Pound", JP: "Japanese Yen", EU: "Euro FX", AU: "Australian Dollar", NZ: "New Zealand Dollar", US: "US Dollar Index", GC: "Gold", OI: "Crude Oil (WTI)" };
     const currencyTraderNames = { all: "All Trader Types", leveragedFund: "Leveraged Fund", assetManager: "Asset Manager", dealer: "Dealer" };
@@ -398,7 +398,7 @@
     // Colors
     const colors = {
         dealer: 'rgba(54, 162, 235, 0.7)', leveragedFund: 'rgba(255, 99, 132, 0.7)', assetManager: 'rgba(75, 192, 192, 0.7)', 
-        openInterest: 'rgba(255, 159, 64, 0.7)', long: 'rgba(75, 192, 75, 0.7)', short: 'rgba(255, 99, 75, 0.7)',         
+        openInterest: 'rgba(255, 159, 64, 0.7)', long: 'rgba(75, 192, 75, 0.7)', short: 'rgba(255, 99, 75, 0.7)',           
         dealerBorder: 'rgb(54, 162, 235)', leveragedFundBorder: 'rgb(255, 99, 132)', assetManagerBorder: 'rgb(75, 192, 192)', 
         openInterestBorder: 'rgb(255, 159, 64)', compare1: 'rgba(255, 206, 86, 0.8)', compare2: 'rgba(153, 102, 255, 0.8)',
         calculatedNet: 'rgba(239, 83, 80, 0.8)'
@@ -438,7 +438,7 @@
         if (typeof num !== 'number' || isNaN(num)) return 'N/A';
         return num.toLocaleString('en-US');
     }
-    
+   
     // --- UI & CHARTING ---
     function commonChartOptions(titleText, yAxisLabel, isTimeSeries = true) {
         const options = {
@@ -478,7 +478,7 @@
     // --- EXPLORER TAB LOGIC ---
     function getSelectedInstrumentData() { return cotData[instrumentSelect.value] || []; }
     function getTraderDisplayNames() { return commodityInstruments.hasOwnProperty(instrumentSelect.value) ? commodityTraderNames : currencyTraderNames; }
-    
+   
     function updateTraderTypeDropdown() {
         const names = getTraderDisplayNames();
         for (const key in names) {
@@ -503,17 +503,17 @@
 
         const data = getSelectedInstrumentData();
         updateTraderTypeDropdown();
-        
+       
         traderTypeSelect.disabled = (currentChartMode === 'openInterest' || currentChartMode === 'percentageBuySell');
         if (traderTypeSelect.disabled && traderTypeSelect.value !== 'all') traderTypeSelect.value = 'all';
 
         if (data.length === 0) return;
-        
+       
         const latestData = data[data.length - 1];
         const prevData = data.length > 1 ? data[data.length - 2] : null;
 
         if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = '';
-        
+       
         // MODIFIED: Handle doughnut charts separately
         if (currentChartMode === 'percentageBuySell') {
             getPercentageBuySellConfig(latestData); // This function now renders the charts directly
@@ -524,7 +524,7 @@
             let chartConfig;
             const labels = data.map(d => d.date);
             const selectedTrader = traderTypeSelect.value;
-            
+           
             switch(currentChartMode) {
                 case 'netPosition': 
                     chartConfig = getNetPositionConfig(data, labels, selectedTrader);
@@ -545,7 +545,7 @@
             if (chartConfig) cotChartInstance = new Chart(ctxCot, chartConfig);
         }
     }
-    
+   
     // --- EXPLORER CHART CONFIGS & INSIGHTS ---
     function getNetPositionConfig(data, labels, selectedTrader) {
         const datasets = [];
@@ -555,7 +555,7 @@
         if (selectedTrader === 'all' || selectedTrader === 'assetManager') datasets.push({ label: `${traderNames.assetManager} Net`, data: data.map(d => d.assetManager.long - d.assetManager.short), borderColor: colors.assetManagerBorder, fill: false });
         return { type: 'line', data: { labels, datasets }, options: commonChartOptions(`Net Positions: ${traderNames[selectedTrader]}`, 'Net Contracts') };
     }
-    
+   
     function getLongShortBreakdownConfig(data, labels, selectedTrader) {
         const datasets = [];
         const traderNames = getTraderDisplayNames();
@@ -576,7 +576,7 @@
             options: { ...commonChartOptions(`Long/Short Gross: ${traderNames[selectedTrader]}`, 'Number of Contracts'), scales: { y: { stacked: false, ticks: { callback: v => formatNumber(Math.abs(v))}}, x: { stacked: true }}, plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${formatNumber(Math.abs(c.parsed.y))}`}}}}
         };
     }
-    
+   
     function getOpenInterestConfig(data, labels) {
         return { type: 'line', data: { labels, datasets: [{ label: 'Total Open Interest', data: data.map(d => d.openInterest), borderColor: colors.openInterestBorder, backgroundColor: colors.openInterest, fill: false }] }, options: commonChartOptions('Total Open Interest', 'Total Contracts') };
     }
@@ -626,13 +626,13 @@
 
             const chartItem = document.createElement('div');
             chartItem.className = 'doughnut-chart-item';
-            
+           
             const title = document.createElement('h4');
             title.textContent = traderNames[key];
-            
+           
             const canvas = document.createElement('canvas');
             canvas.id = `doughnut-${key}`;
-            
+           
             chartItem.appendChild(title);
             chartItem.appendChild(canvas);
             container.appendChild(chartItem);
@@ -693,7 +693,7 @@
         const instrumentSelect = document.getElementById(`${prefix}-instrument-select`);
         const traderSelect = document.getElementById(`${prefix}-trader-select`);
         assetSelect.innerHTML = `<option value="currencies">Currencies</option><option value="commodities">Commodities</option>`;
-        
+       
         const updateDropdowns = () => {
             const isCommodity = assetSelect.value === 'commodities';
             const iList = isCommodity ? commodityInstruments : currencyInstruments;
@@ -736,18 +736,18 @@
         const d2 = { i: document.getElementById('d2-instrument-select').value, t: document.getElementById('d2-trader-select').value, p: document.getElementById('d2-position-select').value };
         const d1_label = `${instrumentNames[d1.i]} - ${document.getElementById('d1-trader-select').options[document.getElementById('d1-trader-select').selectedIndex].text} ${d1.p}`;
         const d2_label = `${instrumentNames[d2.i]} - ${document.getElementById('d2-trader-select').options[document.getElementById('d2-trader-select').selectedIndex].text} ${d2.p}`;
-        
+       
         const series1 = getDataSeries(d1.i, d1.t, d1.p);
         const series2 = getDataSeries(d2.i, d2.t, d2.p);
-        if (!series1.length || !series2.length) { alert("Data not available."); return; }
+        if (!series1.length || !series2.length) { alert("Data not available for one or both selections."); return; }
         const { labels, alignedData } = alignData(series1, series2);
-        
+       
         if (compareChartInstance) compareChartInstance.destroy();
         compareChartInstance = new Chart(ctxCompare, {
             type: 'line',
             data: { labels, datasets: [
-                    { label: d1_label, data: alignedData.map(d => d.v1), borderColor: colors.compare1, fill: false, borderWidth: 2 },
-                    { label: d2_label, data: alignedData.map(d => d.v2), borderColor: colors.compare2, fill: false, borderWidth: 2 }
+                { label: d1_label, data: alignedData.map(d => d.v1), borderColor: colors.compare1, fill: false, borderWidth: 2 },
+                { label: d2_label, data: alignedData.map(d => d.v2), borderColor: colors.compare2, fill: false, borderWidth: 2 }
             ]},
             options: commonChartOptions('Dataset Comparison', 'Contracts')
         });
@@ -761,15 +761,21 @@
 
         const series1 = getDataSeries(d1.i, d1.t, d1.p);
         const series2 = getDataSeries(d2.i, d2.t, d2.p);
-        if (!series1.length || !series2.length) { alert("Data not available."); return; }
+        if (!series1.length || !series2.length) { alert("Data not available for one or both selections."); return; }
         const { labels, alignedData } = alignData(series1, series2);
-        
+       
         if (compareChartInstance) compareChartInstance.destroy();
         compareChartInstance = new Chart(ctxCompare, {
             type: 'line',
             data: { labels, datasets: [{
-                label: `Net: ${d1_label_short} + ${d2_label_short}`, data: alignedData.map(d => d.v1 + d.v2), 
-                borderColor: colors.calculatedNet, backgroundColor: 'rgba(239, 83, 80, 0.1)', fill: true, borderWidth: 2
+                // --- REVISED CALCULATION ---
+                label: `Net: ${d1_label_short} - ${d2_label_short}`, 
+                data: alignedData.map(d => d.v1 - d.v2), 
+                // --- END OF REVISION ---
+                borderColor: colors.calculatedNet, 
+                backgroundColor: 'rgba(239, 83, 80, 0.1)', 
+                fill: true, 
+                borderWidth: 2
             }]},
             options: commonChartOptions('Calculated Net Position', 'Net Contracts')
         });
@@ -779,7 +785,7 @@
     async function initializeApp() {
         cotData = await fetchAndProcessData();
         loadingIndicator.textContent = ''; 
-        
+       
         const availableInstruments = Object.keys(cotData);
         if (availableInstruments.length > 0) {
             instrumentSelect.innerHTML = availableInstruments.map(k => `<option value="${k}">${instrumentNames[k] || k}</option>`).join('');
@@ -791,7 +797,7 @@
             instrumentSelect.disabled = true;
             instrumentSelect.innerHTML = `<option>No data loaded</option>`;
         }
-        
+       
         instrumentSelect.addEventListener('change', renderExplorerChart);
         traderTypeSelect.addEventListener('change', renderExplorerChart);
         chartModeButtonsContainer.addEventListener('click', (e) => {
