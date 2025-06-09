@@ -270,7 +270,7 @@
             button.className = 'add-widget-button';
             button.innerHTML = `
                 <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"></path></svg>
-                <span>Tambahkan Widget</span>`;
+                <span>Add Widget</span>`;
             
             // Saat tombol ditekan, ganti placeholder dengan menu pemilihan
             button.onclick = () => renderWidgetSelectionMenu(slotElement);
@@ -291,7 +291,7 @@
             const header = document.createElement('div');
             header.className = 'selection-menu-header';
             header.innerHTML = `
-                <span class="selection-menu-title">Pilih Widget</span>
+                <span class="selection-menu-title">Select Widget</span>
                 <button class="selection-menu-cancel" title="Batal">&times;</button>
             `;
 
@@ -360,8 +360,8 @@
 
             const replaceButton = document.createElement('button');
             replaceButton.className = 'widget-control-button';
-            replaceButton.textContent = 'Ganti';
-            replaceButton.title = 'Ganti Widget';
+            replaceButton.textContent = 'Change';
+            replaceButton.title = 'Change Widget';
             replaceButton.onclick = () => {
                 // Tampilkan menu pemilihan langsung di slot ini
                 renderWidgetSelectionMenu(targetSlot);
@@ -369,8 +369,8 @@
 
             const closeButton = document.createElement('button');
             closeButton.className = 'widget-control-button';
-            closeButton.textContent = 'Tutup';
-            closeButton.title = 'Tutup Widget';
+            closeButton.textContent = 'Close';
+            closeButton.title = 'Close Widget';
             closeButton.onclick = () => clearSlot(slotId);
 
             controls.appendChild(replaceButton);
