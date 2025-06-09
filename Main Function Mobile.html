@@ -45,9 +45,9 @@
             align-items: center;
             position: relative;
             overflow: hidden;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, border-style 0.3s;
         }
-
+        
         /* Tombol untuk menambahkan widget baru di slot kosong */
         .add-widget-button {
             cursor: pointer;
@@ -75,8 +75,7 @@
             width: 100%;
             height: 100%;
             background-color: #1e1e1e;
-            border: 1px solid #444;
-            border-radius: 8px;
+            border-radius: 8px; /* Disesuaikan agar pas di dalam slot */
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -136,38 +135,48 @@
             display: block;
         }
 
-        /* Modal untuk memilih widget */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* --- PERUBAHAN BARU: Gaya untuk Menu Pemilihan di dalam Slot --- */
+        .widget-selection-menu {
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background-color: #2a2a2a;
-            padding: 20px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 400px;
-            max-height: 80vh;
             display: flex;
             flex-direction: column;
+            background-color: #2a2a2a;
+            padding: 15px;
+            box-sizing: border-box;
         }
-        .modal-header {
-            font-size: 16px;
-            color: #FFA500;
+        
+        .selection-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 1px solid #444;
+            flex-shrink: 0;
         }
-        .modal-body {
+
+        .selection-menu-title {
+            font-size: 16px;
+            color: #FFA500;
+        }
+
+        .selection-menu-cancel {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 5px;
+        }
+        .selection-menu-cancel:hover {
+            color: #fff;
+        }
+
+        .selection-menu-body {
             overflow-y: auto;
+            flex-grow: 1;
         }
         .widget-category-title {
             font-weight: bold;
@@ -188,50 +197,20 @@
             background-color: #383838;
             color: #fff;
         }
-        .modal-close-button {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            background: none;
-            border: none;
-            color: #888;
-            font-size: 24px;
-            cursor: pointer;
-        }
-         .modal-close-button:hover {
-            color: #fff;
-         }
-
-        .hidden {
-            display: none !important;
-        }
+        /* --- AKHIR PERUBAHAN --- */
     </style>
 </head>
 <body>
-    <!-- Kontainer utama tempat 3 slot widget akan ditampilkan -->
     <div class="main-content">
         <div id="slot-1" class="widget-slot"></div>
         <div id="slot-2" class="widget-slot"></div>
         <div id="slot-3" class="widget-slot"></div>
     </div>
 
-    <!-- Modal untuk memilih widget, tersembunyi secara default -->
-    <div id="widget-selection-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button id="modal-close-button" class="modal-close-button">&times;</button>
-            <div class="modal-header">Pilih Widget</div>
-            <div id="modal-body" class="modal-body">
-                <!-- Daftar widget akan diisi oleh JavaScript -->
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Konfigurasi dasar
         const GITHUB_BASE_URL = 'https://xxslashbunny24xx.github.io/Terminal-Widget/';
-        const LAYOUT_STORAGE_KEY = 'mobileWidgetLayout_v1';
+        const LAYOUT_STORAGE_KEY = 'mobileWidgetLayout_v2';
 
-        // Daftar widget yang tersedia dikelompokkan berdasarkan kategori
         const widgetCategories = [
             {
                 name: "Charting",
@@ -278,50 +257,97 @@
             }
         ];
 
-        // Elemen DOM
         const slots = [document.getElementById('slot-1'), document.getElementById('slot-2'), document.getElementById('slot-3')];
-        const modal = document.getElementById('widget-selection-modal');
-        const modalBody = document.getElementById('modal-body');
-        const modalCloseButton = document.getElementById('modal-close-button');
         
-        // State untuk melacak slot mana yang sedang diedit
-        let currentEditingSlotId = null;
-
         /**
-         * Fungsi untuk menampilkan tombol "Tambah Widget" pada slot yang kosong.
+         * Menampilkan tombol "Tambah Widget" pada slot yang kosong.
          * @param {HTMLElement} slotElement - Elemen slot yang akan diisi.
          */
         function renderAddWidgetPlaceholder(slotElement) {
-            slotElement.innerHTML = ''; // Pastikan slot kosong
+            slotElement.innerHTML = '';
+            slotElement.style.borderStyle = 'dashed'; // Kembalikan border menjadi putus-putus
             const button = document.createElement('button');
             button.className = 'add-widget-button';
             button.innerHTML = `
                 <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"></path></svg>
-                <span>Add Widget</span>`;
-            button.onclick = () => {
-                currentEditingSlotId = slotElement.id;
-                modal.classList.remove('hidden');
-            };
+                <span>Tambahkan Widget</span>`;
+            
+            // Saat tombol ditekan, ganti placeholder dengan menu pemilihan
+            button.onclick = () => renderWidgetSelectionMenu(slotElement);
             slotElement.appendChild(button);
         }
 
         /**
-         * Fungsi untuk membuat dan menampilkan widget pada slot tertentu.
-         * @param {object} widgetData - Informasi tentang widget yang akan dibuat.
+         * --- PERUBAHAN BARU: Menampilkan menu pemilihan di dalam slot ---
+         * @param {HTMLElement} slotElement - Elemen slot target.
+         */
+        function renderWidgetSelectionMenu(slotElement) {
+            slotElement.innerHTML = '';
+            slotElement.style.borderStyle = 'solid'; // Ubah border menjadi solid saat menu aktif
+
+            const menuContainer = document.createElement('div');
+            menuContainer.className = 'widget-selection-menu';
+            
+            const header = document.createElement('div');
+            header.className = 'selection-menu-header';
+            header.innerHTML = `
+                <span class="selection-menu-title">Pilih Widget</span>
+                <button class="selection-menu-cancel" title="Batal">&times;</button>
+            `;
+
+            const body = document.createElement('div');
+            body.className = 'selection-menu-body';
+            
+            // Isi body dengan daftar widget
+            widgetCategories.forEach(category => {
+                const categoryTitle = document.createElement('div');
+                categoryTitle.className = 'widget-category-title';
+                categoryTitle.textContent = category.name;
+                body.appendChild(categoryTitle);
+
+                category.widgets.forEach(widget => {
+                    const item = document.createElement('div');
+                    item.className = 'widget-selection-item';
+                    item.textContent = `#${widget.ticker} - ${widget.description}`;
+                    item.onclick = () => createWidget(widget, slotElement.id);
+                    body.appendChild(item);
+                });
+            });
+
+            menuContainer.appendChild(header);
+            menuContainer.appendChild(body);
+            slotElement.appendChild(menuContainer);
+
+            // Tambahkan event listener untuk tombol batal
+            header.querySelector('.selection-menu-cancel').onclick = () => {
+                const widget = slotElement.querySelector('.widget');
+                // Jika sudah ada widget, jangan tampilkan placeholder, biarkan widget tetap ada
+                if (!widget) {
+                    renderAddWidgetPlaceholder(slotElement);
+                } else {
+                    slotElement.style.borderStyle = 'solid'; // Kembalikan ke solid jika ada widget
+                }
+            };
+        }
+
+
+        /**
+         * Membuat dan menampilkan widget pada slot tertentu.
+         * @param {object} widgetData - Informasi tentang widget.
          * @param {string} slotId - ID dari slot target.
          */
         function createWidget(widgetData, slotId) {
             const targetSlot = document.getElementById(slotId);
             if (!targetSlot) return;
 
-            targetSlot.innerHTML = ''; // Kosongkan slot dari placeholder
+            targetSlot.innerHTML = ''; 
+            targetSlot.style.borderStyle = 'solid'; // Border solid untuk slot yang terisi
 
             const widgetEl = document.createElement('div');
             widgetEl.className = 'widget';
             widgetEl.dataset.htmlFile = widgetData.htmlFile;
             widgetEl.dataset.description = widgetData.description;
 
-            // Header Widget
             const header = document.createElement('div');
             header.className = 'widget-header';
             
@@ -334,27 +360,24 @@
 
             const replaceButton = document.createElement('button');
             replaceButton.className = 'widget-control-button';
-            replaceButton.textContent = 'Change';
-            replaceButton.title = 'Change Widget';
+            replaceButton.textContent = 'Ganti';
+            replaceButton.title = 'Ganti Widget';
             replaceButton.onclick = () => {
-                currentEditingSlotId = slotId;
-                modal.classList.remove('hidden');
+                // Tampilkan menu pemilihan langsung di slot ini
+                renderWidgetSelectionMenu(targetSlot);
             };
 
             const closeButton = document.createElement('button');
             closeButton.className = 'widget-control-button';
-            closeButton.textContent = 'Close';
-            closeButton.title = 'Close Widget';
-            closeButton.onclick = () => {
-                clearSlot(slotId);
-            };
+            closeButton.textContent = 'Tutup';
+            closeButton.title = 'Tutup Widget';
+            closeButton.onclick = () => clearSlot(slotId);
 
             controls.appendChild(replaceButton);
             controls.appendChild(closeButton);
             header.appendChild(title);
             header.appendChild(controls);
             
-            // Konten Widget (iframe)
             const content = document.createElement('div');
             content.className = 'widget-content';
             const iframe = document.createElement('iframe');
@@ -369,8 +392,7 @@
         }
 
         /**
-         * Menghapus widget dari slot dan mengembalikannya ke placeholder.
-         * @param {string} slotId - ID dari slot yang akan dibersihkan.
+         * Membersihkan slot dan mengembalikannya ke state awal.
          */
         function clearSlot(slotId) {
             const targetSlot = document.getElementById(slotId);
@@ -381,29 +403,22 @@
         }
 
         /**
-         * Menyimpan konfigurasi tata letak saat ini ke localStorage.
+         * Menyimpan tata letak ke localStorage.
          */
         function saveLayout() {
-            const layoutState = {
-                'slot-1': null,
-                'slot-2': null,
-                'slot-3': null,
-            };
-
+            const layoutState = {};
             slots.forEach(slot => {
                 const widget = slot.querySelector('.widget');
-                if (widget) {
-                    layoutState[slot.id] = {
-                        htmlFile: widget.dataset.htmlFile,
-                        description: widget.dataset.description
-                    };
-                }
+                layoutState[slot.id] = widget ? {
+                    htmlFile: widget.dataset.htmlFile,
+                    description: widget.dataset.description
+                } : null;
             });
             localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layoutState));
         }
 
         /**
-         * Memuat konfigurasi tata letak dari localStorage saat halaman dibuka.
+         * Memuat tata letak dari localStorage.
          */
         function loadLayout() {
             const savedStateJSON = localStorage.getItem(LAYOUT_STORAGE_KEY);
@@ -411,58 +426,22 @@
                 const savedState = JSON.parse(savedStateJSON);
                 Object.keys(savedState).forEach(slotId => {
                     const widgetData = savedState[slotId];
-                    if (widgetData) {
-                        createWidget(widgetData, slotId);
-                    } else {
-                        renderAddWidgetPlaceholder(document.getElementById(slotId));
+                    const slotElement = document.getElementById(slotId);
+                    if (slotElement) {
+                        if (widgetData) {
+                            createWidget(widgetData, slotId);
+                        } else {
+                            renderAddWidgetPlaceholder(slotElement);
+                        }
                     }
                 });
             } else {
-                // Jika tidak ada data tersimpan, tampilkan placeholder di semua slot.
-                slots.forEach(slot => renderAddWidgetPlaceholder(slot));
+                slots.forEach(renderAddWidgetPlaceholder);
             }
         }
-
-        /**
-         * Mengisi modal dengan daftar widget yang bisa dipilih.
-         */
-        function populateWidgetSelectionModal() {
-            modalBody.innerHTML = '';
-            widgetCategories.forEach(category => {
-                const categoryTitle = document.createElement('div');
-                categoryTitle.className = 'widget-category-title';
-                categoryTitle.textContent = category.name;
-                modalBody.appendChild(categoryTitle);
-
-                category.widgets.forEach(widget => {
-                    const item = document.createElement('div');
-                    item.className = 'widget-selection-item';
-                    item.textContent = `#${widget.ticker} - ${widget.description}`;
-                    item.onclick = () => {
-                        if (currentEditingSlotId) {
-                            createWidget(widget, currentEditingSlotId);
-                        }
-                        modal.classList.add('hidden');
-                    };
-                    modalBody.appendChild(item);
-                });
-            });
-        }
-        
-        // Event listener untuk menutup modal
-        modalCloseButton.onclick = () => modal.classList.add('hidden');
-        modal.addEventListener('click', (event) => {
-            // Menutup modal jika user mengklik area overlay di luar konten modal
-            if (event.target === modal) {
-                modal.classList.add('hidden');
-            }
-        });
 
         // Inisialisasi Aplikasi
-        document.addEventListener('DOMContentLoaded', () => {
-            populateWidgetSelectionModal();
-            loadLayout();
-        });
+        document.addEventListener('DOMContentLoaded', loadLayout);
     </script>
 </body>
 </html>
