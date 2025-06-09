@@ -55,7 +55,7 @@
         .tab-nav {
             display: flex;
             gap: 5px;
-            margin-left: auto; /* Push tabs to the far right */
+            margin-left: auto;
         }
         .tab-button {
             background-color: #2a2a2a;
@@ -78,7 +78,7 @@
         }
 
         .tab-content {
-            display: none; /* Hidden by default */
+            display: none;
             flex-direction: column;
             flex: 1;
             padding: 16px;
@@ -88,7 +88,7 @@
             min-height: 0;
         }
         .tab-content.active {
-            display: flex; /* Shown when active */
+            display: flex;
         }
         
         .content-wrapper {
@@ -108,30 +108,25 @@
             flex-shrink: 0; 
         }
         
-        /* --- PERUBAHAN UTAMA UNTUK MOBILE --- */
         .control-row {
             display: flex;
             align-items: center;
             gap: 10px; 
-            overflow-x: auto;   /* Izinkan scroll horizontal */
-            flex-wrap: nowrap;  /* Mencegah item turun baris */
-            padding-bottom: 10px; /* Beri ruang agar tidak terlalu mepet dengan konten di bawahnya */
-            margin-bottom: -10px; /* Kompensasi padding agar tidak menambah tinggi keseluruhan */
-            
-            /* Sembunyikan scrollbar untuk tampilan bersih */
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* IE 10+ */
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding-bottom: 10px;
+            margin-bottom: -10px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
         .control-row::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
+            display: none;
         }
         
-        /* Pastikan item di dalam baris kontrol tidak menyusut */
         .control-row .control-group,
         .control-row button {
             flex-shrink: 0;
         }
-        /* --- AKHIR PERUBAHAN --- */
 
         .control-group {
             display: flex;
@@ -192,7 +187,6 @@
             overflow: hidden; 
         }
         
-        /* Styles for doughnut chart containers */
         .doughnut-container-wrapper {
             display: flex;
             flex: 1;
@@ -254,13 +248,24 @@
             border-color: #ff8000;
         }
         
+        /* --- PERUBAHAN UTAMA UNTUK COMPARE TAB MOBILE --- */
         .compare-main-area {
             display: flex;
             gap: 20px;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
+            padding-bottom: 10px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
+        .compare-main-area::-webkit-scrollbar {
+            display: none;
+        }
+
         .compare-dataset-group {
-            flex: 1;
+            flex-shrink: 0;
+            min-width: 300px; /* Lebar minimum untuk setiap panel dataset */
             padding: 15px;
             border: 1px solid #222;
             border-radius: 5px;
@@ -269,6 +274,8 @@
             flex-direction: column;
             gap: 12px;
         }
+        /* --- AKHIR PERUBAHAN --- */
+
         .compare-dataset-group h3 {
             margin: 0 0 5px 0;
             color: #ff8000;
@@ -314,7 +321,6 @@
         </div>
     </div>
     
-    <!-- Tab 1: Main Explorer -->
     <div id="tab-explorer" class="tab-content active">
         <div class="content-wrapper">
             <div class="controls-wrapper">
@@ -343,7 +349,6 @@
                 </div>
             </div>
             <div class="canvas-wrapper" id="explorer-canvas-wrapper">
-                <!-- Canvas will be dynamically inserted here -->
             </div>
             <div id="insight-area">
                 <div id="insight-text-content"></div>
@@ -351,7 +356,6 @@
         </div>
     </div>
 
-    <!-- Tab 2: Compare Feature -->
     <div id="tab-compare" class="tab-content">
         <div class="content-wrapper">
             <div class="compare-main-area">
@@ -386,14 +390,12 @@
 </div>
 
 <script>
-    // --- GLOBAL VARIABLES & CONSTANTS ---
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwr-JR2ibyM1ExSW6F-Hm6LiSYPOrvUHM8CtSaVPTDobxeQe7bbCM0stpfoqeEllOLj/exec';
     let cotData = {};
     let cotChartInstance = null;
     let compareChartInstance = null;
     let currentChartMode = 'netPosition';
 
-    // DOM Elements
     const loadingIndicator = document.getElementById('loading-indicator');
     const explorerCanvasWrapper = document.getElementById('explorer-canvas-wrapper');
     const instrumentSelect = document.getElementById('instrument-select');
@@ -406,14 +408,12 @@
     const calculateNetBtn = document.getElementById('calculate-net-btn');
     const ctxCompare = document.getElementById('compareChart').getContext('2d');
     
-    // Data Definitions
     const instrumentNames = { CA: "Canadian Dollar", CH: "Swiss Franc", GB: "British Pound", JP: "Japanese Yen", EU: "Euro FX", AU: "Australian Dollar", NZ: "New Zealand Dollar", US: "US Dollar Index", GC: "Gold", OI: "Crude Oil (WTI)" };
     const currencyTraderNames = { all: "All Trader Types", leveragedFund: "Leveraged Fund", assetManager: "Asset Manager", dealer: "Dealer" };
     const commodityTraderNames = { all: "All Trader Types", leveragedFund: "Managed Money", assetManager: "Producent Merchant", dealer: "Swap" };
     const currencyInstruments = { CA: "Canadian Dollar", CH: "Swiss Franc", GB: "British Pound", JP: "Japanese Yen", EU: "Euro FX", AU: "Australian Dollar", NZ: "New Zealand Dollar", US: "US Dollar Index"};
     const commodityInstruments = { GC: "Gold", OI: "Crude Oil (WTI)"};
 
-    // Colors
     const colors = {
         dealer: 'rgba(54, 162, 235, 0.7)', leveragedFund: 'rgba(255, 99, 132, 0.7)', assetManager: 'rgba(75, 192, 192, 0.7)', 
         openInterest: 'rgba(255, 159, 64, 0.7)', long: 'rgba(75, 192, 75, 0.7)', short: 'rgba(255, 99, 75, 0.7)',             
@@ -422,7 +422,6 @@
         calculatedNet: 'rgba(239, 83, 80, 0.8)'
     };
 
-    // --- DATA FETCHING & PROCESSING ---
     async function fetchAndProcessData() {
         loadingIndicator.textContent = '(Loading data...)';
         try {
@@ -451,13 +450,11 @@
         }
     }
 
-    // --- UTILITY FUNCTIONS ---
     function formatNumber(num) {
         if (typeof num !== 'number' || isNaN(num)) return 'N/A';
         return num.toLocaleString('en-US');
     }
     
-    // --- UI & CHARTING ---
     function commonChartOptions(titleText, yAxisLabel, isTimeSeries = true) {
         const options = {
             responsive: true, maintainAspectRatio: false, 
@@ -493,7 +490,6 @@
         });
     }
 
-    // --- EXPLORER TAB LOGIC ---
     function getSelectedInstrumentData() { return cotData[instrumentSelect.value] || []; }
     function getTraderDisplayNames() { return commodityInstruments.hasOwnProperty(instrumentSelect.value) ? commodityTraderNames : currencyTraderNames; }
     
@@ -510,14 +506,13 @@
             cotChartInstance.destroy();
             cotChartInstance = null;
         }
-        // Clear any existing doughnut charts
         Chart.helpers.each(Chart.instances, (instance) => {
             if (instance.canvas.id.startsWith('doughnut-')) {
                 instance.destroy();
             }
         });
 
-        explorerCanvasWrapper.innerHTML = ''; // Clear the wrapper
+        explorerCanvasWrapper.innerHTML = ''; 
 
         const data = getSelectedInstrumentData();
         updateTraderTypeDropdown();
@@ -532,11 +527,9 @@
 
         if (!insightArea.classList.contains('hidden')) insightTextContent.innerHTML = '';
         
-        // MODIFIED: Handle doughnut charts separately
         if (currentChartMode === 'percentageBuySell') {
-            getPercentageBuySellConfig(latestData); // This function now renders the charts directly
+            getPercentageBuySellConfig(latestData);
         } else {
-            // Re-create the main canvas for other chart types
             explorerCanvasWrapper.innerHTML = '<canvas id="cotChart"></canvas>';
             const ctxCot = document.getElementById('cotChart').getContext('2d');
             let chartConfig;
@@ -564,7 +557,6 @@
         }
     }
     
-    // --- EXPLORER CHART CONFIGS & INSIGHTS ---
     function getNetPositionConfig(data, labels, selectedTrader) {
         const datasets = [];
         const traderNames = getTraderDisplayNames();
@@ -698,7 +690,6 @@
     function generateLongShortInsights(latest, prev, selectedTrader) { /* ... same logic ... */ }
     function generateOpenInterestInsights(latest, prev) { /* ... same logic ... */ }
 
-    // --- COMPARE TAB LOGIC ---
     function setupCompareControls() {
         setupDatasetControls('d1');
         setupDatasetControls('d2');
@@ -786,10 +777,8 @@
         compareChartInstance = new Chart(ctxCompare, {
             type: 'line',
             data: { labels, datasets: [{
-                // --- REVISED CALCULATION ---
                 label: `Net: ${d1_label_short} - ${d2_label_short}`, 
                 data: alignedData.map(d => d.v1 - d.v2), 
-                // --- END OF REVISION ---
                 borderColor: colors.calculatedNet, 
                 backgroundColor: 'rgba(239, 83, 80, 0.1)', 
                 fill: true, 
@@ -799,7 +788,6 @@
         });
     }
 
-    // --- INITIALIZATION ---
     async function initializeApp() {
         cotData = await fetchAndProcessData();
         loadingIndicator.textContent = ''; 
@@ -829,7 +817,7 @@
         toggleInsightButtonMain.addEventListener('click', () => {
             insightArea.classList.toggle('hidden');
             toggleInsightButtonMain.textContent = insightArea.classList.contains('hidden') ? "Show Insight" : "Hide Insight";
-            if (!insightArea.classList.contains('hidden')) renderExplorerChart(); // Re-render to show insights
+            if (!insightArea.classList.contains('hidden')) renderExplorerChart();
         });
 
         setupCompareControls();
