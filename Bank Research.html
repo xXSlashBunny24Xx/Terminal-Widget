@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS yang diberikan oleh pengguna */
+        /* CSS yang diberikan oleh pengguna dengan modifikasi */
         html, body {
             margin: 0;
             padding: 0;
@@ -19,10 +19,8 @@
             color: #f0f0f0;
             display: flex;
             flex-direction: column;
-            /* Mencegah seleksi teks yang tidak diinginkan saat menggeser */
             user-select: none;
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none; /* IE 10+ */
+            overflow: hidden; /* Mencegah scroll di body */
         }
 
         .main-container {
@@ -30,60 +28,29 @@
             flex: 1;
             overflow: hidden;
         }
-
+        
+        /* -- START: Modifikasi untuk Panel Kiri dan Toggle -- */
         .file-list-panel {
             width: 35%; /* Lebar awal */
-            min-width: 250px; /* Lebar minimum */
-            max-width: 80%; /* Lebar maksimum disesuaikan untuk mobile */
+            min-width: 280px; /* Lebar minimum saat tidak ter-collapse */
             display: flex;
             flex-direction: column;
             background-color: #000;
-            resize: horizontal; /* Memungkinkan resize jika browser mendukung */
-        }
-        
-        #resizer {
-            width: 10px; /* Diperlebar agar lebih mudah disentuh di mobile */
-            cursor: col-resize;
-            background-color: #222;
-            flex-shrink: 0;
-            transition: background-color 0.2s; /* Tambahkan transisi halus */
+            transition: width 0.3s ease, min-width 0.3s ease; /* Transisi halus untuk collapse/expand */
             position: relative;
         }
 
-        /* Menambahkan pseudo-element untuk area sentuh yang lebih besar tanpa mengubah tampilan visual */
-        #resizer::before {
-            content: '';
-            position: absolute;
-            left: -10px;
-            right: -10px;
-            top: 0;
-            bottom: 0;
-        }
-
-        #resizer:hover, .resizing #resizer {
-            background-color: #007bff; /* Warna saat hover atau sedang di-drag */
+        /* State ketika panel disembunyikan */
+        .file-list-panel.collapsed {
+            width: 50px; /* Lebar saat collapsed */
+            min-width: 50px; /* Lebar minimum saat collapsed */
         }
         
-        /* -- START: Penambahan Style untuk Overlay Resizer -- */
-        #resize-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            cursor: col-resize;
-            z-index: 9999;
-            display: none; /* Disembunyikan secara default */
+        /* Menyembunyikan konten panel saat collapsed */
+        .file-list-panel.collapsed > *:not(.title-bar) {
+            display: none;
         }
-        /* -- END: Penambahan Style -- */
         
-        .pdf-viewer-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 30%; /* Memastikan panel kanan tidak terlalu kecil */
-        }
-
         .title-bar {
             background-color: #1a1a1a;
             color: #fff;
@@ -93,6 +60,46 @@
             text-align: left;
             border-bottom: 1px solid #222;
             flex-shrink: 0;
+            display: flex; /* Menggunakan flexbox untuk mensejajarkan judul dan tombol */
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        #panel-toggle-btn {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, transform 0.3s ease;
+        }
+
+        #panel-toggle-btn:hover {
+            background: #3a3a3a;
+        }
+        
+        #panel-toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        /* Merotasi panah saat panel di-collapse */
+        .file-list-panel.collapsed #panel-toggle-btn svg {
+            transform: rotate(180deg);
+        }
+        /* -- END: Modifikasi untuk Panel Kiri dan Toggle -- */
+
+        .pdf-viewer-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 30%; /* Memastikan panel kanan tidak terlalu kecil */
         }
         
         .view-switcher {
@@ -217,12 +224,6 @@
             width: 100%;
             height: 100%;
             border: none;
-            /* Mencegah iframe menangkap event mouse saat di-resize */
-            pointer-events: auto;
-        }
-
-        .resizing > .main-container .pdf-viewer-iframe {
-            pointer-events: none;
         }
         
         #viewer-placeholder {
@@ -261,17 +262,50 @@
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.15) transparent;
         }
+
+        /* Aturan untuk mobile: panel default collapsed */
+        @media (max-width: 768px) {
+            .file-list-panel {
+                width: 50px;
+                min-width: 50px;
+            }
+            .file-list-panel > *:not(.title-bar) {
+                display: none;
+            }
+            .file-list-panel #panel-toggle-btn svg {
+                 transform: rotate(180deg);
+            }
+            
+            /* Menyesuaikan kembali state saat .collapsed DIHAPUS di mobile */
+            .file-list-panel:not(.collapsed) {
+                 width: 85%; /* Lebar panel saat expand di mobile */
+                 min-width: 280px;
+            }
+            .file-list-panel:not(.collapsed) > *:not(.title-bar) {
+                 display: flex; /* atau block, sesuai elemen */
+            }
+            .file-list-panel:not(.collapsed) #panel-toggle-btn svg {
+                 transform: rotate(0deg);
+            }
+            .view-switcher, .filter-container {
+                 flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- START: Penambahan Div Overlay -->
-    <div id="resize-overlay"></div>
-    <!-- END: Penambahan Div Overlay -->
-
     <div class="main-container">
         <!-- Panel Kiri untuk Daftar File -->
         <div class="file-list-panel" id="left-panel">
-            <div class="title-bar">Bank Research</div>
+            <div class="title-bar">
+                <span id="panel-title">Bank Research</span>
+                <!-- Tombol Toggle Baru -->
+                <button id="panel-toggle-btn" title="Toggle Panel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+            </div>
             <div class="view-switcher">
                 <div id="btn-by-source" class="view-button active">By Provider</div>
                 <div id="btn-by-time" class="view-button">By Upload Time</div>
@@ -284,8 +318,6 @@
             </div>
         </div>
         
-        <div id="resizer"></div>
-
         <!-- Panel Kanan untuk Penampil PDF -->
         <div class="pdf-viewer-panel" id="right-panel">
              <div class="title-bar" id="viewer-title">PDF Viewer</div>
@@ -416,71 +448,41 @@
         document.addEventListener('DOMContentLoaded', () => {
             fetchAndDisplayFiles();
 
-            // --- START: Logika Resizer yang Dioptimalkan untuk Mouse dan Touch ---
-            const resizer = document.getElementById('resizer');
+            // --- START: Logika untuk Tombol Toggle Panel ---
+            const toggleButton = document.getElementById('panel-toggle-btn');
             const leftPanel = document.getElementById('left-panel');
-            const rightPanel = document.getElementById('right-panel');
-            const resizeOverlay = document.getElementById('resize-overlay');
+            const panelTitle = document.getElementById('panel-title');
 
-            let isResizing = false;
-
-            // Fungsi untuk mengubah ukuran panel
-            const resize = (e) => {
-                if (!isResizing) return;
-                
-                // Mendapatkan posisi X dari event mouse atau sentuhan
-                const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-                if (clientX === 0) return; // Keluar jika tidak ada data posisi
-                
-                const minWidth = 250; // Lebar minimum panel kiri
-                const maxWidth = window.innerWidth * 0.8; // Batas maksimum 80% dari lebar layar
-
-                // Hitung lebar baru
-                let newLeftWidth = clientX;
-                
-                // Terapkan batasan lebar
-                if (newLeftWidth < minWidth) newLeftWidth = minWidth;
-                if (newLeftWidth > maxWidth) newLeftWidth = maxWidth;
-
-                leftPanel.style.width = `${newLeftWidth}px`;
-                // flex: 1 pada panel kanan akan otomatis menyesuaikan lebarnya
+            const checkScreenWidth = () => {
+                // Sembunyikan panel secara default di layar kecil
+                if (window.innerWidth <= 768) {
+                    leftPanel.classList.add('collapsed');
+                } else {
+                    leftPanel.classList.remove('collapsed');
+                }
+                 // Tampilkan/sembunyikan judul berdasarkan state collapsed
+                if (leftPanel.classList.contains('collapsed')) {
+                    panelTitle.style.display = 'none';
+                } else {
+                    panelTitle.style.display = 'block';
+                }
             };
 
-            // Fungsi untuk menghentikan proses resize
-            const stopResizing = () => {
-                isResizing = false;
-                resizeOverlay.style.display = 'none'; // Sembunyikan overlay
-                document.body.classList.remove('resizing');
-                
-                // Hapus semua event listener dari document untuk menghemat memori
-                document.removeEventListener('mousemove', resize);
-                document.removeEventListener('mouseup', stopResizing);
-                document.removeEventListener('touchmove', resize);
-                document.removeEventListener('touchend', stopResizing);
-            };
-            
-            // Fungsi untuk memulai proses resize
-            const startResizing = (e) => {
-                // Mencegah aksi default browser, seperti scroll halaman pada perangkat sentuh
-                e.preventDefault();
-                isResizing = true;
-                resizeOverlay.style.display = 'block'; // Tampilkan overlay
-                document.body.classList.add('resizing');
+            toggleButton.addEventListener('click', () => {
+                leftPanel.classList.toggle('collapsed');
+                 // Tampilkan/sembunyikan judul saat tombol diklik
+                if (leftPanel.classList.contains('collapsed')) {
+                    panelTitle.style.display = 'none';
+                } else {
+                    panelTitle.style.display = 'block';
+                }
+            });
 
-                // Tambahkan event listener yang sesuai (mouse atau touch)
-                document.addEventListener('mousemove', resize);
-                document.addEventListener('mouseup', stopResizing);
-                document.addEventListener('touchmove', resize, { passive: false });
-                document.addEventListener('touchend', stopResizing);
-            };
-
-            // Tambahkan event listener untuk MOUSE
-            resizer.addEventListener('mousedown', startResizing);
-            // Tambahkan event listener untuk TOUCH
-            resizer.addEventListener('touchstart', startResizing, { passive: false });
-            // --- END: Logika Resizer ---
+            // Panggil saat memuat dan saat ukuran window berubah
+            checkScreenWidth();
+            window.addEventListener('resize', checkScreenWidth);
+            // --- END: Logika Toggle ---
         });
     </script>
-
 </body>
 </html>
