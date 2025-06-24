@@ -21,6 +21,8 @@
             flex-direction: column;
             /* Mencegah seleksi teks yang tidak diinginkan saat menggeser */
             user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
         }
 
         .main-container {
@@ -32,7 +34,7 @@
         .file-list-panel {
             width: 35%; /* Lebar awal */
             min-width: 250px; /* Lebar minimum */
-            max-width: 70%; /* Lebar maksimum */
+            max-width: 80%; /* Lebar maksimum disesuaikan untuk mobile */
             display: flex;
             flex-direction: column;
             background-color: #000;
@@ -40,12 +42,24 @@
         }
         
         #resizer {
-            width: 5px;
+            width: 10px; /* Diperlebar agar lebih mudah disentuh di mobile */
             cursor: col-resize;
             background-color: #222;
             flex-shrink: 0;
             transition: background-color 0.2s; /* Tambahkan transisi halus */
+            position: relative;
         }
+
+        /* Menambahkan pseudo-element untuk area sentuh yang lebih besar tanpa mengubah tampilan visual */
+        #resizer::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            right: -10px;
+            top: 0;
+            bottom: 0;
+        }
+
         #resizer:hover, .resizing #resizer {
             background-color: #007bff; /* Warna saat hover atau sedang di-drag */
         }
@@ -218,6 +232,8 @@
             height: 100%;
             color: #888;
             font-style: italic;
+            text-align: center;
+            padding: 20px;
         }
 
         .loading-message, .error-message {
@@ -274,7 +290,7 @@
         <div class="pdf-viewer-panel" id="right-panel">
              <div class="title-bar" id="viewer-title">PDF Viewer</div>
              <div id="viewer-placeholder">
-                <p>Select a file from the list to view it here.</p>
+                 <p>Select a file from the list to view it here.</p>
              </div>
              <iframe id="pdf-viewer-iframe" class="pdf-viewer-iframe" style="display: none;"></iframe>
         </div>
@@ -400,7 +416,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             fetchAndDisplayFiles();
 
-            // --- START: Logika Resizer yang Dioptimalkan ---
+            // --- START: Logika Resizer yang Dioptimalkan untuk Mouse dan Touch ---
             const resizer = document.getElementById('resizer');
             const leftPanel = document.getElementById('left-panel');
             const rightPanel = document.getElementById('right-panel');
@@ -408,41 +424,60 @@
 
             let isResizing = false;
 
-            const handleMouseMove = (e) => {
+            // Fungsi untuk mengubah ukuran panel
+            const resize = (e) => {
                 if (!isResizing) return;
                 
-                const minWidth = 250;
-                const maxWidth = window.innerWidth * 0.7;
+                // Mendapatkan posisi X dari event mouse atau sentuhan
+                const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+                if (clientX === 0) return; // Keluar jika tidak ada data posisi
+                
+                const minWidth = 250; // Lebar minimum panel kiri
+                const maxWidth = window.innerWidth * 0.8; // Batas maksimum 80% dari lebar layar
 
-                // Hitung lebar baru berdasarkan posisi kursor
-                const newLeftWidth = e.clientX;
+                // Hitung lebar baru
+                let newLeftWidth = clientX;
+                
+                // Terapkan batasan lebar
+                if (newLeftWidth < minWidth) newLeftWidth = minWidth;
+                if (newLeftWidth > maxWidth) newLeftWidth = maxWidth;
 
-                if (newLeftWidth > minWidth && newLeftWidth < maxWidth) {
-                    leftPanel.style.width = `${newLeftWidth}px`;
-                    // flex: 1 pada rightPanel akan otomatis menyesuaikan
-                }
+                leftPanel.style.width = `${newLeftWidth}px`;
+                // flex: 1 pada panel kanan akan otomatis menyesuaikan lebarnya
             };
-            
+
+            // Fungsi untuk menghentikan proses resize
             const stopResizing = () => {
                 isResizing = false;
                 resizeOverlay.style.display = 'none'; // Sembunyikan overlay
                 document.body.classList.remove('resizing');
                 
-                // Hapus event listener dari document
-                document.removeEventListener('mousemove', handleMouseMove);
+                // Hapus semua event listener dari document untuk menghemat memori
+                document.removeEventListener('mousemove', resize);
                 document.removeEventListener('mouseup', stopResizing);
+                document.removeEventListener('touchmove', resize);
+                document.removeEventListener('touchend', stopResizing);
             };
-
-            resizer.addEventListener('mousedown', (e) => {
+            
+            // Fungsi untuk memulai proses resize
+            const startResizing = (e) => {
+                // Mencegah aksi default browser, seperti scroll halaman pada perangkat sentuh
                 e.preventDefault();
                 isResizing = true;
                 resizeOverlay.style.display = 'block'; // Tampilkan overlay
                 document.body.classList.add('resizing');
-                
-                // Tambahkan event listener ke document untuk menangkap semua event
-                document.addEventListener('mousemove', handleMouseMove);
+
+                // Tambahkan event listener yang sesuai (mouse atau touch)
+                document.addEventListener('mousemove', resize);
                 document.addEventListener('mouseup', stopResizing);
-            });
+                document.addEventListener('touchmove', resize, { passive: false });
+                document.addEventListener('touchend', stopResizing);
+            };
+
+            // Tambahkan event listener untuk MOUSE
+            resizer.addEventListener('mousedown', startResizing);
+            // Tambahkan event listener untuk TOUCH
+            resizer.addEventListener('touchstart', startResizing, { passive: false });
             // --- END: Logika Resizer ---
         });
     </script>
