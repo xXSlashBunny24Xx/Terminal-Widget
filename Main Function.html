@@ -29,6 +29,14 @@
         *, *:before, *:after {
             box-sizing: inherit;
         }
+        
+        /* Prevent text selection during drag on mobile */
+        body.dragging-touch {
+             -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
 
         .tab-bar-container {
             background-color: #1a1a1a;
@@ -39,7 +47,6 @@
             flex-shrink: 0;
             overflow-x: auto;
             overflow-y: hidden;
-            /* PERBAIKAN: Menetapkan konteks tumpukan (stacking context) agar selalu di atas */
             position: relative;
             z-index: 1000;
         }
@@ -181,7 +188,6 @@
             border-bottom: 1px solid #2a2a2a;
             flex-shrink: 0;
             height: 46px;
-             /* PERBAIKAN: Menetapkan konteks tumpukan (stacking context) agar selalu di atas */
             position: relative;
             z-index: 1000;
         }
@@ -213,7 +219,6 @@
             background-color: #2a2a2a;
             border: 1px solid #444;
             border-radius: 4px;
-            /* PERBAIKAN: z-index dinaikkan sedikit untuk memastikan di atas elemen lain dalam container yang sama */
             z-index: 1050;
             min-width: 220px;
             max-height: 200px;
@@ -349,14 +354,16 @@
         }
 
         .resizer {
-            width: 12px; height: 12px; background: rgba(255,255,255,0.1);
+             /* MODIFIED: Increased size for easier touch interaction */
+            width: 16px; height: 16px; background: rgba(255,255,255,0.1);
             position: absolute; border: 1px solid rgba(255,255,255,0.2); z-index: 10;
         }
         .widget.locked .resizer { display: none; }
-        .resizer.se { bottom: -1px; right: -1px; cursor: nwse-resize; }
-        .resizer.sw { bottom: -1px; left: -1px; cursor: nesw-resize; }
-        .resizer.ne { top: -1px; right: -1px; cursor: nesw-resize; }
-        .resizer.nw { top: -1px; left: -1px; cursor: nwse-resize; }
+        /* MODIFIED: Adjusted position for new size */
+        .resizer.se { bottom: -2px; right: -2px; cursor: nwse-resize; }
+        .resizer.sw { bottom: -2px; left: -2px; cursor: nesw-resize; }
+        .resizer.ne { top: -2px; right: -2px; cursor: nesw-resize; }
+        .resizer.nw { top: -2px; left: -2px; cursor: nwse-resize; }
 
         /* Search Bar Styles */
         #search-widget-area {
@@ -382,7 +389,7 @@
             outline: none;
             box-shadow: none;
         }
-         #search-widget-icon-button {
+           #search-widget-icon-button {
             height: 28px;
             display: inline-flex;
             align-items: center;
@@ -413,7 +420,7 @@
 <body>
     <div class="tab-bar-container">
         <div id="tab-bar">
-            </div>
+        </div>
         <button id="add-tab-button" title="Add New Tab">+</button>
     </div>
 
@@ -427,17 +434,17 @@
                    placeholder="Ticker (`)...">
             <div id="search-suggestions-list"
                  class="hidden absolute left-0 top-full mt-1 w-full max-h-60 overflow-y-auto rounded-md shadow-lg z-50 py-1">
-                </div>
+            </div>
         </div>
 
         <div id="widget-buttons-group">
-            </div>
+        </div>
 
         <button id="clear-all-widgets-button" class="custom-button">Clear All</button>
     </div>
 
     <div class="main-content">
-        </div>
+    </div>
 
     <script>
         const mainContent = document.querySelector('.main-content');
@@ -462,7 +469,7 @@
 
         let activeWidgetInteractionElement = null; // Tracks the widget element being dragged/resized
         let currentAction = null; // 'drag' or 'resize'
-        let initialMouseX, initialMouseY;
+        let initialPointerX, initialPointerY; // MODIFIED: Renamed for clarity (mouse/touch)
         let initialWidgetX, initialWidgetY;
         let initialWidgetWidth, initialWidgetHeight;
         let currentResizerType = null;
@@ -1051,7 +1058,11 @@
 
             const header = document.createElement('div');
             header.className = 'widget-header';
+            
+            // ADDED: Touch event listeners for mobile drag
             header.addEventListener('mousedown', startDrag);
+            header.addEventListener('touchstart', startDrag, { passive: false });
+
 
             const title = document.createElement('span');
             title.className = 'widget-title';
@@ -1089,11 +1100,16 @@
             ['se', 'sw', 'ne', 'nw'].forEach(type => {
                 const resizer = document.createElement('div');
                 resizer.className = `resizer ${type}`;
+                // ADDED: Touch event listeners for mobile resize
                 resizer.addEventListener('mousedown', (e) => startResize(e, type));
+                resizer.addEventListener('touchstart', (e) => startResize(e, type), { passive: false });
                 widget.appendChild(resizer);
             });
-
+            
+            // ADDED: Touch event listeners for bringing widget to front
             widget.addEventListener('mousedown', bringToFront);
+            widget.addEventListener('touchstart', bringToFront, { passive: false });
+
             currentTargetCanvas.appendChild(widget);
 
             if (fromButton) {
@@ -1103,6 +1119,10 @@
 
 
         function bringToFront(event) {
+            // Check if the event is a touch event with more than one finger (e.g., pinch-zoom gesture)
+            if (event.touches && event.touches.length > 1) {
+                return;
+            }
             const widget = event.currentTarget;
             if (widget.dataset.locked === 'true' || isRenamingTab) return;
 
@@ -1133,51 +1153,91 @@
             });
         }
 
+        // MODIFIED: Unified startDrag function
         function startDrag(event) {
-            if (event.button !== 0) return;
+            // Prevent drag on right-click for mouse
+            if (event.type === 'mousedown' && event.button !== 0) return;
+            
             if (event.target.closest('.widget-controls button') || isRenamingTab) return;
             activeWidgetInteractionElement = this.closest('.widget');
             if (!activeWidgetInteractionElement || activeWidgetInteractionElement.dataset.locked === 'true') return;
+            
+            // This prevents default touch behaviors like scrolling
             event.preventDefault();
-            bringToFront({currentTarget: activeWidgetInteractionElement});
+            
+            bringToFront({currentTarget: activeWidgetInteractionElement, touches: event.touches});
+
             currentAction = 'drag';
             activeWidgetInteractionElement.classList.add('dragging');
-            initialMouseX = event.clientX;
-            initialMouseY = event.clientY;
+            
+            // Get initial pointer coordinates (works for both touch and mouse)
+            const touch = event.touches ? event.touches[0] : null;
+            initialPointerX = touch ? touch.clientX : event.clientX;
+            initialPointerY = touch ? touch.clientY : event.clientY;
+
             initialWidgetX = activeWidgetInteractionElement.offsetLeft;
             initialWidgetY = activeWidgetInteractionElement.offsetTop;
             setIframesPointerEvents('none');
+
+            // Add listeners for both mouse and touch
             document.addEventListener('mousemove', performDragOrResize);
             document.addEventListener('mouseup', stopDragOrResize);
+            document.addEventListener('touchmove', performDragOrResize, { passive: false });
+            document.addEventListener('touchend', stopDragOrResize);
+            
+            // Add a class to the body to prevent text selection on mobile
+            document.body.classList.add('dragging-touch');
         }
-
+        
+        // MODIFIED: Unified startResize function
         function startResize(event, resizerType) {
-            if (event.button !== 0) return;
+            if (event.type === 'mousedown' && event.button !== 0) return;
             if (isRenamingTab) return;
             activeWidgetInteractionElement = event.target.closest('.widget');
             if (!activeWidgetInteractionElement || activeWidgetInteractionElement.dataset.locked === 'true') return;
+
             event.preventDefault();
             event.stopPropagation();
-            bringToFront({currentTarget: activeWidgetInteractionElement});
+            
+            bringToFront({currentTarget: activeWidgetInteractionElement, touches: event.touches});
+            
             currentAction = 'resize';
             currentResizerType = resizerType;
             activeWidgetInteractionElement.classList.add('resizing');
-            initialMouseX = event.clientX;
-            initialMouseY = event.clientY;
+            
+            // Get initial pointer coordinates
+            const touch = event.touches ? event.touches[0] : null;
+            initialPointerX = touch ? touch.clientX : event.clientX;
+            initialPointerY = touch ? touch.clientY : event.clientY;
+            
             initialWidgetX = activeWidgetInteractionElement.offsetLeft;
             initialWidgetY = activeWidgetInteractionElement.offsetTop;
             initialWidgetWidth = activeWidgetInteractionElement.offsetWidth;
             initialWidgetHeight = activeWidgetInteractionElement.offsetHeight;
             setIframesPointerEvents('none');
+            
+            // Add listeners for both mouse and touch
             document.addEventListener('mousemove', performDragOrResize);
             document.addEventListener('mouseup', stopDragOrResize);
+            document.addEventListener('touchmove', performDragOrResize, { passive: false });
+            document.addEventListener('touchend', stopDragOrResize);
+            
+            document.body.classList.add('dragging-touch');
         }
 
+        // MODIFIED: Unified performDragOrResize function
         function performDragOrResize(event) {
             if (!activeWidgetInteractionElement) return;
             event.preventDefault();
-            const deltaX = event.clientX - initialMouseX;
-            const deltaY = event.clientY - initialMouseY;
+            
+            // Get current pointer coordinates (works for both touch and mouse)
+            // For touchend, `touches` is empty, so use `changedTouches`
+            const touch = event.touches && event.touches.length > 0 ? event.touches[0] : event.changedTouches ? event.changedTouches[0] : null;
+            const currentX = touch ? touch.clientX : event.clientX;
+            const currentY = touch ? touch.clientY : event.clientY;
+
+            const deltaX = currentX - initialPointerX;
+            const deltaY = currentY - initialPointerY;
 
             if (currentAction === 'drag') {
                 activeWidgetInteractionElement.style.left = `${initialWidgetX + deltaX}px`;
@@ -1206,7 +1266,8 @@
                 }
             }
         }
-
+        
+        // MODIFIED: Unified stopDragOrResize function
         function stopDragOrResize() {
             if (activeWidgetInteractionElement) {
                 activeWidgetInteractionElement.classList.remove('dragging', 'resizing');
@@ -1215,8 +1276,15 @@
             activeWidgetInteractionElement = null;
             currentAction = null;
             currentResizerType = null;
+            
+            // Remove all listeners
             document.removeEventListener('mousemove', performDragOrResize);
             document.removeEventListener('mouseup', stopDragOrResize);
+            document.removeEventListener('touchmove', performDragOrResize);
+            document.removeEventListener('touchend', stopDragOrResize);
+
+            document.body.classList.remove('dragging-touch');
+            
             saveLayout();
             updateScrollability();
         }
