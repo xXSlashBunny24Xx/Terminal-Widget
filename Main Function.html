@@ -32,7 +32,7 @@
         
         /* Prevent text selection during drag on mobile */
         body.dragging-touch {
-             -webkit-user-select: none;
+              -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
@@ -203,6 +203,12 @@
             padding: 0 0.5rem;
         }
 
+        #right-controls-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
         .category-group {
             position: relative;
         }
@@ -253,6 +259,9 @@
             white-space: nowrap;
             flex-shrink: 0;
             height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .custom-button:hover {
@@ -438,9 +447,17 @@
         </div>
 
         <div id="widget-buttons-group">
+            <!-- Categories will be injected here -->
         </div>
-
-        <button id="clear-all-widgets-button" class="custom-button">Clear All</button>
+        
+        <div id="right-controls-group">
+            <button id="layout-manager-button" class="custom-button" title="Manage Layouts">
+                 <svg class="w-4 h-4 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                </svg>
+            </button>
+            <button id="clear-all-widgets-button" class="custom-button">Clear All</button>
+        </div>
     </div>
 
     <div class="main-content">
@@ -451,6 +468,7 @@
         const tabBar = document.getElementById('tab-bar');
         const addTabButton = document.getElementById('add-tab-button');
         const widgetButtonsGroup = document.getElementById('widget-buttons-group');
+        const layoutManagerButton = document.getElementById('layout-manager-button');
 
         // Search Bar Elements
         const searchWidgetArea = document.getElementById('search-widget-area');
@@ -475,7 +493,8 @@
         let currentResizerType = null;
 
         const GITHUB_BASE_URL = 'https://xxslashbunny24xx.github.io/Terminal-Widget/';
-        const TAB_STORAGE_KEY = 'interactiveWidgetTabsLayout_v3'; // Incremented version for new structure
+        const TAB_STORAGE_KEY = 'interactiveWidgetTabsLayout_v5'; // Incremented version for new structure
+        const LAYOUT_STORAGE_KEY = 'interactiveWidgetUserLayouts_v1';
 
         const lockedIconSVG = `<svg viewBox="0 0 24 24" fill="#FFFFFF" stroke="none"><circle cx="12" cy="12" r="7"/></svg>`;
         const unlockedIconSVG = `<svg viewBox="0 0 24 24" fill="transparent" stroke="#FFFFFF" stroke-width="2"><circle cx="12" cy="12" r="7"/></svg>`;
@@ -535,6 +554,67 @@
                 ]
             }
         ];
+        
+        // --- PREDEFINED LAYOUTS ---
+        const predefinedLayouts = [
+            {
+                id: "predefined-dashboard",
+                name: "Dashboard",
+                widgets: [
+                    { name: "Live Chart", htmlFile: "Chart.html", options: { left: '10px', top: '10px', width: '660px', height: '400px' } },
+                    { name: "Catalyst Explorer", htmlFile: "Catalyst Explorer.html", options: { left: '10px', top: '420px', width: '660px', height: '564px' } },
+                    { name: "CFTC - COTC Positioning Explorer", htmlFile: "CFTC COT.html", options: { left: '675px', top: '10px', width: '750px', height: '470px' } },
+                    { name: "Retail Trader Positioning Explorer", htmlFile: "Retail Trader.html", options: { left: '675px', top: '485px', width: '750px', height: '500px' } },
+                    { name: "Economic Calendar", htmlFile: "Economic Calendar.html", options: { left: '1430px', top: '10px', width: '480px', height: '974px' } }
+                ]
+            },
+            {
+                id: "predefined-central-bank",
+                name: "Central Bank",
+                widgets: [
+                    { name: "Live Chart", htmlFile: "Chart.html", options: { left: '10px', top: '10px', width: '450px', height: '400px' } },
+                    { name: "Market Headline", htmlFile: "Market Headline.html", options: { left: '10px', top: '420px', width: '450px', height: '564px' } },
+                    { name: "Yield Curve", htmlFile: "Yield Curve.html", options: { left: '470px', top: '10px', width: '470px', height: '400px' } },
+                    { name: "Interest Rate Forecast", htmlFile: "Interest Rate Forecast.html", options: { left: '470px', top: '420px', width: '470px', height: '564px' } },
+                    { name: "Central Bank Policy Table", htmlFile: "CB Policy Table.html", options: { left: '950px', top: '10px', width: '960px', height: '350px' } },
+                    { name: "Central Bank Policy Statement", htmlFile: "CB Policy Statement.html", options: { left: '950px', top: '370px', width: '960px', height: '614px' } }
+                ]
+            },
+            {
+                id: "predefined-market-news",
+                name: "Market News",
+                widgets: [
+                    { name: "Catalyst Explorer", htmlFile: "Catalyst Explorer.html", options: { left: '10px', top: '10px', width: '450px', height: '974px' } },
+                    { name: "News Articles", htmlFile: "News Article.html", options: { left: '470px', top: '10px', width: '450px', height: '974px' } },
+                    { name: "Finance Livestream - Bloomberg TV", htmlFile: "Bloomberg Youtube.html", options: { left: '930px', top: '10px', width: '480px', height: '400px' } },
+                    { name: "Bloomberg Video Feed", htmlFile: "Youtube Video Playlist.html", options: { left: '930px', top: '420px', width: '480px', height: '564px' } },
+                    { name: "Economic Calendar", htmlFile: "Economic Calendar.html", options: { left: '1420px', top: '10px', width: '490px', height: '974px' } }
+                ]
+            },
+            {
+                id: "predefined-macro",
+                name: "Macro",
+                widgets: [
+                    { name: "Macroeconomic Data", htmlFile: "Macroeconomic Data.html", options: { left: '10px', top: '10px', width: '850px', height: '974px' } },
+                    { name: "Market Forecast", htmlFile: "Market Forecast.html", options: { left: '870px', top: '10px', width: '500px', height: '500px' } },
+                    { name: "Central Bank Policy Table", htmlFile: "CB Policy Table.html", options: { left: '1380px', top: '10px', width: '530px', height: '477px' } },
+                    { name: "Yield Curve", htmlFile: "Yield Curve.html", options: { left: '870px', top: '520px', width: '1040px', height: '464px' } }
+                ]
+            },
+            {
+                id: "predefined-market-participant",
+                name: "Market Participant",
+                widgets: [
+                    { name: "CFTC - COTC Positioning Explorer", htmlFile: "CFTC COT.html", options: { left: '10px', top: '10px', width: '700px', height: '400px' } },
+                    { name: "Retail Trader Positioning Explorer", htmlFile: "Retail Trader.html", options: { left: '10px', top: '420px', width: '700px', height: '564px' } },
+                    { name: "COT Overview Dashboard", htmlFile: "CFTC COT Table.html", options: { left: '720px', top: '10px', width: '700px', height: '300px' } },
+                    { name: "Retail Trader Market Participant", htmlFile: "Market Participant Retail.html", options: { left: '720px', top: '320px', width: '700px', height: '300px' } },
+                    { name: "COT Historical Data Table", htmlFile: "CFTC COT Table.html", options: { left: '720px', top: '630px', width: '700px', height: '354px' } },
+                    { name: "Live Chart", htmlFile: "Chart.html", options: { left: '1430px', top: '10px', width: '480px', height: '600px' } },
+                    { name: "Retail Historical Data Table", htmlFile: "Retail Trader Table.html", options: { left: '1430px', top: '620px', width: '480px', height: '364px' } }
+                ]
+            },    
+        ];
 
         function getActiveWidgetCanvas() {
             if (!activeTabId) return null;
@@ -559,8 +639,10 @@
             });
         }
 
-        function renderWidgetCategoryButtonsAndDropdowns() {
-            widgetButtonsGroup.innerHTML = '';
+        function renderTopButtons() {
+            widgetButtonsGroup.innerHTML = ''; // Clear previous buttons
+            
+            // Render Widget Category Buttons
             widgetCategories.forEach(category => {
                 const categoryGroup = document.createElement('div');
                 categoryGroup.className = 'category-group';
@@ -770,8 +852,14 @@
 
             if (tabs.length === 0) {
                 const initialTabId = `tab-${Date.now()}`;
-                tabs = [{ id: initialTabId, name: 'Workspace 1', widgets: [], highestZ: 0, widgetCounter: 0 }];
+                tabs = [{ id: initialTabId, name: 'Dashboard', widgets: [], highestZ: 0, widgetCounter: 0 }];
                 activeTabId = initialTabId;
+                // Automatically load the default layout for the first-ever tab
+                const defaultLayout = predefinedLayouts.find(l => l.name === "Dashboard");
+                if (defaultLayout) {
+                    const activeTabObject = tabs.find(t => t.id === activeTabId);
+                    activeTabObject.widgets = JSON.parse(JSON.stringify(defaultLayout.widgets.map(w => ({...w.options, name: w.name, htmlFile: w.htmlFile}))));
+                }
             } else if (!activeTabId || !tabs.find(t => t.id === activeTabId)) {
                 activeTabId = tabs[0].id; // Default to first tab if active one is invalid
             }
@@ -977,8 +1065,11 @@
             newTabCanvas.style.display = 'none'; // Initially hidden, switchTab will show it
             mainContent.appendChild(newTabCanvas);
 
-            switchTab(newTabId);
-            saveLayout();
+            switchTab(newTabId); // This will switch to the new empty tab
+            
+            // The line that loaded the default layout is now removed. The tab will be blank.
+            
+            saveLayout(); // Save the new empty tab state
         }
 
 
@@ -1323,7 +1414,7 @@
                 return;
             }
 
-            showCustomConfirm("Are you sure you want to clear all widgets in this tab? The tab layout will be reset.", () => {
+            showCustomConfirm("Are you sure you want to clear all widgets in this tab? This action cannot be undone.", () => {
                 activeTabObject.widgets = [];
                 activeTabObject.highestZ = 0;
                 activeTabObject.widgetCounter = 0;
@@ -1364,7 +1455,7 @@
             }
         }
 
-        function showCustomModal(message) {
+        function showCustomModal(message, onOk) {
             const existingModal = document.getElementById('customModalOverlay');
             if (existingModal) document.body.removeChild(existingModal);
             const modalOverlay = document.createElement('div');
@@ -1379,7 +1470,10 @@
             const okButton = document.createElement('button');
             okButton.textContent = 'OK';
             okButton.style.cssText = `background-color: #FFA500; color: #000; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Source Code Pro', monospace;`;
-            okButton.onclick = () => document.body.removeChild(modalOverlay);
+            okButton.onclick = () => {
+                document.body.removeChild(modalOverlay);
+                if (onOk) onOk();
+            };
             modalContent.appendChild(messageP);
             modalContent.appendChild(okButton);
             modalOverlay.appendChild(modalContent);
@@ -1421,9 +1515,287 @@
             document.body.appendChild(modalOverlay);
         }
 
+        // --- LAYOUT MANAGEMENT (NEW & IMPROVED) ---
+        
+        function getSavedLayouts() {
+            try {
+                const layoutsJSON = localStorage.getItem(LAYOUT_STORAGE_KEY);
+                return layoutsJSON ? JSON.parse(layoutsJSON) : [];
+            } catch (error) {
+                console.error("Error reading user layouts from localStorage:", error);
+                return [];
+            }
+        }
+
+        function saveUserLayouts(layouts) {
+            try {
+                localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layouts));
+            } catch (error) {
+                console.error("Error saving user layouts to localStorage:", error);
+                showCustomModal("Error saving layouts.");
+            }
+        }
+        
+        function showLayoutManagerModal() {
+            const existingModal = document.getElementById('layoutManagerModal');
+            if (existingModal) document.body.removeChild(existingModal);
+
+            const modalOverlay = document.createElement('div');
+            modalOverlay.id = 'layoutManagerModal';
+            modalOverlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000;`;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `background-color: #2a2a2a; color: #f0f0f0; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); width: 90%; max-width: 600px; font-family: 'Source Code Pro', monospace; display: flex; flex-direction: column; max-height: 80vh;`;
+
+            const modalHeader = document.createElement('h3');
+            modalHeader.textContent = 'Layout Manager';
+            modalHeader.style.cssText = `text-align: center; margin-top: 0; margin-bottom: 20px; color: #FFA500;`;
+            
+            // --- Save/Import Section ---
+            const topActionsContainer = document.createElement('div');
+            topActionsContainer.style.cssText = `display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #444;`;
+
+            const saveContainer = document.createElement('div');
+            saveContainer.style.cssText = `display: flex; flex-grow: 1; min-width: 250px;`;
+            const layoutNameInput = document.createElement('input');
+            layoutNameInput.type = 'text';
+            layoutNameInput.placeholder = 'New layout name...';
+            layoutNameInput.style.cssText = `flex-grow: 1; background-color: #1e1e1e; color: #f0f0f0; border: 1px solid #444; border-radius: 4px 0 0 4px; padding: 8px; font-size: 13px; border-right: none;`;
+            const saveButton = document.createElement('button');
+            saveButton.textContent = 'Save Current';
+            saveButton.title = "Save the current tab's layout";
+            saveButton.style.cssText = `background-color: #FFA500; color: #000; border: none; padding: 8px 15px; border-radius: 0 4px 4px 0; cursor: pointer; font-size: 13px; white-space: nowrap;`;
+            saveContainer.appendChild(layoutNameInput);
+            saveContainer.appendChild(saveButton);
+
+            const importButton = document.createElement('button');
+            importButton.textContent = 'Import From File';
+            importButton.title = 'Import a .json layout file';
+            importButton.style.cssText = `background-color: #338a3e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px;`;
+
+            topActionsContainer.appendChild(saveContainer);
+            topActionsContainer.appendChild(importButton);
+
+            // --- Lists Container ---
+            const listsContainer = document.createElement('div');
+            listsContainer.style.cssText = `flex-grow: 1; overflow-y: auto;`;
+
+            const closeModalButton = document.createElement('button');
+            closeModalButton.textContent = 'Close';
+            closeModalButton.style.cssText = `background-color: #555; color: #f0f0f0; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 20px; align-self: center;`;
+            
+            modalContent.appendChild(modalHeader);
+            modalContent.appendChild(topActionsContainer);
+            modalContent.appendChild(listsContainer);
+            modalContent.appendChild(closeModalButton);
+            modalOverlay.appendChild(modalContent);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) {
+                    document.body.removeChild(modalOverlay);
+                }
+            });
+            closeModalButton.onclick = () => document.body.removeChild(modalOverlay);
+            document.body.appendChild(modalOverlay);
+
+            function renderLayoutLists() {
+                listsContainer.innerHTML = '';
+                
+                // Predefined Layouts
+                const predefinedList = createLayoutSection('Predefined Layouts', predefinedLayouts, false);
+                listsContainer.appendChild(predefinedList);
+
+                // User-saved Layouts
+                const userLayouts = getSavedLayouts();
+                const userList = createLayoutSection('My Layouts', userLayouts, true);
+                listsContainer.appendChild(userList);
+            }
+
+            function createLayoutSection(title, layouts, isUserSection) {
+                const section = document.createElement('div');
+                section.style.marginBottom = '20px';
+                const sectionTitle = document.createElement('h4');
+                sectionTitle.textContent = title;
+                sectionTitle.style.cssText = `color: #ccc; margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px;`;
+                section.appendChild(sectionTitle);
+
+                if (layouts.length === 0) {
+                    section.innerHTML += `<p style="text-align: center; color: #888; padding: 10px 0;">No layouts in this section.</p>`;
+                    return section;
+                }
+
+                const listContainer = document.createElement('div');
+                listContainer.style.cssText = `max-height: 200px; overflow-y: auto; padding-right: 5px;`;
+                layouts.forEach(layout => {
+                    const item = document.createElement('div');
+                    item.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #333;`;
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = layout.name;
+                    nameSpan.style.fontSize = '14px';
+                    
+                    const buttonsDiv = document.createElement('div');
+                    buttonsDiv.style.display = 'flex';
+                    buttonsDiv.style.gap = '8px';
+
+                    const loadBtn = document.createElement('button');
+                    loadBtn.textContent = 'Load';
+                    loadBtn.style.cssText = `background-color: #338a3e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;`;
+                    loadBtn.onclick = () => {
+                        showCustomConfirm(`Load layout "${layout.name}"? This will replace the current tab's content.`, () => {
+                            loadLayoutData(layout);
+                            document.body.removeChild(modalOverlay);
+                        });
+                    };
+                    buttonsDiv.appendChild(loadBtn);
+
+                    if (isUserSection) {
+                        const exportBtn = document.createElement('button');
+                        exportBtn.textContent = 'Export';
+                        exportBtn.style.cssText = `background-color: #0277bd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;`;
+                        exportBtn.onclick = () => exportLayout(layout.id);
+                        buttonsDiv.appendChild(exportBtn);
+
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.textContent = 'Delete';
+                        deleteBtn.style.cssText = `background-color: #c62828; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;`;
+                        deleteBtn.onclick = () => {
+                            showCustomConfirm(`Are you sure you want to delete the layout "${layout.name}"?`, () => {
+                                deleteUserLayout(layout.id);
+                                renderLayoutLists();
+                            });
+                        };
+                        buttonsDiv.appendChild(deleteBtn);
+                    }
+
+                    item.appendChild(nameSpan);
+                    item.appendChild(buttonsDiv);
+                    listContainer.appendChild(item);
+                });
+                section.appendChild(listContainer);
+                return section;
+            }
+
+            saveButton.onclick = () => {
+                const name = layoutNameInput.value.trim();
+                if (!name) {
+                    showCustomModal("Please enter a name for the layout.");
+                    return;
+                }
+                saveCurrentLayoutAsUserLayout(name);
+                layoutNameInput.value = '';
+                renderLayoutLists();
+            };
+            
+            importButton.onclick = importLayout;
+
+            renderLayoutLists();
+        }
+
+        function saveCurrentLayoutAsUserLayout(name) {
+            const activeTabObject = tabs.find(t => t.id === activeTabId);
+            if (!activeTabObject) {
+                showCustomModal("Could not find active tab data to save.");
+                return;
+            }
+            saveLayout(); // First, ensure the in-memory layout is up-to-date
+            
+            const layouts = getSavedLayouts();
+            const newLayout = {
+                id: `user-${Date.now()}`,
+                name: name,
+                widgets: JSON.parse(JSON.stringify(activeTabObject.widgets.map(w => ({name: w.name, htmlFile: w.htmlFile, options: {left: w.left, top: w.top, width: w.width, height: w.height, zIndex: w.zIndex, locked: w.locked}}))))
+            };
+            layouts.push(newLayout);
+            saveUserLayouts(layouts);
+            showCustomModal(`Layout "${name}" saved successfully!`);
+        }
+
+        function loadLayoutData(layoutData) {
+            if (!layoutData) return;
+            const activeTabObject = tabs.find(t => t.id === activeTabId);
+            const activeCanvas = getActiveWidgetCanvas();
+            if (!activeTabObject || !activeCanvas) {
+                showCustomModal("No active tab to load the layout into.");
+                return;
+            }
+            activeCanvas.innerHTML = '';
+            activeTabObject.widgets = [];
+            activeTabObject.highestZ = 0;
+            activeTabObject.widgetCounter = 0;
+            currentHighestZ = 0;
+            currentWidgetCounter = 0;
+            layoutData.widgets.forEach(widgetInfo => {
+                 createWidget(widgetInfo.name, widgetInfo.htmlFile, widgetInfo.options, true, activeCanvas);
+            });
+            saveLayout();
+            updateScrollability();
+        }
+
+        function deleteUserLayout(layoutId) {
+            let layouts = getSavedLayouts();
+            layouts = layouts.filter(l => l.id !== layoutId);
+            saveUserLayouts(layouts);
+        }
+
+        function exportLayout(layoutId) {
+            const layouts = getSavedLayouts();
+            const layoutToExp = layouts.find(l => l.id === layoutId);
+            if (!layoutToExp) {
+                showCustomModal("Could not find layout to export.");
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(layoutToExp, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            const safeName = layoutToExp.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            downloadAnchorNode.setAttribute("download", `${safeName}_layout.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importLayout() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json,application/json';
+            input.onchange = e => { 
+                const file = e.target.files[0]; 
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = readerEvent => {
+                    try {
+                        const content = readerEvent.target.result;
+                        const newLayout = JSON.parse(content);
+                        // Basic validation
+                        if (typeof newLayout.name !== 'string' || !Array.isArray(newLayout.widgets)) {
+                            throw new Error("Invalid layout file format.");
+                        }
+                        const layouts = getSavedLayouts();
+                        // Assign a new unique ID to prevent conflicts
+                        newLayout.id = `user-${Date.now()}`;
+                        layouts.push(newLayout);
+                        saveUserLayouts(layouts);
+                        showCustomModal(`Layout "${newLayout.name}" imported successfully.`, () => {
+                            // Re-open or re-render the modal list
+                            const modal = document.getElementById('layoutManagerModal');
+                            if(modal) document.body.removeChild(modal);
+                            showLayoutManagerModal();
+                        });
+                    } catch (err) {
+                        console.error("Error parsing imported layout file:", err);
+                        showCustomModal("Error: Could not import file. It may be corrupted or in the wrong format.");
+                    }
+                }
+                reader.readAsText(file);
+            }
+            input.click();
+        }
+
+        layoutManagerButton.addEventListener('click', showLayoutManagerModal);
+
+
         // Initialize
         populateWidgetDataList();
-        renderWidgetCategoryButtonsAndDropdowns();
+        renderTopButtons();
         loadLayout(); // This will now create all tab canvases and their widgets
 
         window.addEventListener('load', () => {
