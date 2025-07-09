@@ -129,6 +129,7 @@
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #222;
+            vertical-align: top; /* --- PERUBAHAN --- Agar konten selaras di atas */
         }
 
         thead th {
@@ -149,10 +150,12 @@
             background-color: #111;
         }
 
-        td:nth-child(1) { font-weight: bold; color: #eee; width: 30%; }
-        td:nth-child(2) { color: #bbb; width: 55%; }
-        td:nth-child(3) { color: #3498db; font-weight: bold; text-align: right; width: 15%; }
-        
+        /* --- PERUBAHAN --- Menyesuaikan lebar kolom untuk kolom baru */
+        td:nth-child(1) { font-weight: bold; color: #eee; width: 25%; }
+        td:nth-child(2) { color: #bbb; width: 40%; }
+        td:nth-child(3) { color: #3498db; font-weight: bold; text-align: right; width: 10%; }
+        td:nth-child(4) { color: #a9a9a9; width: 25%; }
+
         .loader-container {
             width: 100%;
             height: 100%;
@@ -175,11 +178,16 @@
             opacity: 0;
             transition: opacity 0.2s;
             max-width: 300px;
+            z-index: 10;
         }
         .d3-tooltip strong {
             color: #ff8000;
             display: block;
             margin-bottom: 5px;
+        }
+        .d3-tooltip .label {
+            color: #ccc;
+            font-weight: bold;
         }
         
         .bubble-circle {
@@ -192,7 +200,6 @@
             filter: drop-shadow(0 0 8px rgba(255, 128, 0, 0.7));
         }
 
-        /* --- PERBAIKAN: Menerapkan gaya scrollbar ke selector yang benar --- */
         #table-container::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -211,7 +218,6 @@
             background-color: rgba(255,255,255,0.2);
         }
 
-        /* Untuk Firefox */
         #table-container {
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
@@ -323,12 +329,15 @@
                 container.innerHTML = '<div class="loader-container"><span>No data available.</span></div>';
                 return;
             }
-            let tableHTML = `<div id="table-container"><table><thead><tr><th>Catalyst</th><th>Context</th><th>Dominance</th></tr></thead><tbody>`;
+            // --- PERUBAHAN --- Menambahkan kolom "Impacted Instruments" ke header
+            let tableHTML = `<div id="table-container"><table><thead><tr><th>Catalyst</th><th>Context</th><th>Dominance</th><th>Impacted Instruments</th></tr></thead><tbody>`;
             data.forEach(item => {
+                // --- PERUBAHAN --- Menambahkan sel data untuk "impactedInstrument"
                 tableHTML += `<tr>
                     <td>${item.name}</td>
                     <td>${item.context}</td>
                     <td>${(item.percentage * 100).toFixed(2)}%</td>
+                    <td>${item.impactedInstrument || 'N/A'}</td>
                 </tr>`;
             });
             tableHTML += `</tbody></table></div>`;
@@ -361,10 +370,20 @@
                             position: 'right',
                             labels: { color: '#f0f0f0', font: { family: "'Source Code Pro', monospace" } }
                         },
+                        // --- PERUBAHAN --- Memperbarui tooltip untuk menampilkan data baru
                         tooltip: {
+                            bodyFont: { family: "'Source Code Pro', monospace" },
+                            titleFont: { family: "'Source Code Pro', monospace" },
                             callbacks: {
                                 label: function(context) {
                                     return `${context.label}: ${context.raw.toFixed(2)}%`;
+                                },
+                                afterLabel: function(context) {
+                                    const dataItem = data[context.dataIndex];
+                                    if (dataItem && dataItem.impactedInstrument) {
+                                        return `\nImpact: ${dataItem.impactedInstrument}`;
+                                    }
+                                    return '';
                                 }
                             }
                         }
@@ -383,10 +402,12 @@
             const colorScale = d3.scaleOrdinal(modernPalette);
 
             const dataset = {
+                // --- PERUBAHAN --- Memastikan data baru tersedia untuk bubble
                 children: data.map(d => ({
                     name: d.name,
                     context: d.context,
                     value: d.percentage,
+                    impactedInstrument: d.impactedInstrument 
                 }))
             };
 
@@ -410,10 +431,12 @@
                 .attr("r", d => d.r)
                 .style("fill", d => colorScale(d.data.name))
                 .on("mouseover", (event, d) => {
-                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.transition().duration(200).style("opacity", .95);
+                    // --- PERUBAHAN --- Memperbarui tooltip untuk menampilkan data baru
                     tooltip.html(`<strong>${d.data.name}</strong>
-                                 Dominance: ${(d.data.value * 100).toFixed(2)}%<br>
-                                 Context: ${d.data.context}`)
+                                <span class="label">Dominance:</span> ${(d.data.value * 100).toFixed(2)}%<br>
+                                <span class="label">Context:</span> ${d.data.context}<br>
+                                <span class="label">Impact:</span> ${d.data.impactedInstrument}`)
                         .style("left", (event.pageX + 15) + "px")
                         .style("top", (event.pageY - 28) + "px");
                 })
@@ -430,6 +453,7 @@
                 .text(d => {
                     const name = d.data.name;
                     const r = d.r;
+                    // Perkiraan kasar lebar teks untuk pemotongan
                     const textWidth = name.length * (r / 8) * 0.6; 
                     return textWidth < r * 1.9 ? name : name.substring(0, Math.floor(name.length * r * 1.9 / textWidth) - 3) + '...';
                 });
