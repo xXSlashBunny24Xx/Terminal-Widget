@@ -255,7 +255,7 @@
                     const quoteIndex = currencyHierarchy.indexOf(quoteCurrency);
                     const accountIndex = currencyHierarchy.indexOf(accountCurrency);
                     let displayPair = (quoteIndex < accountIndex) ? `${quoteCurrency}/${accountCurrency}` : `${accountCurrency}/${quoteCurrency}`;
-                    manualRateLabel.textContent = `Harga ${displayPair}`;
+                    manualRateLabel.textContent = `Harga ${displayPair} saat ini`;
                     manualRateRow.style.display = 'table-row';
                 }
                 resultRows.forEach(row => row.classList.remove('show'));
