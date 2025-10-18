@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Newsletter Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --surface-color: #1a1a1a;
+            --border-color: #2a2a2a;
+            --text-color: #f0f0f0;
+            --text-muted-color: #888;
+            --accent-color: #2980b9;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Source Code Pro', monospace;
+            background-color: #000;
+            color: var(--text-color);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .title-bar {
+            background-color: var(--surface-color);
+            color: #fff;
+            padding: 12px 15px;
+            font-size: 16px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .controls-container {
+            background-color: #000;
+            padding: 12px 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .view-toggle button {
+            font-family: 'Source Code Pro', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted-color);
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .view-toggle button:hover {
+            background-color: var(--surface-color);
+            color: var(--text-color);
+        }
+
+        .view-toggle button.active {
+            background-color: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
+        }
+        
+        .content-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .status-message {
+            color: var(--text-muted-color);
+            text-align: center;
+            padding: 50px 20px;
+            font-style: italic;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        /* Styling untuk Tampilan Buletin Terbaru */
+        /* --- Penambahan Baru --- */
+        .newsletter-title-header {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--text-muted-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tabs-nav {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .tab-link {
+            padding: 10px 15px;
+            cursor: pointer;
+            color: var(--text-muted-color);
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .tab-link:hover {
+            color: var(--text-color);
+        }
+
+        .tab-link.active {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+            font-weight: 700;
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        .newsletter-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        
+        .newsletter-header h1 {
+            font-size: 1.5em;
+            margin: 0 0 5px 0;
+            color: var(--text-color);
+        }
+        
+        .newsletter-header p {
+            font-size: 0.9em;
+            color: var(--text-muted-color);
+            margin: 0 0 20px 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .newsletter-section h2 {
+            font-size: 1.1em;
+            color: var(--accent-color);
+            margin: 25px 0 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .newsletter-section p, .newsletter-section li {
+            font-size: 0.95em;
+            line-height: 1.7;
+            color: #ccc;
+        }
+        
+        .tldr-box {
+            background-color: rgba(41, 128, 185, 0.1);
+            border-left: 3px solid var(--accent-color);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .instrument-analysis {
+            margin-bottom: 15px;
+        }
+        .instrument-analysis h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.05em;
+            color: var(--text-color);
+        }
+        
+        .quick-insight-list, .trade-idea-list {
+            padding-left: 20px;
+        }
+        .quick-insight-list { list-style-type: '» '; }
+        .trade-idea-list { list-style-type: '💡 '; }
+
+        .trade-idea-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .trade-idea-card h3 {
+             margin: 0 0 10px 0;
+             font-size: 1.05em;
+             color: var(--text-color);
+        }
+        .trade-idea-card p {
+            margin-top: 0;
+            font-style: italic;
+            color: #ddd;
+        }
+        .trade-idea-card ul {
+            list-style-type: '✓ ';
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+        
+        /* Styling untuk Riwayat */
+        .history-item {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .history-header {
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+        
+        .history-header span {
+            font-size: 0.9em;
+            color: var(--text-muted-color);
+        }
+        
+        .history-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .history-item.active .history-content {
+            max-height: 50000px; /* Nilai yang sangat besar untuk memastikan semua konten muat */
+            padding: 0 15px 15px 15px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.15); border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="title-bar">Market Newsletter Terminal</div>
+        
+        <div class="controls-container">
+            <div class="view-toggle">
+                <button id="btn-latest" class="active">Buletin Terbaru</button>
+                <button id="btn-history">Riwayat</button>
+            </div>
+        </div>
+        
+        <main id="content-container" class="content-container">
+            <!-- Konten dinamis akan dimuat di sini -->
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- KONFIGURASI ---
+            const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzT7m3SODbotQCZolm3l-hSH7lg_bi8HbWDI4ye5yFg16Asc01pZ-RcNjsF7khOPIGG/exec'; // GANTI DENGAN URL ANDA
+
+            // --- ELEMEN UI ---
+            const contentContainer = document.getElementById('content-container');
+            const btnLatest = document.getElementById('btn-latest');
+            const btnHistory = document.getElementById('btn-history');
+
+            // --- STATE APLIKASI ---
+            let currentView = 'latest';
+            let latestNewsletterHtml = '';
+
+            function showStatus(message) {
+                contentContainer.innerHTML = `<div class="status-message">${message}</div>`;
+            }
+
+            async function loadLatestNewsletter() {
+                showStatus('Mengambil buletin terbaru...');
+                try {
+                    const response = await fetch(APPS_SCRIPT_URL);
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    const data = await response.json();
+
+                    if (data.source === 'empty_sheet' || !data.newsletters || data.newsletters.length === 0) {
+                        showStatus(data.message || 'Belum ada buletin terbaru yang tersedia.');
+                        return;
+                    }
+                    renderLatestView(data);
+                } catch (error) {
+                    console.error('Gagal mengambil buletin terbaru:', error);
+                    showStatus(`Gagal memuat data. Silakan coba lagi nanti.<br><small>${error.message}</small>`);
+                }
+            }
+            
+            async function loadHistory() {
+                showStatus('Mengambil riwayat...');
+                try {
+                    const response = await fetch(`${APPS_SCRIPT_URL}?history=true`);
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    const data = await response.json();
+
+                    if (!data.batches || data.batches.length === 0) {
+                        showStatus(data.message || 'Tidak ada riwayat buletin yang tersimpan.');
+                        return;
+                    }
+                    renderHistoryView(data.batches);
+                } catch (error) {
+                    console.error('Gagal mengambil riwayat:', error);
+                    showStatus(`Gagal memuat riwayat.<br><small>${error.message}</small>`);
+                }
+            }
+
+            // --- PERUBAHAN UTAMA DI SINI ---
+            function renderLatestView(data) {
+                const { newsletters, newsletter_name } = data;
+                
+                // 1. Buat HTML untuk judul tema
+                const titleHtml = `<div class="newsletter-title-header">${newsletter_name || 'Market Update'}</div>`;
+
+                // 2. Buat HTML untuk tab instrumen
+                const tabs = newsletters.map(nl => nl.kategori);
+                let tabsHtml = '<div class="tabs-nav">';
+                tabs.forEach((tab, index) => {
+                    tabsHtml += `<div class="tab-link ${index === 0 ? 'active' : ''}" data-tab="${tab}">${tab}</div>`;
+                });
+                tabsHtml += '</div>';
+
+                // 3. Buat HTML untuk konten
+                let contentHtml = '';
+                newsletters.forEach((nl, index) => {
+                    contentHtml += `
+                        <div class="tab-content ${index === 0 ? 'active' : ''}" id="tab-${nl.kategori}">
+                            ${renderSingleNewsletter(nl)}
+                        </div>
+                    `;
+                });
+
+                // 4. Gabungkan semuanya dan simpan ke cache
+                const fullHtml = titleHtml + tabsHtml + contentHtml;
+                contentContainer.innerHTML = fullHtml;
+                latestNewsletterHtml = fullHtml;
+                addTabEventListeners();
+            }
+            
+            function renderHistoryView(batches) {
+                let historyHtml = '<div class="history-accordion">';
+                batches.forEach(batch => {
+                    const formattedDate = new Date(batch.generated_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+                    historyHtml += `
+                        <div class="history-item">
+                            <div class="history-header">
+                                <h3>${batch.newsletter_name}</h3>
+                                <span>${formattedDate}</span>
+                            </div>
+                            <div class="history-content">
+                                ${batch.newsletters.map(nl => renderSingleNewsletter(nl)).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                historyHtml += '</div>';
+                contentContainer.innerHTML = historyHtml;
+                addAccordionEventListeners();
+            }
+            
+            function renderSingleNewsletter(nl) {
+                let tradeIdeaHtml = '';
+                const tradeIdea = nl.possible_trade_idea;
+                
+                if (Array.isArray(tradeIdea) && tradeIdea.length > 0) {
+                    tradeIdeaHtml = `<ul class="trade-idea-list">${tradeIdea.map(idea => `<li>${idea}</li>`).join('')}</ul>`;
+                } else if (tradeIdea && typeof tradeIdea === 'object' && tradeIdea.title) {
+                    tradeIdeaHtml = `<div class="trade-idea-card"><h3>${tradeIdea.title}</h3><p>${tradeIdea.thesis}</p><ul>${tradeIdea.details.map(detail => `<li>${detail}</li>`).join('')}</ul></div>`;
+                } else if (typeof tradeIdea === 'string') {
+                    tradeIdeaHtml = `<p>${tradeIdea}</p>`;
+                }
+
+                return `
+                    <div class="newsletter-card">
+                        <div class="newsletter-header">
+                            <h1>${nl.judul_buletin}</h1>
+                            <p>Kategori: ${nl.kategori} &bull; Publikasi: ${new Date(nl.waktu_publikasi).toLocaleString('id-ID')}</p>
+                        </div>
+                        <div class="newsletter-section"><div class="tldr-box"><strong>TL;DR:</strong> ${nl.tldr}</div><p>${nl.opening_remarks}</p></div>
+                        <div class="newsletter-section"><h2>Analisis Instrumen</h2>${nl.analisis_instrumen.map(item => `<div class="instrument-analysis"><h3>${item.instrumen}</h3><p>${item.analisis}</p></div>`).join('')}</div>
+                        <div class="newsletter-section"><h2>Possible Trade Idea</h2>${tradeIdeaHtml}</div>
+                        <div class="newsletter-section"><h2>Key Takeaway</h2><p>${nl.key_takeaway}</p></div>
+                        <div class="newsletter-section"><h2>Quick Insight</h2><ul class="quick-insight-list">${nl.quick_insight.map(item => `<li>${item}</li>`).join('')}</ul></div>
+                        <div class="newsletter-section"><h2>Closing Remarks</h2><p>${nl.closing_remarks}</p></div>
+                    </div>
+                `;
+            }
+
+            function addTabEventListeners() {
+                const tabs = document.querySelectorAll('.tab-link');
+                const contents = document.querySelectorAll('.tab-content');
+
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(item => item.classList.remove('active'));
+                        contents.forEach(item => item.classList.remove('active'));
+                        tab.classList.add('active');
+                        document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+                    });
+                });
+            }
+
+            function addAccordionEventListeners() {
+                const items = document.querySelectorAll('.history-item');
+                items.forEach(item => {
+                    item.querySelector('.history-header').addEventListener('click', () => {
+                        items.forEach(otherItem => {
+                            if (otherItem !== item) {
+                                otherItem.classList.remove('active');
+                            }
+                        });
+                        item.classList.toggle('active');
+                    });
+                });
+            }
+
+            function init() {
+                btnLatest.addEventListener('click', () => {
+                    if (currentView === 'latest') return;
+                    currentView = 'latest';
+                    btnLatest.classList.add('active');
+                    btnHistory.classList.remove('active');
+                    
+                    if (latestNewsletterHtml) {
+                        contentContainer.innerHTML = latestNewsletterHtml;
+                        addTabEventListeners();
+                    } else {
+                        loadLatestNewsletter();
+                    }
+                });
+
+                btnHistory.addEventListener('click', () => {
+                    if (currentView === 'history') {
+                        loadHistory();
+                        return;
+                    }
+                    currentView = 'history';
+                    btnHistory.classList.add('active');
+                    btnLatest.classList.remove('active');
+                    loadHistory();
+                });
+
+                loadLatestNewsletter();
+            }
+
+            init();
+        });
+    </script>
+
+</body>
+</html>
+
