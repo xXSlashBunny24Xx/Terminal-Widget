@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Note</title>
+    
+    <!-- Impor font yang digunakan di CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Variabel Global CSS --- */
+        :root {
+            --bg-color: #0d0d0d;
+            --surface-color: #1a1a1a;
+            --border-color: #2a2a2a;
+            --text-color: #f0f0f0;
+            --text-muted-color: #888;
+            --accent-color: #2980b9;
+        }
+
+        /* --- Reset Dasar --- */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Source Code Pro', monospace;
+            background-color: #000;
+            color: var(--text-color);
+        }
+
+        /* --- Layout Utama --- */
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Tinggi penuh layar */
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            overflow: hidden; /* Mencegah container luar ter-scroll */
+        }
+
+        .title-bar {
+            background-color: var(--surface-color);
+            color: #fff;
+            padding: 12px 15px;
+            font-size: 16px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0; /* Mencegah title-bar menyusut */
+        }
+        
+        /* --- Controls Bar --- */
+        .controls-bar {
+            background-color: #000;
+            padding: 12px 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            flex-wrap: wrap; /* Membungkus tombol jika layar terlalu kecil */
+        }
+
+        /* Tombol standar */
+        .control-button {
+            font-family: 'Source Code Pro', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted-color);
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .control-button:hover {
+            background-color: var(--surface-color);
+            color: var(--text-color);
+        }
+        
+        /* BARU: Gaya untuk tombol aktif */
+        .control-button.active {
+            background-color: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
+        }
+
+        /* --- Styling Dropdown --- */
+        .dropdown-container {
+            position: relative; /* Kunci untuk posisi menu */
+        }
+        
+        .dropdown-toggle {
+            /* Menggunakan gaya .control-button */
+            font-family: 'Source Code Pro', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            background-color: var(--surface-color); /* Dibuat aktif */
+            border: 1px solid var(--border-color);
+            color: var(--text-color); /* Dibuat aktif */
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px; /* Lebar minimum agar rapi */
+            justify-content: space-between;
+        }
+        
+        .dropdown-toggle:hover {
+            background-color: #2e2e2e; /* Sedikit lebih terang */
+        }
+
+        .dropdown-toggle svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--text-muted-color);
+            transition: transform 0.2s ease;
+        }
+
+        .dropdown-container.open .dropdown-toggle svg {
+            transform: rotate(180deg); /* Putar panah saat menu terbuka */
+        }
+        
+        .dropdown-menu {
+            display: none; /* Sembunyi secara default */
+            position: absolute;
+            top: 110%; /* Tampil di bawah tombol */
+            left: 0;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            min-width: 160px;
+            z-index: 10;
+            padding: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        
+        .dropdown-menu.show {
+            display: block; /* Tampilkan saat 'show' */
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 8px 12px;
+            color: var(--text-muted-color);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: none; /* Mencegah teks ter-highlight */
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+        
+        .dropdown-item.active {
+            color: var(--text-color);
+            background-color: #2e2e2e;
+        }
+        /* --- AKHIR: Styling Dropdown --- */
+
+
+        /* Spacer untuk controls-bar */
+        .spacer {
+            flex-grow: 1;
+        }
+
+        /* Tombol Bantuan */
+        .help-button {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            padding: 0;
+            font-weight: 700;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        /* --- Akhir Controls Bar --- */
+        
+        .content-container {
+            flex-grow: 1; /* Mengisi sisa ruang */
+            overflow: hidden; /* Konten di-handle oleh editor */
+            padding: 0; 
+        }
+        
+        /* BARU: Area Editor Teks */
+        #note-editor {
+            height: 100%;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box; /* Padding termasuk dalam height/width */
+            overflow-y: auto;
+            color: var(--text-color);
+            font-family: 'Source Code Pro', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            outline: none; /* Hilangkan border fokus default */
+        }
+
+        /* BARU: Placeholder untuk editor */
+        #note-editor:empty::before {
+            content: 'Ketik catatan Anda di sini...';
+            color: var(--text-muted-color);
+            pointer-events: none; /* Biarkan klik "menembus" ke editor */
+        }
+        
+        /* Mengganti widget trading yang tidak terpakai */
+        #view-terminal, .tradingview-widget-container {
+            display: none;
+        }
+
+
+        /* --- Styling Modal (Pop-up) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; /* Sembunyi secara default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex; /* Tampilkan saat 'show' ditambahkan */
+        }
+
+        .modal-window {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-width: 650px;
+            width: 90%;
+            color: var(--text-color);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            /* Animasi untuk muncul */
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+        }
+        
+        .modal-overlay.show .modal-window {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.1em;
+            color: var(--text-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted-color);
+            font-size: 2.2em;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        .modal-close:hover {
+            color: var(--text-color);
+        }
+
+        .modal-content {
+            padding: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+            color: #ccc;
+            line-height: 1.7;
+            font-size: 0.9em;
+        }
+
+        .modal-content h3 {
+            color: var(--accent-color);
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+         .modal-content h4 {
+            color: var(--text-color);
+            margin-top: 15px;
+            margin-bottom: 5px;
+         }
+         .modal-content p {
+            margin-bottom: 15px;
+         }
+
+        /* --- Akhir Styling Modal --- */
+
+        /* --- Styling Scrollbar Kustom --- */
+        ::-webkit-scrollbar { 
+            width: 8px; 
+        }
+        ::-webkit-scrollbar-track { 
+            background: var(--bg-color); 
+        }
+        ::-webkit-scrollbar-thumb { 
+            background-color: rgba(255,255,255,0.15); 
+            border-radius: 4px; 
+            border: 2px solid var(--bg-color); 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background-color: rgba(255,255,255,0.3); 
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Layout Utama Aplikasi -->
+    <div class="container">
+
+        <!-- Judul Aplikasi -->
+        <div class="title-bar">
+            Personal Note
+        </div>
+        
+        <!-- Kontrol Editor -->
+        <div class="controls-bar">
+            
+            <!-- BARU: Dropdown Perataan Teks (Menggantikan Paragraf) -->
+            <div class="dropdown-container" id="align-dropdown">
+                <button class="dropdown-toggle" id="align-toggle">
+                    <span id="align-label">Left</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="align-menu">
+                    <a class="dropdown-item" data-align="justifyLeft">Left</a>
+                    <a class="dropdown-item" data-align="justifyCenter">Center</a>
+                    <a class="dropdown-item" data-align="justifyRight">Right</a>
+                    <a class="dropdown-item" data-align="justifyFull">Justify</a>
+                </div>
+            </div>
+
+            <!-- BARU: Dropdown Ukuran Font -->
+            <div class="dropdown-container" id="fontsize-dropdown">
+                <button class="dropdown-toggle" id="fontsize-toggle">
+                    <span id="fontsize-label">Normal</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="fontsize-menu">
+                    <!-- Nilai data-size (1-7) adalah standar execCommand 'fontSize' -->
+                    <a class="dropdown-item" data-size="1">X-Small</a>
+                    <a class="dropdown-item" data-size="2">Small</a>
+                    <a class="dropdown-item" data-size="3">Normal</a>
+                    <a class="dropdown-item" data-size="4">Medium</a>
+                    <a class="dropdown-item" data-size="5">Large</a>
+                    <a class="dropdown-item" data-size="6">X-Large</a>
+                    <a class="dropdown-item" data-size="7">Huge</a>
+                </div>
+            </div>
+
+            <!-- Tombol Format Teks -->
+            <button class="control-button" id="btn-bold" title="Bold (Ctrl+B)"><b>B</b></button>
+            <button class="control-button" id="btn-italic" title="Italic (Ctrl+I)"><i>I</i></button>
+            <button class="control-button" id="btn-underline" title="Underline (Ctrl+U)"><u>U</u></button>
+            <button class="control-button" id="btn-ul" title="Bullet List">• List</button>
+
+            <!-- BARU: Tombol Ekspor, Impor, Bersihkan -->
+            <button class="control-button" id="btn-export" title="Export Note">Export</button>
+            <button class="control-button" id="btn-import" title="Import Note">Import</button>
+            <button class="control-button" id="btn-clear" title="Clear Note">Clear</button>
+
+            <!-- Spacer (dari CSS Anda) -->
+            <div class="spacer"></div>
+            
+            <!-- Tombol Bantuan (dari CSS Anda) -->
+            <button class="control-button help-button" id="help-button">?</button>
+        </div>
+
+        <!-- Area Konten (Editor Teks) -->
+        <div class="content-container">
+            <div id="note-editor" contenteditable="true" spellcheck="true"></div>
+        </div>
+        
+    </div>
+
+    <!-- BARU: Input file tersembunyi untuk impor -->
+    <input type="file" id="import-file" accept=".json" style="display: none;">
+
+    <!-- Modal Bantuan (Pop-up) -->
+    <div class="modal-overlay" id="help-modal">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h2>Bantuan Take Note App</h2>
+                <button class="modal-close" id="help-modal-close">&times;</button>
+            </div>
+            <div class="modal-content">
+                <h3>Selamat Datang!</h3>
+                <p>
+                    Ini adalah editor catatan sederhana yang dibangun menggunakan gaya visual yang Anda berikan.
+                </p>
+                
+                <h4>Fitur Editor</h4>
+                <p>
+                    Gunakan tombol-tombol di <i>controls bar</i> (di bawah judul) untuk memformat teks Anda.
+                </p>
+                <ul>
+                    <li><b>Dropdown (cth: Align Left)</b>: Untuk mengubah perataan teks (kiri, tengah, kanan, justify).</li>
+                    <li><b>Dropdown (cth: Normal)</b>: Untuk mengubah ukuran font.</li>
+                    <li><b>B, I, U</b>: Untuk membuat teks menjadi Bold, Italic, atau Underline.</li>
+                    <li><b>• List</b>: Untuk membuat daftar poin (bullet list).</li>
+                </ul>
+
+                <h4>Penyimpanan & Ekspor/Impor</h4>
+                <ul>
+                    <li><b>Penyimpanan Otomatis</b>: Catatan Anda disimpan secara otomatis di browser (local cache) setiap kali Anda mengetik.</li>
+                    <li><b>Export</b>: Mengunduh catatan Anda saat ini sebagai file <code>note.json</code>.</li>
+                    <li><b>Import</b>: Membuka file <code>.json</code> dari komputer Anda untuk dimuat ke editor (akan menimpa catatan saat ini).</li>
+                    <li><b>Clear</b>: Menghapus semua konten di editor.</li>
+                </ul>
+                
+                <h4>Area Penulisan</h4>
+                <p>
+                    Area utama di bawah <i>controls bar</i> adalah tempat Anda menulis. Klik di sana dan mulailah mengetik. Semua catatan Anda bersifat sementara dan hanya ada di sesi browser ini.
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const editor = document.getElementById('note-editor');
+            const STORAGE_KEY = 'take-note-app-content';
+            
+            // --- Logika Modal Bantuan ---
+            const helpButton = document.getElementById('help-button');
+            const helpModal = document.getElementById('help-modal');
+            const helpModalClose = document.getElementById('help-modal-close');
+
+            if (helpButton && helpModal && helpModalClose) {
+                helpButton.addEventListener('click', () => {
+                    helpModal.classList.add('show');
+                });
+                helpModalClose.addEventListener('click', () => {
+                    helpModal.classList.remove('show');
+                });
+                // Tutup modal jika klik di luar window
+                helpModal.addEventListener('click', (e) => {
+                    if (e.target === helpModal) {
+                        helpModal.classList.remove('show');
+                    }
+                });
+            }
+
+            // --- BARU: Logika Penyimpanan (LocalStorage) ---
+
+            // Muat catatan saat aplikasi dibuka
+            function loadNote() {
+                const savedContent = localStorage.getItem(STORAGE_KEY);
+                if (savedContent) {
+                    editor.innerHTML = savedContent;
+                }
+            }
+
+            // Simpan catatan setiap kali ada input
+            function saveNote() {
+                localStorage.setItem(STORAGE_KEY, editor.innerHTML);
+            }
+
+            // Panggil loadNote saat DOM siap
+            loadNote();
+            // Mulai menyimpan setiap kali ada input
+            editor.addEventListener('input', saveNote);
+
+
+            // --- Logika Tombol Format Sederhana ---
+            const formatButtons = [
+                { id: 'btn-bold', command: 'bold' },
+                { id: 'btn-italic', command: 'italic' },
+                { id: 'btn-underline', command: 'underline' },
+                { id: 'btn-ul', command: 'insertUnorderedList' },
+            ];
+
+            formatButtons.forEach(btnInfo => {
+                const button = document.getElementById(btnInfo.id);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        document.execCommand(btnInfo.command, false, null);
+                        editor.focus(); // Kembalikan fokus ke editor setelah klik tombol
+                        updateButtonStates(); // Perbarui status tombol
+                    });
+                }
+            });
+
+            // --- BARU: Logika Dropdown Perataan Teks ---
+            const alignDropdown = document.getElementById('align-dropdown');
+            const alignToggle = document.getElementById('align-toggle');
+            const alignMenu = document.getElementById('align-menu');
+            const alignLabel = document.getElementById('align-label');
+            const alignItems = alignMenu.querySelectorAll('.dropdown-item');
+
+            if (alignDropdown && alignToggle && alignMenu) {
+                // Buka/Tutup menu
+                alignToggle.addEventListener('click', () => {
+                    alignDropdown.classList.toggle('open');
+                    alignMenu.classList.toggle('show');
+                });
+
+                // Aksi saat item dipilih
+                alignItems.forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const alignCommand = item.dataset.align;
+                        document.execCommand(alignCommand, false, null);
+                        
+                        alignLabel.textContent = item.textContent; // Update label tombol
+                        
+                        // Tutup dropdown
+                        alignDropdown.classList.remove('open');
+                        alignMenu.classList.remove('show');
+                        
+                        editor.focus();
+                        updateButtonStates();
+                    });
+                });
+
+                // Tutup dropdown jika klik di luar
+                document.addEventListener('click', (e) => {
+                    if (!alignDropdown.contains(e.target)) {
+                        alignDropdown.classList.remove('open');
+                        alignMenu.classList.remove('show');
+                    }
+                });
+            }
+
+            // --- BARU: Logika Dropdown Ukuran Font ---
+            const fontsizeDropdown = document.getElementById('fontsize-dropdown');
+            const fontsizeToggle = document.getElementById('fontsize-toggle');
+            const fontsizeMenu = document.getElementById('fontsize-menu');
+            const fontsizeLabel = document.getElementById('fontsize-label');
+            const fontsizeItems = fontsizeMenu.querySelectorAll('.dropdown-item');
+
+            if (fontsizeDropdown && fontsizeToggle && fontsizeMenu) {
+                // Buka/Tutup menu
+                fontsizeToggle.addEventListener('click', () => {
+                    fontsizeDropdown.classList.toggle('open');
+                    fontsizeMenu.classList.toggle('show');
+                });
+
+                // Aksi saat item dipilih
+                fontsizeItems.forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const size = item.dataset.size;
+                        document.execCommand('fontSize', false, size);
+                        
+                        fontsizeLabel.textContent = item.textContent; // Update label tombol
+                        
+                        // Tutup dropdown
+                        fontsizeDropdown.classList.remove('open');
+                        fontsizeMenu.classList.remove('show');
+                        
+                        editor.focus();
+                        updateButtonStates();
+                    });
+                });
+
+                // Tutup dropdown jika klik di luar
+                document.addEventListener('click', (e) => {
+                    if (!fontsizeDropdown.contains(e.target)) {
+                        fontsizeDropdown.classList.remove('open');
+                        fontsizeMenu.classList.remove('show');
+                    }
+                });
+            }
+
+
+            // --- BARU: Logika Tombol Ekspor / Impor / Bersihkan ---
+            const btnExport = document.getElementById('btn-export');
+            const btnImport = document.getElementById('btn-import');
+            const btnClear = document.getElementById('btn-clear');
+            const importFileInput = document.getElementById('import-file');
+
+            // Ekspor
+            btnExport.addEventListener('click', () => {
+                const content = editor.innerHTML;
+                const data = {
+                    appName: "Take Note App",
+                    exportedAt: new Date().toISOString(),
+                    content: content
+                };
+                const jsonString = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'note.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            // Impor (trigger klik file input)
+            btnImport.addEventListener('click', () => {
+                importFileInput.click();
+            });
+
+            // Handler saat file dipilih
+            importFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file || file.type !== 'application/json') {
+                    console.error("File tidak valid atau bukan JSON.");
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        if (json && typeof json.content !== 'undefined') {
+                            // Impor konten.
+                            // Peringatan: Ini akan menimpa catatan saat ini.
+                            editor.innerHTML = json.content;
+                            saveNote(); // Simpan konten yang baru diimpor
+                            updateButtonStates(); // Perbarui UI
+                        } else {
+                            console.error("Format JSON tidak valid: 'content' key tidak ditemukan.");
+                        }
+                    } catch (err) {
+                        console.error("Gagal mem-parsing file JSON:", err);
+                    }
+                };
+                reader.readAsText(file);
+                
+                // Reset input file agar bisa impor file yang sama lagi
+                event.target.value = null;
+            });
+
+            // Bersihkan
+            btnClear.addEventListener('click', () => {
+                // Peringatan: Ini menghapus catatan tanpa konfirmasi
+                editor.innerHTML = '';
+                saveNote();
+                updateButtonStates();
+            });
+
+
+            // --- Logika Memperbarui Status Tombol ---
+            // Fungsi ini akan membuat tombol menjadi 'aktif' jika kursor berada di teks yang diformat
+            function updateButtonStates() {
+                // Status tombol bold/italic/underline
+                formatButtons.forEach(btnInfo => {
+                    const button = document.getElementById(btnInfo.id);
+                    if (button) {
+                        try {
+                            const isActive = document.queryCommandState(btnInfo.command);
+                            button.classList.toggle('active', isActive);
+                        } catch (e) {
+                            // queryCommandState bisa error untuk list di beberapa browser
+                            if(btnInfo.command === 'insertUnorderedList') {
+                                const listActive = document.queryCommandValue('formatBlock') === 'ul';
+                                button.classList.toggle('active', listActive);
+                            }
+                        } // <!-- FIX: Menutup blok catch (e) -->
+                    } // <!-- FIX: Menutup blok if (button) -->
+                }); // <!-- FIX: Menutup blok formatButtons.forEach -->
+
+                // Status dropdown paragraf (diganti jadi Perataan)
+                let alignFound = false;
+                alignItems.forEach(item => {
+                    const alignCommand = item.dataset.align;
+                    const isActive = document.queryCommandState(alignCommand);
+                    item.classList.toggle('active', isActive);
+                    if (isActive) {
+                        alignLabel.textContent = item.textContent;
+                        alignFound = true;
+                    }
+                });
+                if (!alignFound) {
+                    alignLabel.textContent = alignItems[0].textContent; // Default ke "Align Left"
+                    alignItems[0].classList.add('active');
+                }
+
+                // BARU: Status dropdown ukuran font
+                try {
+                    const currentSize = document.queryCommandValue('fontSize'); // "1" - "7"
+                    let sizeFound = false;
+                    if (currentSize) {
+                        fontsizeItems.forEach(item => {
+                            const isActive = (item.dataset.size === currentSize);
+                            item.classList.toggle('active', isActive);
+                            if (isActive) {
+                                fontsizeLabel.textContent = item.textContent;
+                                sizeFound = true;
+                            }
+                        });
+                    }
+                    if (!sizeFound) {
+                        fontsizeLabel.textContent = "Normal"; // Default
+                        document.querySelector('#fontsize-menu .dropdown-item[data-size="3"]').classList.add('active');
+                    }
+                } catch(e) {
+                     console.warn("Tidak bisa mendapatkan 'fontSize', mungkin editor kosong.");
+                     fontsizeLabel.textContent = "Normal";
+                }
+            }
+            
+            // Panggil updateButtonStates saat pengguna mengetik atau menggerakkan kursor
+            if (editor) {
+                editor.addEventListener('keyup', updateButtonStates);
+                editor.addEventListener('mouseup', updateButtonStates);
+                editor.addEventListener('focus', updateButtonStates);
+            }
+        });
+    </script>
+
+</body>
+</html>
