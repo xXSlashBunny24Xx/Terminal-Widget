@@ -48,6 +48,58 @@
             font-weight: 700;
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0; /* Mencegah title-bar menyusut */
+            display: flex; /* BARU: Untuk judul dan tombol edit */
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        /* BARU: Kontainer judul dan tombol edit */
+        .title-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden; /* Mencegah judul panjang merusak layout */
+        }
+        
+        #note-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* BARU: Tombol ikon (Pencil, Upload, Download, Trash, New) */
+        .icon-button {
+            background: none;
+            border: none;
+            color: var(--text-muted-color);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        
+        .icon-button:hover {
+            background-color: var(--surface-color);
+            color: var(--text-color);
+        }
+        
+        .icon-button svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        /* Tombol edit judul di title-bar */
+        #edit-title-button {
+             width: 28px;
+             height: 28px;
+        }
+        #edit-title-button svg {
+            width: 16px;
+            height: 16px;
         }
         
         /* --- Controls Bar --- */
@@ -139,6 +191,8 @@
             z-index: 10;
             padding: 5px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            max-height: 250px; /* BARU: Batas tinggi untuk daftar panjang */
+            overflow-y: auto; /* BARU: Scroll jika daftar panjang */
         }
         
         .dropdown-menu.show {
@@ -155,9 +209,52 @@
             border-radius: 4px;
             cursor: pointer;
             user-select: none; /* Mencegah teks ter-highlight */
+            white-space: nowrap; /* BARU: Mencegah judul ter-wrap */
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-
-        .dropdown-item:hover {
+        
+        /* BARU: Styling untuk item 'My Recent Note' */
+        .recent-note-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        
+        .recent-note-item .dropdown-item {
+            flex-grow: 1; /* Judul mengisi ruang */
+            padding: 8px;
+        }
+        
+        .recent-note-item .delete-note-btn {
+            /* Menggunakan gaya .icon-button tapi lebih kecil */
+            background: none;
+            border: none;
+            color: var(--text-muted-color);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, color 0.2s;
+            flex-shrink: 0; /* Mencegah tombol menyusut */
+            margin-right: 5px;
+        }
+        
+        .recent-note-item .delete-note-btn:hover {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+        
+        .recent-note-item .delete-note-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+        
+        .recent-note-item .dropdown-item:hover {
             background-color: var(--accent-color);
             color: #fff;
         }
@@ -166,6 +263,17 @@
             color: var(--text-color);
             background-color: #2e2e2e;
         }
+        
+        /* BARU: Tampilan saat dropdown recent note kosong */
+        #recent-notes-menu:empty::after {
+            content: "No recent notes";
+            display: block;
+            padding: 10px 12px;
+            font-style: italic;
+            color: var(--text-muted-color);
+            font-size: 13px;
+        }
+
         /* --- AKHIR: Styling Dropdown --- */
 
 
@@ -176,6 +284,7 @@
 
         /* Tombol Bantuan */
         .help-button {
+            /* Menggunakan gaya .control-button */
             width: 30px;
             height: 30px;
             border-radius: 50%;
@@ -294,6 +403,64 @@
             line-height: 1.7;
             font-size: 0.9em;
         }
+        
+        /* BARU: Styling untuk modal kustom */
+        .modal-input-group {
+            margin: 15px 0;
+        }
+        .modal-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .modal-input-group input {
+            width: 100%;
+            box-sizing: border-box;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 10px;
+            color: var(--text-color);
+            font-family: 'Source Code Pro', monospace;
+            font-size: 1em;
+        }
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background-color: #000;
+        }
+        /* Tombol di footer modal */
+        .modal-button {
+            font-family: 'Source Code Pro', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .modal-button.primary {
+            background-color: var(--accent-color);
+            color: #fff;
+            border: 1px solid var(--accent-color);
+        }
+        .modal-button.primary:hover {
+            background-color: #3498db;
+        }
+        .modal-button.secondary {
+            background-color: transparent;
+            color: var(--text-muted-color);
+            border: 1px solid var(--border-color);
+        }
+         .modal-button.secondary:hover {
+            background-color: var(--surface-color);
+            color: var(--text-color);
+        }
+
 
         .modal-content h3 {
             color: var(--accent-color);
@@ -337,13 +504,38 @@
 
         <!-- Judul Aplikasi -->
         <div class="title-bar">
-            Personal Note
+            <!-- BARU: Kontainer Judul Dinamis -->
+            <div class="title-container">
+                <span id="note-title">Personal Note</span>
+                <button class="icon-button" id="edit-title-button" title="Edit Note Title">
+                    <!-- SVG Ikon Pensil -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M17.56 2.44a3 3 0 0 0-4.24 0L5 10.76V15h4.24l8.32-8.32a3 3 0 0 0 0-4.24zM8.41 13H7v-1.41l6.32-6.32 1.41 1.41L8.41 13zM16.15 4.56l-1.41-1.41 1.06-1.06a1 1 0 0 1 1.41 0l.01.01a1 1 0 0 1 0 1.41l-1.07 1.05z"></path></svg>
+                </button>
+            </div>
+            
+            <!-- BARU: Grup Ikon Kanan (Tombol Bantuan, Impor, Ekspor) -->
+            <div class="title-controls-group" style="display: flex; gap: 10px; align-items: center;">
+                <!-- DIUBAH: Tombol Ikon menjadi Teks -->
+                <button class="control-button" id="btn-import" title="Import All Notes">
+                    Import
+                </button>
+                <button class="control-button" id="btn-export" title="Export All Notes">
+                    Export
+                </button>
+                <!-- DIPINDAH: Tombol New Note sekarang di sini -->
+                <button class="control-button" id="btn-new" title="New Note">
+                    New Note
+                </button>
+                <button class="control-button help-button" id="help-button">?</button>
+            </div>
         </div>
         
         <!-- Kontrol Editor -->
         <div class="controls-bar">
             
-            <!-- BARU: Dropdown Perataan Teks (Menggantikan Paragraf) -->
+            <!-- DIPINDAH: Dropdown "My Recent Note" dihapus dari sini -->
+
+            <!-- Dropdown Perataan Teks -->
             <div class="dropdown-container" id="align-dropdown">
                 <button class="dropdown-toggle" id="align-toggle">
                     <span id="align-label">Left</span>
@@ -359,7 +551,7 @@
                 </div>
             </div>
 
-            <!-- BARU: Dropdown Ukuran Font -->
+            <!-- Dropdown Ukuran Font -->
             <div class="dropdown-container" id="fontsize-dropdown">
                 <button class="dropdown-toggle" id="fontsize-toggle">
                     <span id="fontsize-label">Normal</span>
@@ -368,7 +560,6 @@
                     </svg>
                 </button>
                 <div class="dropdown-menu" id="fontsize-menu">
-                    <!-- Nilai data-size (1-7) adalah standar execCommand 'fontSize' -->
                     <a class="dropdown-item" data-size="1">X-Small</a>
                     <a class="dropdown-item" data-size="2">Small</a>
                     <a class="dropdown-item" data-size="3">Normal</a>
@@ -385,16 +576,24 @@
             <button class="control-button" id="btn-underline" title="Underline (Ctrl+U)"><u>U</u></button>
             <button class="control-button" id="btn-ul" title="Bullet List">• List</button>
 
-            <!-- BARU: Tombol Ekspor, Impor, Bersihkan -->
-            <button class="control-button" id="btn-export" title="Export Note">Export</button>
-            <button class="control-button" id="btn-import" title="Import Note">Import</button>
-            <button class="control-button" id="btn-clear" title="Clear Note">Clear</button>
+            <!-- DIHAPUS: Tombol "New Note" dipindah ke atas -->
+            <button class="control-button" id="btn-clear" title="Clear Active Note Content">Clear</button>
 
             <!-- Spacer (dari CSS Anda) -->
             <div class="spacer"></div>
-            
-            <!-- Tombol Bantuan (dari CSS Anda) -->
-            <button class="control-button help-button" id="help-button">?</button>
+
+            <!-- BARU: Dropdown "My Recent Note" dipindah ke paling kanan -->
+            <div class="dropdown-container" id="recent-dropdown">
+                <button class="dropdown-toggle" id="recent-toggle">
+                    <span>My Recent Note</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="recent-notes-menu">
+                    <!-- Item akan ditambahkan oleh JavaScript -->
+                </div>
+            </div>
         </div>
 
         <!-- Area Konten (Editor Teks) -->
@@ -411,38 +610,70 @@
     <div class="modal-overlay" id="help-modal">
         <div class="modal-window">
             <div class="modal-header">
-                <h2>Bantuan Take Note App</h2>
+                <h2>Bantuan Personal Note App</h2>
                 <button class="modal-close" id="help-modal-close">&times;</button>
             </div>
             <div class="modal-content">
                 <h3>Selamat Datang!</h3>
                 <p>
-                    Ini adalah editor catatan sederhana yang dibangun menggunakan gaya visual yang Anda berikan.
+                    Ini adalah aplikasi catatan pribadi Anda. Semua catatan disimpan di <i>local cache</i> browser Anda.
                 </p>
                 
-                <h4>Fitur Editor</h4>
-                <p>
-                    Gunakan tombol-tombol di <i>controls bar</i> (di bawah judul) untuk memformat teks Anda.
-                </p>
+                <h4>Manajemen Catatan</h4>
                 <ul>
-                    <li><b>Dropdown (cth: Align Left)</b>: Untuk mengubah perataan teks (kiri, tengah, kanan, justify).</li>
-                    <li><b>Dropdown (cth: Normal)</b>: Untuk mengubah ukuran font.</li>
-                    <li><b>B, I, U</b>: Untuk membuat teks menjadi Bold, Italic, atau Underline.</li>
-                    <li><b>• List</b>: Untuk membuat daftar poin (bullet list).</li>
+                    <li><b>Judul Catatan (Atas)</b>: Judul catatan yang sedang aktif. Klik ikon pensil di sebelahnya untuk mengganti nama.</li>
+                    <li><b>My Recent Note (di kanan)</b>: Dropdown untuk melihat dan beralih di antara semua catatan Anda. Anda juga dapat menghapus catatan dari daftar ini menggunakan ikon tempat sampah.</li>
+                    <li><b>New Note (di bar atas)</b>: Membuat catatan baru yang kosong dan menyimpannya ke daftar Anda.</li>
+                    <li><b>Clear</b>: Menghapus <i>seluruh isi</i> catatan yang sedang Anda buka.</li>
                 </ul>
 
                 <h4>Penyimpanan & Ekspor/Impor</h4>
                 <ul>
-                    <li><b>Penyimpanan Otomatis</b>: Catatan Anda disimpan secara otomatis di browser (local cache) setiap kali Anda mengetik.</li>
-                    <li><b>Export</b>: Mengunduh catatan Anda saat ini sebagai file <code>note.json</code>.</li>
-                    <li><b>Import</b>: Membuka file <code>.json</code> dari komputer Anda untuk dimuat ke editor (akan menimpa catatan saat ini).</li>
-                    <li><b>Clear</b>: Menghapus semua konten di editor.</li>
+                    <li><b>Penyimpanan Otomatis</b>: Catatan Anda disimpan secara otomatis setiap kali Anda mengetik.</li>
+                    <li><b>Export</b>: Mengunduh <i>semua</i> catatan Anda sebagai satu file <code>personal_notes.json</code>.</li>
+                    <li><b>Import</b>: Membuka file <code>.json</code> untuk mengganti semua catatan Anda saat ini.</li>
                 </ul>
                 
-                <h4>Area Penulisan</h4>
+                <h4>Fitur Editor</h4>
                 <p>
-                    Area utama di bawah <i>controls bar</i> adalah tempat Anda menulis. Klik di sana dan mulailah mengetik. Semua catatan Anda bersifat sementara dan hanya ada di sesi browser ini.
+                    Gunakan tombol-tombol di <i>controls bar</i> untuk memformat teks Anda (Perataan, Ukuran Font, Bold, Italic, Underline, dan List).
                 </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- BARU: Modal untuk Edit Judul -->
+    <div class="modal-overlay" id="edit-title-modal">
+        <div class="modal-window" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2>Edit Note Title</h2>
+                <button class="modal-close" id="edit-title-modal-close">&times;</button>
+            </div>
+            <div class="modal-content">
+                 <div class="modal-input-group">
+                    <label for="note-title-input">Note Title</label>
+                    <input type="text" id="note-title-input" placeholder="Masukkan judul catatan...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-button secondary" id="edit-title-cancel">Cancel</button>
+                <button class="modal-button primary" id="edit-title-save">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- BARU: Modal untuk Konfirmasi (Hapus, Impor, Bersihkan) -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-window" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="confirm-modal-title">Confirmation</h2>
+            </div>
+            <div class="modal-content">
+                <p id="confirm-modal-text">Apakah Anda yakin ingin melanjutkan?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-button secondary" id="confirm-modal-cancel">Cancel</button>
+                <button class="modal-button primary" id="confirm-modal-ok">OK</button>
             </div>
         </div>
     </div>
@@ -451,186 +682,307 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
+            // --- Selektor Elemen ---
             const editor = document.getElementById('note-editor');
-            const STORAGE_KEY = 'take-note-app-content';
             
-            // --- Logika Modal Bantuan ---
+            // Elemen UI Utama
+            const noteTitleElement = document.getElementById('note-title');
+            const editTitleButton = document.getElementById('edit-title-button');
+            const recentDropdown = document.getElementById('recent-dropdown');
+            const recentToggle = document.getElementById('recent-toggle');
+            const recentNotesMenu = document.getElementById('recent-notes-menu');
+
+            // Modal Bantuan
             const helpButton = document.getElementById('help-button');
             const helpModal = document.getElementById('help-modal');
             const helpModalClose = document.getElementById('help-modal-close');
+            
+            // Modal Edit Judul
+            const editTitleModal = document.getElementById('edit-title-modal');
+            const editTitleModalClose = document.getElementById('edit-title-modal-close');
+            const editTitleInput = document.getElementById('note-title-input');
+            const editTitleSave = document.getElementById('edit-title-save');
+            const editTitleCancel = document.getElementById('edit-title-cancel');
+            
+            // Modal Konfirmasi
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmModalTitle = document.getElementById('confirm-modal-title');
+            const confirmModalText = document.getElementById('confirm-modal-text');
+            const confirmModalOk = document.getElementById('confirm-modal-ok');
+            const confirmModalCancel = document.getElementById('confirm-modal-cancel');
 
-            if (helpButton && helpModal && helpModalClose) {
-                helpButton.addEventListener('click', () => {
-                    helpModal.classList.add('show');
-                });
-                helpModalClose.addEventListener('click', () => {
-                    helpModal.classList.remove('show');
-                });
-                // Tutup modal jika klik di luar window
-                helpModal.addEventListener('click', (e) => {
-                    if (e.target === helpModal) {
-                        helpModal.classList.remove('show');
-                    }
-                });
-            }
-
-            // --- BARU: Logika Penyimpanan (LocalStorage) ---
-
-            // Muat catatan saat aplikasi dibuka
-            function loadNote() {
-                const savedContent = localStorage.getItem(STORAGE_KEY);
-                if (savedContent) {
-                    editor.innerHTML = savedContent;
-                }
-            }
-
-            // Simpan catatan setiap kali ada input
-            function saveNote() {
-                localStorage.setItem(STORAGE_KEY, editor.innerHTML);
-            }
-
-            // Panggil loadNote saat DOM siap
-            loadNote();
-            // Mulai menyimpan setiap kali ada input
-            editor.addEventListener('input', saveNote);
-
-
-            // --- Logika Tombol Format Sederhana ---
-            const formatButtons = [
-                { id: 'btn-bold', command: 'bold' },
-                { id: 'btn-italic', command: 'italic' },
-                { id: 'btn-underline', command: 'underline' },
-                { id: 'btn-ul', command: 'insertUnorderedList' },
-            ];
-
-            formatButtons.forEach(btnInfo => {
-                const button = document.getElementById(btnInfo.id);
-                if (button) {
-                    button.addEventListener('click', () => {
-                        document.execCommand(btnInfo.command, false, null);
-                        editor.focus(); // Kembalikan fokus ke editor setelah klik tombol
-                        updateButtonStates(); // Perbarui status tombol
-                    });
-                }
-            });
-
-            // --- BARU: Logika Dropdown Perataan Teks ---
-            const alignDropdown = document.getElementById('align-dropdown');
-            const alignToggle = document.getElementById('align-toggle');
-            const alignMenu = document.getElementById('align-menu');
-            const alignLabel = document.getElementById('align-label');
-            const alignItems = alignMenu.querySelectorAll('.dropdown-item');
-
-            if (alignDropdown && alignToggle && alignMenu) {
-                // Buka/Tutup menu
-                alignToggle.addEventListener('click', () => {
-                    alignDropdown.classList.toggle('open');
-                    alignMenu.classList.toggle('show');
-                });
-
-                // Aksi saat item dipilih
-                alignItems.forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const alignCommand = item.dataset.align;
-                        document.execCommand(alignCommand, false, null);
-                        
-                        alignLabel.textContent = item.textContent; // Update label tombol
-                        
-                        // Tutup dropdown
-                        alignDropdown.classList.remove('open');
-                        alignMenu.classList.remove('show');
-                        
-                        editor.focus();
-                        updateButtonStates();
-                    });
-                });
-
-                // Tutup dropdown jika klik di luar
-                document.addEventListener('click', (e) => {
-                    if (!alignDropdown.contains(e.target)) {
-                        alignDropdown.classList.remove('open');
-                        alignMenu.classList.remove('show');
-                    }
-                });
-            }
-
-            // --- BARU: Logika Dropdown Ukuran Font ---
-            const fontsizeDropdown = document.getElementById('fontsize-dropdown');
-            const fontsizeToggle = document.getElementById('fontsize-toggle');
-            const fontsizeMenu = document.getElementById('fontsize-menu');
-            const fontsizeLabel = document.getElementById('fontsize-label');
-            const fontsizeItems = fontsizeMenu.querySelectorAll('.dropdown-item');
-
-            if (fontsizeDropdown && fontsizeToggle && fontsizeMenu) {
-                // Buka/Tutup menu
-                fontsizeToggle.addEventListener('click', () => {
-                    fontsizeDropdown.classList.toggle('open');
-                    fontsizeMenu.classList.toggle('show');
-                });
-
-                // Aksi saat item dipilih
-                fontsizeItems.forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const size = item.dataset.size;
-                        document.execCommand('fontSize', false, size);
-                        
-                        fontsizeLabel.textContent = item.textContent; // Update label tombol
-                        
-                        // Tutup dropdown
-                        fontsizeDropdown.classList.remove('open');
-                        fontsizeMenu.classList.remove('show');
-                        
-                        editor.focus();
-                        updateButtonStates();
-                    });
-                });
-
-                // Tutup dropdown jika klik di luar
-                document.addEventListener('click', (e) => {
-                    if (!fontsizeDropdown.contains(e.target)) {
-                        fontsizeDropdown.classList.remove('open');
-                        fontsizeMenu.classList.remove('show');
-                    }
-                });
-            }
-
-
-            // --- BARU: Logika Tombol Ekspor / Impor / Bersihkan ---
+            // Tombol Aksi
+            const btnNew = document.getElementById('btn-new');
+            const btnClear = document.getElementById('btn-clear');
             const btnExport = document.getElementById('btn-export');
             const btnImport = document.getElementById('btn-import');
-            const btnClear = document.getElementById('btn-clear');
             const importFileInput = document.getElementById('import-file');
 
-            // Ekspor
-            btnExport.addEventListener('click', () => {
-                const content = editor.innerHTML;
-                const data = {
-                    appName: "Take Note App",
-                    exportedAt: new Date().toISOString(),
-                    content: content
+            // --- Kunci Penyimpanan ---
+            const DB_STORAGE_KEY = 'personal-notes-db';
+
+            // --- State Aplikasi ---
+            let appState = {
+                activeNoteId: null,
+                notes: []
+            };
+            
+            // Variabel untuk menyimpan callback konfirmasi
+            let confirmOkCallback = null;
+
+            // --- Inisialisasi Aplikasi ---
+            function initApp() {
+                loadDatabase();
+                setupAllListeners();
+                renderApp();
+            }
+
+            // --- Manajemen Database (LocalStorage) ---
+
+            function loadDatabase() {
+                const dbString = localStorage.getItem(DB_STORAGE_KEY);
+                let db = JSON.parse(dbString);
+
+                if (!db || !db.notes) {
+                    // Database tidak ada, buat note pertama
+                    db = {
+                        activeNoteId: null,
+                        notes: []
+                    };
+                }
+                
+                if (db.notes.length === 0) {
+                     // Jika tidak ada notes, buat satu
+                    const newNote = createNewNoteObject("My First Note", "<p>Selamat datang di Personal Note!</p>");
+                    db.notes.push(newNote);
+                    db.activeNoteId = newNote.id;
+                }
+                
+                if (!db.activeNoteId || !db.notes.find(n => n.id === db.activeNoteId)) {
+                    // Jika activeNoteId tidak valid, set ke note terbaru
+                    db.notes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                    db.activeNoteId = db.notes[0].id;
+                }
+
+                appState = db;
+                saveDatabase();
+            }
+            
+            function saveDatabase() {
+                localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(appState));
+            }
+
+            // --- Fungsi Render UI ---
+
+            function renderApp() {
+                renderTitleBar();
+                renderRecentNotesDropdown();
+                loadActiveNoteToEditor();
+                updateButtonStates();
+            }
+            
+            function renderTitleBar() {
+                const activeNote = getActiveNote();
+                if (activeNote) {
+                    noteTitleElement.textContent = activeNote.title;
+                    noteTitleElement.title = activeNote.title; // Tooltip jika judul panjang
+                }
+            }
+
+            function renderRecentNotesDropdown() {
+                recentNotesMenu.innerHTML = ''; // Kosongkan menu
+                
+                // Urutkan notes berdasarkan tanggal update terbaru
+                const sortedNotes = [...appState.notes].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+                sortedNotes.forEach(note => {
+                    const itemContainer = document.createElement('div');
+                    itemContainer.className = 'recent-note-item';
+
+                    // Tombol Judul Note
+                    const titleLink = document.createElement('a');
+                    titleLink.className = 'dropdown-item';
+                    titleLink.textContent = note.title;
+                    titleLink.dataset.noteId = note.id;
+                    if (note.id === appState.activeNoteId) {
+                        titleLink.classList.add('active');
+                    }
+                    titleLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        switchActiveNote(note.id);
+                        closeAllDropdowns();
+                    });
+
+                    // Tombol Hapus
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-note-btn';
+                    deleteBtn.dataset.noteId = note.id;
+                    deleteBtn.title = `Delete "${note.title}"`;
+                    deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M15 4h-3.5l-1-1h-5l-1 1H1v2h18V4zM5 18a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7H5v11z"></path></svg>`;
+                    
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Hentikan event agar dropdown tidak tertutup
+                        showConfirmModal(
+                            "Delete Note?",
+                            `Are you sure you want to delete "${note.title}"? This action cannot be undone.`,
+                            () => deleteNote(note.id)
+                        );
+                    });
+
+                    itemContainer.appendChild(titleLink);
+                    itemContainer.appendChild(deleteBtn);
+                    recentNotesMenu.appendChild(itemContainer);
+                });
+            }
+            
+            function loadActiveNoteToEditor() {
+                const activeNote = getActiveNote();
+                if (activeNote) {
+                    // Cek jika konten editor berbeda sebelum menimpanya
+                    // untuk menghindari reset kursor
+                    if (editor.innerHTML !== activeNote.content) {
+                         editor.innerHTML = activeNote.content;
+                    }
+                } else {
+                    // Seharusnya tidak terjadi jika initApp benar
+                    editor.innerHTML = ''; 
+                }
+            }
+
+            // --- Fungsi Helper Note ---
+            
+            function getActiveNote() {
+                return appState.notes.find(n => n.id === appState.activeNoteId);
+            }
+            
+            function createNewNoteObject(title, content = "") {
+                 return {
+                    id: crypto.randomUUID(),
+                    title: title,
+                    content: content,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
                 };
+            }
+            
+            function switchActiveNote(noteId) {
+                if (noteId === appState.activeNoteId) return; // Sudah aktif
+                
+                appState.activeNoteId = noteId;
+                saveDatabase();
+                renderApp();
+            }
+
+            // --- Logika Aksi Note ---
+
+            function handleNewNote() {
+                const noteCount = appState.notes.length + 1;
+                const newNote = createNewNoteObject(`Untitled Note ${noteCount}`);
+                appState.notes.push(newNote);
+                appState.activeNoteId = newNote.id;
+                
+                saveDatabase();
+                renderApp();
+                editor.focus();
+            }
+            
+            function handleClearNote() {
+                showConfirmModal(
+                    "Clear Note Content?",
+                    "Are you sure you want to erase all content from this note? This cannot be undone.",
+                    () => {
+                        editor.innerHTML = '';
+                        handleEditorInput(); // Simpan perubahan (konten kosong)
+                        editor.focus();
+                    }
+                );
+            }
+
+            function handleEditorInput() {
+                const activeNote = getActiveNote();
+                if (activeNote) {
+                    activeNote.content = editor.innerHTML;
+                    activeNote.updatedAt = new Date().toISOString();
+                    // Simpan database (mungkin perlu di-debounce jika performa jadi isu)
+                    saveDatabase();
+                }
+            }
+            
+            function handleEditTitle() {
+                const activeNote = getActiveNote();
+                if (!activeNote) return;
+                
+                editTitleInput.value = activeNote.title;
+                editTitleModal.classList.add('show');
+                editTitleInput.focus();
+                editTitleInput.select();
+            }
+            
+            function handleSaveTitle() {
+                const newTitle = editTitleInput.value.trim();
+                if (newTitle) {
+                    const activeNote = getActiveNote();
+                    if (activeNote) {
+                        activeNote.title = newTitle;
+                        activeNote.updatedAt = new Date().toISOString();
+                        saveDatabase();
+                        renderApp();
+                    }
+                    editTitleModal.classList.remove('show');
+                }
+            }
+            
+            function deleteNote(noteId) {
+                appState.notes = appState.notes.filter(n => n.id !== noteId);
+
+                // Jika note yang dihapus adalah note aktif
+                if (appState.activeNoteId === noteId) {
+                    // Jika masih ada note lain, pindah ke yang terbaru
+                    if (appState.notes.length > 0) {
+                        appState.notes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                        appState.activeNoteId = appState.notes[0].id;
+                    } else {
+                        // Jika tidak ada note tersisa, buat note baru
+                        const newNote = createNewNoteObject("My First Note", "<p>Selamat datang kembali!</p>");
+                        appState.notes.push(newNote);
+                        appState.activeNoteId = newNote.id;
+                    }
+                }
+                
+                saveDatabase();
+                renderApp();
+                closeAllDropdowns();
+            }
+            
+            // --- Logika Ekspor / Impor ---
+
+            function handleExport() {
+                // Ekspor semua notes
+                const data = appState;
                 const jsonString = JSON.stringify(data, null, 2);
                 const blob = new Blob([jsonString], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'note.json';
+                a.download = 'personal_notes.json';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-            });
-
-            // Impor (trigger klik file input)
-            btnImport.addEventListener('click', () => {
-                importFileInput.click();
-            });
-
-            // Handler saat file dipilih
-            importFileInput.addEventListener('change', (event) => {
+            }
+            
+            function handleImport() {
+                 showConfirmModal(
+                    "Import Notes?",
+                    "Importing will replace ALL your current notes. This action cannot be undone. Are you sure?",
+                    () => {
+                        importFileInput.click();
+                    }
+                );
+            }
+            
+            function handleImportFile(event) {
                 const file = event.target.files[0];
                 if (!file || file.type !== 'application/json') {
                     console.error("File tidak valid atau bukan JSON.");
@@ -641,36 +993,202 @@
                 reader.onload = (e) => {
                     try {
                         const json = JSON.parse(e.target.result);
-                        if (json && typeof json.content !== 'undefined') {
-                            // Impor konten.
-                            // Peringatan: Ini akan menimpa catatan saat ini.
-                            editor.innerHTML = json.content;
-                            saveNote(); // Simpan konten yang baru diimpor
-                            updateButtonStates(); // Perbarui UI
+                        // Validasi format file impor
+                        if (json && json.notes && typeof json.activeNoteId !== 'undefined') {
+                            appState = json; // Timpa state saat ini
+                            
+                            // Pastikan note aktif ada
+                            if (!appState.notes.find(n => n.id === appState.activeNoteId)) {
+                                 appState.activeNoteId = appState.notes.length > 0 ? appState.notes[0].id : null;
+                            }
+                            
+                            saveDatabase();
+                            renderApp();
                         } else {
-                            console.error("Format JSON tidak valid: 'content' key tidak ditemukan.");
+                            console.error("Format JSON tidak valid.");
                         }
                     } catch (err) {
                         console.error("Gagal mem-parsing file JSON:", err);
                     }
                 };
                 reader.readAsText(file);
+                event.target.value = null; // Reset input file
+            }
+
+
+            // --- Logika Modal Kustom ---
+            
+            function showConfirmModal(title, text, onOk) {
+                confirmModalTitle.textContent = title;
+                confirmModalText.textContent = text;
+                confirmOkCallback = onOk;
+                confirmModal.classList.add('show');
+            }
+            
+            function closeConfirmModal() {
+                confirmModal.classList.remove('show');
+                confirmOkCallback = null;
+            }
+            
+            // --- Setup Event Listeners ---
+            
+            function setupAllListeners() {
                 
-                // Reset input file agar bisa impor file yang sama lagi
-                event.target.value = null;
-            });
+                // Editor
+                editor.addEventListener('input', handleEditorInput);
 
-            // Bersihkan
-            btnClear.addEventListener('click', () => {
-                // Peringatan: Ini menghapus catatan tanpa konfirmasi
-                editor.innerHTML = '';
-                saveNote();
-                updateButtonStates();
-            });
+                // Aksi Note
+                btnNew.addEventListener('click', handleNewNote);
+                btnClear.addEventListener('click', handleClearNote);
+                editTitleButton.addEventListener('click', handleEditTitle);
+                
+                // Ekspor / Impor
+                btnExport.addEventListener('click', handleExport);
+                btnImport.addEventListener('click', handleImport);
+                importFileInput.addEventListener('change', handleImportFile);
 
+                // Modal Bantuan
+                helpButton.addEventListener('click', () => helpModal.classList.add('show'));
+                helpModalClose.addEventListener('click', () => helpModal.classList.remove('show'));
+                helpModal.addEventListener('click', (e) => {
+                    if (e.target === helpModal) helpModal.classList.remove('show');
+                });
+                
+                // Modal Edit Judul
+                editTitleSave.addEventListener('click', handleSaveTitle);
+                editTitleInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') handleSaveTitle();
+                    if (e.key === 'Escape') editTitleModal.classList.remove('show');
+                });
+                editTitleCancel.addEventListener('click', () => editTitleModal.classList.remove('show'));
+                editTitleModalClose.addEventListener('click', () => editTitleModal.classList.remove('show'));
+                editTitleModal.addEventListener('click', (e) => {
+                    if (e.target === editTitleModal) editTitleModal.classList.remove('show');
+                });
+                
+                // Modal Konfirmasi
+                confirmModalOk.addEventListener('click', () => {
+                    if (confirmOkCallback) {
+                        confirmOkCallback();
+                    }
+                    closeConfirmModal();
+                });
+                confirmModalCancel.addEventListener('click', closeConfirmModal);
+                confirmModal.addEventListener('click', (e) => {
+                    if (e.target === confirmModal) closeConfirmModal();
+                });
 
-            // --- Logika Memperbarui Status Tombol ---
-            // Fungsi ini akan membuat tombol menjadi 'aktif' jika kursor berada di teks yang diformat
+                // Setup listener untuk tombol format (dari kode sebelumnya)
+                setupFormatButtonListeners();
+                
+                // Setup listener untuk dropdown (dari kode sebelumnya)
+                setupDropdownListeners();
+            }
+            
+            // --- Logika Tombol Format (Sama seperti sebelumnya) ---
+            
+            const formatButtons = [
+                { id: 'btn-bold', command: 'bold' },
+                { id: 'btn-italic', command: 'italic' },
+                { id: 'btn-underline', command: 'underline' },
+                { id: 'btn-ul', command: 'insertUnorderedList' },
+            ];
+
+            function setupFormatButtonListeners() {
+                formatButtons.forEach(btnInfo => {
+                    const button = document.getElementById(btnInfo.id);
+                    if (button) {
+                        button.addEventListener('click', () => {
+                            document.execCommand(btnInfo.command, false, null);
+                            editor.focus();
+                            updateButtonStates();
+                        });
+                    }
+                });
+                
+                // Listener untuk update status tombol
+                editor.addEventListener('keyup', updateButtonStates);
+                editor.addEventListener('mouseup', updateButtonStates);
+                editor.addEventListener('focus', updateButtonStates);
+            }
+            
+            // --- Logika Dropdown (Align, Fontsize, RecentNotes) ---
+            
+            function setupDropdownListeners() {
+                // Helper untuk menutup semua dropdown
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.dropdown-container')) {
+                        closeAllDropdowns();
+                    }
+                });
+                
+                // Setup per dropdown
+                setupSingleDropdown('align-dropdown', 'align-label', 'align-menu', (item) => {
+                    document.execCommand(item.dataset.align, false, null);
+                    editor.focus();
+                    updateButtonStates();
+                });
+                
+                setupSingleDropdown('fontsize-dropdown', 'fontsize-label', 'fontsize-menu', (item) => {
+                    document.execCommand('fontSize', false, item.dataset.size);
+                    editor.focus();
+                    updateButtonStates();
+                });
+                
+                // Dropdown recent notes ditangani secara terpisah karena lebih kompleks
+                 if (recentDropdown && recentToggle) {
+                    recentToggle.addEventListener('click', () => {
+                        const isOpen = recentDropdown.classList.contains('open');
+                        closeAllDropdowns();
+                        if (!isOpen) {
+                            recentDropdown.classList.add('open');
+                            recentNotesMenu.classList.add('show');
+                        }
+                    });
+                }
+            }
+
+            function setupSingleDropdown(containerId, labelId, menuId, itemCallback) {
+                const container = document.getElementById(containerId);
+                const toggle = container.querySelector('.dropdown-toggle');
+                const label = document.getElementById(labelId);
+                const menu = document.getElementById(menuId);
+                const items = menu.querySelectorAll('.dropdown-item');
+
+                if (container && toggle && menu) {
+                    toggle.addEventListener('click', () => {
+                        const isOpen = container.classList.contains('open');
+                        closeAllDropdowns(); // Tutup semua dulu
+                        if (!isOpen) {
+                            container.classList.toggle('open');
+                            menu.classList.toggle('show');
+                        }
+                    });
+
+                    items.forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            if (label) {
+                                label.textContent = item.textContent;
+                            }
+                            itemCallback(item);
+                            closeAllDropdowns();
+                        });
+                    });
+                }
+            }
+            
+            function closeAllDropdowns() {
+                document.querySelectorAll('.dropdown-container').forEach(d => {
+                    d.classList.remove('open');
+                });
+                document.querySelectorAll('.dropdown-menu').forEach(m => {
+                    m.classList.remove('show');
+                });
+            }
+
+            // --- Logika Update Status Tombol (Sama seperti sebelumnya) ---
+            
             function updateButtonStates() {
                 // Status tombol bold/italic/underline
                 formatButtons.forEach(btnInfo => {
@@ -680,36 +1198,43 @@
                             const isActive = document.queryCommandState(btnInfo.command);
                             button.classList.toggle('active', isActive);
                         } catch (e) {
-                            // queryCommandState bisa error untuk list di beberapa browser
                             if(btnInfo.command === 'insertUnorderedList') {
-                                const listActive = document.queryCommandValue('formatBlock') === 'ul';
-                                button.classList.toggle('active', listActive);
+                                // Coba cek node terdekat
+                                let node = document.getSelection().anchorNode;
+                                if(node) {
+                                    const listActive = node.parentNode.closest('ul');
+                                    button.classList.toggle('active', !!listActive);
+                                }
                             }
-                        } // <!-- FIX: Menutup blok catch (e) -->
-                    } // <!-- FIX: Menutup blok if (button) -->
-                }); // <!-- FIX: Menutup blok formatButtons.forEach -->
+                        } 
+                    } 
+                }); 
 
-                // Status dropdown paragraf (diganti jadi Perataan)
+                // Status dropdown perataan
+                const alignLabel = document.getElementById('align-label');
+                const alignItems = document.querySelectorAll('#align-menu .dropdown-item');
                 let alignFound = false;
                 alignItems.forEach(item => {
                     const alignCommand = item.dataset.align;
                     const isActive = document.queryCommandState(alignCommand);
                     item.classList.toggle('active', isActive);
-                    if (isActive) {
+                    if (isActive && alignLabel) {
                         alignLabel.textContent = item.textContent;
                         alignFound = true;
                     }
                 });
-                if (!alignFound) {
-                    alignLabel.textContent = alignItems[0].textContent; // Default ke "Align Left"
+                if (!alignFound && alignLabel) {
+                    alignLabel.textContent = alignItems[0].textContent; // Default ke "Left"
                     alignItems[0].classList.add('active');
                 }
 
-                // BARU: Status dropdown ukuran font
+                // Status dropdown ukuran font
+                const fontsizeLabel = document.getElementById('fontsize-label');
+                const fontsizeItems = document.querySelectorAll('#fontsize-menu .dropdown-item');
                 try {
                     const currentSize = document.queryCommandValue('fontSize'); // "1" - "7"
                     let sizeFound = false;
-                    if (currentSize) {
+                    if (currentSize && fontsizeLabel) {
                         fontsizeItems.forEach(item => {
                             const isActive = (item.dataset.size === currentSize);
                             item.classList.toggle('active', isActive);
@@ -719,22 +1244,17 @@
                             }
                         });
                     }
-                    if (!sizeFound) {
+                    if (!sizeFound && fontsizeLabel) {
                         fontsizeLabel.textContent = "Normal"; // Default
                         document.querySelector('#fontsize-menu .dropdown-item[data-size="3"]').classList.add('active');
                     }
                 } catch(e) {
-                     console.warn("Tidak bisa mendapatkan 'fontSize', mungkin editor kosong.");
-                     fontsizeLabel.textContent = "Normal";
+                     if (fontsizeLabel) fontsizeLabel.textContent = "Normal";
                 }
             }
             
-            // Panggil updateButtonStates saat pengguna mengetik atau menggerakkan kursor
-            if (editor) {
-                editor.addEventListener('keyup', updateButtonStates);
-                editor.addEventListener('mouseup', updateButtonStates);
-                editor.addEventListener('focus', updateButtonStates);
-            }
+            // --- Mulai Aplikasi ---
+            initApp();
         });
     </script>
 
