@@ -3,456 +3,678 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Market News Feed</title>
+    <title>Catalyst Explorer</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        /* CSS Theme yang Anda berikan */
+        :root {
+            /* --- UNIFIED PALETTE --- */
+            --bg-app: #050505;
+            --bg-panel: #0a0a0a;
+            --bg-card: #080808;
+            --bg-card-hover: #0f0f0f;
+            
+            --border-subtle: #1f1f1f;
+            --border-accent: #333333;
+            
+            --text-primary: #ffffff;
+            --text-secondary: #e5e5e5;
+            --text-muted: #888888;
+            
+            --brand-orange: #ff6600;
+            
+            /* Sentiment Colors */
+            --bullish: #00e676; 
+            --bearish: #ff1744; 
+            
+            /* Impact Colors */
+            --impact-high: #ff1744;    /* Red */
+            --impact-medium: #ff9100;  /* Orange */
+            --impact-low: #9e9e9e;     /* Grey */
+        }
+
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; }
+        
         html, body {
             margin: 0;
             padding: 0;
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
             height: 100%;
             width: 100%;
-            font-family: 'Source Code Pro', monospace;
-            background-color: #000;
-            color: #f0f0f0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .table-container {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            background-color: #000;
-            border: 1px solid #222;
-            border-radius: 0;
             overflow: hidden;
-            height: 100vh; /* Memastikan container memenuhi tinggi viewport */
+            display: flex;
+            flex-direction: column;
         }
 
-        .title-bar {
-            background-color: #1a1a1a;
-            color: #fff;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: Bold;
-            text-align: left;
-            border-radius: 0;
-            padding-left: 12px;
-            border-bottom: 1px solid #222;
-            flex-shrink: 0;
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0 auto;
         }
-        
-        /* BARU: Filter & Search Bar Container */
-        .filter-container {
-            background-color: #0d0d0d;
-            padding: 12px;
+
+        /* --- HEADER & FILTERS --- */
+        .header-section {
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .brand-bar {
+            display: flex;
+            align-items: center;
+        }
+
+        .brand-title {
+            font-family: 'Source Code Pro', monospace;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 1px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-title::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--brand-orange);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--brand-orange);
+        }
+
+        /* Filter Controls */
+        .filter-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            border-bottom: 1px solid #222;
-            flex-shrink: 0;
+            gap: 12px;
+            align-items: flex-end;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 6px;
         }
         
         .filter-label {
-            font-size: 11px;
-            color: #888;
-            text-transform: uppercase;
-        }
-
-        .filter-select, #search-input {
-            background-color: #1a1a1a;
-            border: 1px solid #333;
-            padding: 6px 8px;
-            color: #fff;
-            border-radius: 5px;
             font-family: 'Source Code Pro', monospace;
-            font-size: 13px;
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        #search-input {
-            min-width: 200px;
+        .filter-input {
+            background-color: var(--bg-app);
+            border: 1px solid var(--border-accent);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Source Code Pro', monospace;
+            font-size: 12px;
+            min-width: 140px;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        /* Kontainer berita */
-        .news-container {
+        .filter-input:focus { border-color: var(--brand-orange); }
+
+        #search-input { min-width: 240px; flex: 1; }
+
+        /* --- FEED CONTAINER --- */
+        .feed-container {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
+            padding: 0;
+            scroll-behavior: smooth;
+        }
+
+        /* --- CARD ITEM --- */
+        .news-card {
+            border-bottom: 1px solid var(--border-subtle);
+            background-color: var(--bg-app);
+            transition: background-color 0.2s ease;
+        }
+
+        /* 1. Header (Depan / List View) */
+        .card-header {
+            padding: 18px 24px;
+            cursor: pointer;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-        }
-        
-        /* Setiap item berita */
-        .news-item {
-            background-color: #1a1a1a; /* Latar belakang default untuk Low Impact */
-            padding: 12px;
-            border-radius: 5px;
-            border: 1px solid #222; 
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.2s ease-in-out, box-shadow 0.3s ease, background-color 0.3s ease;
-        }
-        
-        .news-item.impact-bg-high {
-            background-color: #4c1d1d; 
-            border-color: #8a2a2a; 
+            gap: 8px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
         }
 
-        .news-item.impact-bg-medium {
-            background-color: #573a0a;
-            border-color: #b37400;
+        .card-header:hover { background-color: var(--bg-card-hover); }
+
+        .news-card.active .card-header {
+            background-color: #0c0c0c;
+            border-left-color: var(--brand-orange);
         }
 
-        .news-title {
-            font-size: 16px; 
-            font-weight: 700;
-            color: #eee;
-            margin-bottom: 8px;
-        }
+        /* Impact Border Colors */
+        .news-card.impact-high .card-header { border-left-color: var(--impact-high); }
+        .news-card.impact-medium .card-header { border-left-color: var(--impact-medium); }
+        .news-card.impact-low .card-header { border-left-color: var(--border-subtle); }
 
-        .news-content {
-            font-size: 14px;
-            color: #ccc;
-            line-height: 1.5;
-            margin-bottom: 12px;
-        }
-        
-        .news-meta {
-            font-size: 12px;
-            color: #aaa;
-            margin-top: auto;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        .header-top {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            align-items: flex-start;
+            gap: 16px;
         }
-        
-        .meta-tags-container {
+
+        .headline {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .timestamp {
+            font-family: 'Source Code Pro', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            margin-top: 4px;
+        }
+
+        .header-meta {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            margin-top: 4px;
         }
 
-        .news-tag {
-            font-size: 11px;
-            color: #fff;
+        .tag {
+            font-family: 'Source Code Pro', monospace;
+            font-size: 10px;
             padding: 3px 8px;
             border-radius: 4px;
-            white-space: nowrap;
+            text-transform: uppercase;
+            font-weight: 600;
+            border: 1px solid transparent;
         }
 
-        .category-tag { background-color: #2980b9; } 
-        .category-country-tag { background-color: #7f8c8d; }
+        .tag.impact { background: rgba(255, 255, 255, 0.05); border-color: var(--border-accent); }
+        /* Robust string matching for impact classes in JS */
+        .tag.impact.High { color: var(--impact-high); border-color: rgba(255, 23, 68, 0.3); background: rgba(255, 23, 68, 0.05); }
+        .tag.impact.Medium { color: var(--impact-medium); border-color: rgba(255, 145, 0, 0.3); background: rgba(255, 145, 0, 0.05); }
+        
+        .tag.region { background: #1a1a1a; color: #aaa; }
+        .tag.category { background: #1a1a1a; color: var(--brand-orange); }
 
-        .status-message {
-            color: #888;
-            text-align: center;
-            padding: 40px;
-            font-style: italic;
-            font-size: 1.2em;
+        /* 2. Body (Belakang / Detail View) */
+        .card-body {
+            display: none;
+            background-color: var(--bg-card);
+            padding: 0 24px 32px 24px;
+            border-top: 1px solid var(--border-subtle);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .news-card.active .card-body { display: block; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .detail-section-title {
+            font-family: 'Source Code Pro', monospace;
+            font-size: 11px;
+            color: var(--brand-orange);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 24px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.15); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background-color: rgba(255,255,255,0.25); }
-        html { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+        .detail-section-title::before {
+            content: ''; width: 12px; height: 1px; background: var(--brand-orange); display: block;
+        }
 
-        /* MODIFIKASI: Animasi blink untuk berita baru */
-        @keyframes newItemBlink {
-            50% {
-                background-color: #f0f0f0;
-            }
+        .analysis-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            max-width: 900px;
+            padding-left: 20px;
+            border-left: 1px solid var(--border-subtle);
         }
-        @keyframes newItemBlinkText {
-            50% {
-                color: #1a1a1a;
-            }
+
+        /* Impact Grid */
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+            border: 1px solid var(--border-subtle);
         }
-        .new-item-blink {
-            animation: newItemBlink 1.5s ease-in-out;
+
+        .grid-item h4 {
+            font-family: 'Source Code Pro', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
         }
-        .new-item-blink .news-title,
-        .new-item-blink .news-content,
-        .new-item-blink .news-meta,
-        .new-item-blink .news-meta span,
-        .new-item-blink .news-tag {
-            animation: newItemBlinkText 1.5s ease-in-out;
+        
+        .grid-item p {
+            font-size: 13px;
+            margin: 0;
+            color: #fff;
+            line-height: 1.4;
+        }
+
+        /* Risk Box */
+        .risk-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .risk-box {
+            padding: 16px;
+            border-radius: 4px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .risk-box h5 {
+            margin: 0 0 8px 0;
+            font-family: 'Source Code Pro', monospace;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .risk-box.upside h5 { color: var(--bullish); }
+        .risk-box.downside h5 { color: var(--bearish); }
+        .risk-box p { font-size: 12px; margin: 0; color: #ccc; }
+
+        .original-preview {
+            margin-top: 24px;
+            padding: 12px;
+            background: #111;
+            font-family: 'Source Code Pro', monospace;
+            font-size: 12px;
+            color: #777;
+            border-left: 2px solid #333;
+        }
+
+        /* Animation */
+        @keyframes flashNew {
+            0% { background-color: #222; }
+            100% { background-color: transparent; }
+        }
+        .flash-new .card-header { animation: flashNew 2s ease-out; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .impact-grid, .risk-container { grid-template-columns: 1fr; }
+            .header-top { flex-direction: column; gap: 4px; }
+        }
+        
+        .status-message {
+             padding: 40px; text-align: center; color: var(--text-muted); font-family: 'Source Code Pro', monospace;
         }
     </style>
 </head>
 <body>
 
-    <div class="table-container">
-        <div class="title-bar">
-            Catalyst Explorer
-        </div>
+    <div class="app-container">
         
-        <div class="filter-container">
-            <div class="filter-group">
-                <label for="search-input" class="filter-label">Search Catalyst</label>
-                <input type="text" id="search-input" placeholder="Type to search...">
+        <!-- HEADER -->
+        <div class="header-section">
+            <div class="brand-bar">
+                <div class="brand-title">Catalyst Explorer</div>
             </div>
-            <div class="filter-group">
-                <label for="filter-impact" class="filter-label">Impact Level</label>
-                <select id="filter-impact" class="filter-select">
-                    <option value="all">All Impacts</option>
-                    <option value="High Impact">High</option>
-                    <option value="Medium Impact">Medium</option>
-                    <option value="Low Impact">Low</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="filter-category1" class="filter-label">Country / Region</label>
-                <select id="filter-category1" class="filter-select">
-                    <option value="all">All Regions</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="filter-category2" class="filter-label">Market / Data</label>
-                <select id="filter-category2" class="filter-select">
-                    <option value="all">All Markets</option>
-                </select>
+
+            <div class="filter-row">
+                <div class="filter-group" style="flex: 1;">
+                    <label class="filter-label">SEARCH INTELLIGENCE</label>
+                    <input type="text" id="search-input" class="filter-input" placeholder="Keyword, ticker, country...">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">IMPACT LEVEL</label>
+                    <select id="filter-impact" class="filter-input">
+                        <option value="all">ALL IMPACTS</option>
+                        <option value="High Impact">HIGH ONLY</option>
+                        <option value="Medium Impact">MEDIUM ONLY</option>
+                        <option value="Low Impact">LOW ONLY</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">REGION</label>
+                    <select id="filter-region" class="filter-input">
+                        <option value="all">ALL REGIONS</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">MARKET TYPE</label>
+                    <select id="filter-market" class="filter-input">
+                        <option value="all">ALL MARKETS</option>
+                    </select>
+                </div>
             </div>
         </div>
-        
-        <div id="news-container" class="news-container">
-            <!-- Berita akan dimuat di sini oleh JavaScript -->
-        </div>
+
+        <!-- MAIN FEED -->
+        <div id="feed-container" class="feed-container"></div>
+
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Element UI
-            const newsContainer = document.getElementById('news-container');
-            const searchInput = document.getElementById('search-input');
-            const impactFilter = document.getElementById('filter-impact');
-            const category1Filter = document.getElementById('filter-category1');
-            const category2Filter = document.getElementById('filter-category2');
+        // --- CONFIGURATION ---
+        // NEW SINGLE SOURCE API
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw801fwEpJeaN4J9uX4HYH1d2kGu3vDfSmRLCweAfL6xo_0pwyAJFEGeaKLCWfx0e8C/exec';
+        
+        const REFRESH_INTERVAL = 60000;
+        const INITIAL_DISPLAY_COUNT = 20;
+        const SCROLL_LOAD_COUNT = 10;
 
-            // State & Konfigurasi
-            const API_URL = 'https://script.google.com/macros/s/AKfycbwYr1pQAo2G6_8jAex6FwWO_cut4efeiqAt4jVWAAtvgWC45bXZEWyBMQzTw-KvoteP/exec';
-            const REFRESH_INTERVAL_MS = 60000; // 60 detik
-            const INITIAL_DISPLAY_COUNT = 20;
-            const ARTICLES_PER_SCROLL = 10;
+        // --- DOM ELEMENTS ---
+        const feedContainer = document.getElementById('feed-container');
+        const searchInput = document.getElementById('search-input');
+        const impactFilter = document.getElementById('filter-impact');
+        const regionFilter = document.getElementById('filter-region');
+        const marketFilter = document.getElementById('filter-market');
+
+        // --- STATE ---
+        let feedData = []; 
+        let displayedIds = new Set(); 
+        let currentCount = INITIAL_DISPLAY_COUNT;
+        let isFiltersInit = false;
+        let isLoading = false;
+
+        // --- INIT ---
+        async function initApp() {
+            showStatus('Initializing Intelligence Stream...');
             
-            let allArticles = [];
-            let displayedHeadlines = new Set();
-            let currentDisplayCount = INITIAL_DISPLAY_COUNT;
-            let areFiltersPopulated = false;
-            let isLoadingMore = false;
+            // Event Listeners
+            [searchInput, impactFilter, regionFilter, marketFilter].forEach(el => {
+                el.addEventListener('input', () => {
+                    currentCount = INITIAL_DISPLAY_COUNT; 
+                    renderFeed();
+                });
+            });
 
+            feedContainer.addEventListener('scroll', handleInfiniteScroll);
 
-            function showStatusMessage(message) {
-                newsContainer.innerHTML = `<div class="status-message">${message}</div>`;
-            }
+            // Fetch
+            await fetchFeedData();
+            setInterval(fetchFeedData, REFRESH_INTERVAL);
+        }
 
-            function populateFilterDropdowns() {
-                if (areFiltersPopulated || allArticles.length === 0) return;
+        // --- DATA LAYER (SINGLE SOURCE) ---
+        async function fetchFeedData() {
+            try {
+                // Fetch single API
+                const response = await fetch(`${API_URL}?t=${Date.now()}`);
+                if (!response.ok) throw new Error("Connection failed");
 
-                const categories1 = new Set();
-                const categories2 = new Set();
+                const json = await response.json();
                 
-                allArticles.forEach(article => {
-                    if (article.category1) categories1.add(article.category1);
-                    if (article.category2) categories2.add(article.category2);
-                });
-
-                const populate = (selectElement, items) => {
-                    const selectedValue = selectElement.value;
-                    while (selectElement.options.length > 1) {
-                        selectElement.remove(1);
-                    }
-                    items.forEach(item => {
-                        const option = document.createElement('option');
-                        option.value = item;
-                        option.textContent = item;
-                        selectElement.appendChild(option);
-                    });
-                    selectElement.value = selectedValue;
-                };
-
-                populate(category1Filter, [...categories1].sort());
-                populate(category2Filter, [...categories2].sort());
-
-                areFiltersPopulated = true;
-            }
-            
-            // Fungsi utama untuk filter dan render ulang
-            function updateAndRender(newHeadlines = new Set()) {
-                const searchTerm = searchInput.value.toLowerCase();
-                const selectedImpact = impactFilter.value;
-                const selectedCat1 = category1Filter.value;
-                const selectedCat2 = category2Filter.value;
-
-                // 1. Filter semua artikel berdasarkan kriteria
-                const filteredArticles = allArticles.filter(article => {
-                    const headlineText = String(article.headline || '').toLowerCase();
-                    const contentText = String(article.content || '').toLowerCase();
-                    const matchSearch = searchTerm === '' || headlineText.includes(searchTerm) || contentText.includes(searchTerm);
-                    const matchImpact = selectedImpact === 'all' || article.impact === selectedImpact;
-                    const matchCat1 = selectedCat1 === 'all' || article.category1 === selectedCat1;
-                    const matchCat2 = selectedCat2 === 'all' || article.category2 === selectedCat2;
-                    return matchSearch && matchImpact && matchCat1 && matchCat2;
-                });
-
-                // 2. Tentukan artikel mana yang akan ditampilkan
-                let articlesToRender;
-                if (searchTerm !== '') {
-                    // Jika mencari, tampilkan semua hasil pencarian
-                    articlesToRender = filteredArticles;
+                // Jika API mengembalikan format {data: []} atau langsung []
+                let rawData = [];
+                if (Array.isArray(json)) {
+                    rawData = json;
+                } else if (json.data && Array.isArray(json.data)) {
+                    rawData = json.data;
                 } else {
-                    // Jika tidak mencari, terapkan batas tampilan untuk infinite scroll
-                    articlesToRender = filteredArticles.slice(0, currentDisplayCount);
+                    throw new Error("Invalid data format");
                 }
 
-                renderNews(articlesToRender, newHeadlines);
-            }
-
-
-            async function fetchNewsData() {
-                try {
-                    const response = await fetch(`${API_URL}?t=${new Date().getTime()}`);
-                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                    
-                    const data = await response.json();
-                    if (typeof data === 'object' && !Array.isArray(data) && data.status === 'error') {
-                        throw new Error(`API Error: ${data.message}`);
-                    }
-                    if (!Array.isArray(data)) {
-                        throw new Error('Format data tidak valid. Respon bukan sebuah array.');
-                    }
-                    
-                    const newHeadlines = new Set();
-                    data.forEach(article => {
-                        if (!displayedHeadlines.has(article.headline)) {
-                            newHeadlines.add(article.headline);
-                        }
-                    });
-
-                    allArticles = data;
-                    displayedHeadlines = new Set(allArticles.map(a => a.headline));
-                    
-                    populateFilterDropdowns();
-                    updateAndRender(newHeadlines);
-
-
-                } catch (error) {
-                    console.error('Gagal mengambil berita:', error);
-                    showStatusMessage(`Terjadi kesalahan saat memuat data. <br><small>${error.message}</small>`);
-                }
-            }
-
-            function renderNews(articles, newHeadlines) {
-                if (articles.length === 0) {
-                    if (searchInput.value !== '') {
-                         showStatusMessage('Tidak ada hasil untuk pencarian Anda.');
-                    } else {
-                         showStatusMessage('Tidak ada berita yang cocok dengan filter Anda.');
-                    }
-                    return;
-                }
-
-                newsContainer.innerHTML = ''; 
-                
-                const countryList = ["United States", "China", "Japan", "Germany", "United Kingdom", "Euro Area", "Canada", "Australia", "Indonesia", "India", "Brazil", "Russia", "South Korea"];
-
-                articles.forEach(article => {
-                    const newsItem = document.createElement('div');
-                    newsItem.className = 'news-item';
-
-                    if (newHeadlines.has(article.headline)) {
-                        newsItem.classList.add('new-item-blink');
-                    }
-                    
-                    if (article.impact === 'High Impact') newsItem.classList.add('impact-bg-high');
-                    else if (article.impact === 'Medium Impact') newsItem.classList.add('impact-bg-medium');
-                    
-                    let categoryTags = '';
-                    const createCategoryTag = (categoryName) => {
-                        if (!categoryName) return '';
-                        const isCountry = countryList.some(country => String(categoryName || '').toLowerCase().includes(country.toLowerCase()));
-                        const tagClass = isCountry ? 'category-country-tag' : 'category-tag';
-                        return `<div class="news-tag ${tagClass}">${categoryName}</div>`;
+                // MAPPING DATA (Single Source)
+                // Kita map property dari JSON baru ke variabel internal yang digunakan UI
+                feedData = rawData.map((item, index) => {
+                    return {
+                        id: index,
+                        
+                        // --- DATA DEPAN (LIST VIEW) ---
+                        // Digunakan di Header Kartu
+                        headline: item.headline || "No Headline",
+                        timestamp: item.timestamp || "",
+                        impact: item.impact || "Low Impact",
+                        category1: item.category1 || "", // Region
+                        category2: item.category2 || "", // Market
+                        
+                        // --- DATA BELAKANG (DEEP DIVE VIEW) ---
+                        // Digunakan saat kartu diklik (Expanded)
+                        summary: item.content || "No summary available.", // Raw content
+                        whatHappen: item.what_happen || item.content || "Analysis pending...", 
+                        economicImpact: item.economic_impact || "No data.",
+                        policyImpact: item.policy_impact || "No data.",
+                        marketImpact: item.market_impact || "No data.",
+                        geopolitics: item.geopolitical_impact || "None.",
+                        upsideRisk: item.upside_risk || "N/A",
+                        downsideRisk: item.downside_risk || "N/A"
                     };
-
-                    categoryTags += createCategoryTag(article.category1);
-                    categoryTags += createCategoryTag(article.category2);
-
-                    const date = new Date(article.timestamp);
-                    const formattedDate = date.toLocaleString('id-ID', {
-                        day: '2-digit', month: 'short', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-                    });
-                    
-                    newsItem.innerHTML = `
-                        <div class="news-title">${String(article.headline || '')}</div>
-                        <div class="news-content">${String(article.content || '')}</div>
-                        <div class="news-meta">
-                            <span>${formattedDate}</span>
-                            <div class="meta-tags-container">
-                                ${categoryTags}
-                            </div>
-                        </div>
-                    `;
-                    newsContainer.appendChild(newsItem);
                 });
+
+                if (!isFiltersInit) populateFilters();
+                renderFeed();
+
+            } catch (error) {
+                console.error(error);
+                if (feedData.length === 0) showStatus("Connection Error. Retrying...");
             }
+        }
 
-            function handleFilterChange() {
-                // Reset display count setiap kali filter diubah
-                currentDisplayCount = INITIAL_DISPLAY_COUNT;
-                newsContainer.scrollTop = 0; // Gulir ke atas
-                updateAndRender();
-            }
+        // --- FILTER LOGIC ---
+        function populateFilters() {
+            const regions = new Set();
+            const markets = new Set();
 
-            function handleScroll() {
-                if (isLoadingMore || searchInput.value !== '') return;
+            feedData.forEach(item => {
+                if(item.category1) regions.add(item.category1);
+                if(item.category2) markets.add(item.category2);
+            });
 
-                const { scrollTop, scrollHeight, clientHeight } = newsContainer;
-                // Trigger 100px sebelum akhir
-                if (scrollTop + clientHeight >= scrollHeight - 100) {
-                    isLoadingMore = true;
-                    currentDisplayCount += ARTICLES_PER_SCROLL;
-                    updateAndRender(); 
-                    // Set timeout singkat untuk mencegah pemanggilan berulang kali
-                    setTimeout(() => { isLoadingMore = false; }, 300);
+            const fill = (select, set) => {
+                const current = select.value;
+                while(select.options.length > 1) select.remove(1);
+                [...set].sort().forEach(val => {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    select.appendChild(opt);
+                });
+                select.value = current;
+            };
+
+            fill(regionFilter, regions);
+            fill(marketFilter, markets);
+            isFiltersInit = true;
+        }
+
+        function getFilteredData() {
+            const search = searchInput.value.toLowerCase();
+            const fImpact = impactFilter.value;
+            const fRegion = regionFilter.value;
+            const fMarket = marketFilter.value;
+
+            return feedData.filter(item => {
+                const textMatch = 
+                    (item.headline || '').toLowerCase().includes(search) || 
+                    (item.summary || '').toLowerCase().includes(search);
+                
+                // Cek substring karena impact bisa "High Impact" atau "High"
+                let impactMatch = true;
+                if (fImpact !== 'all') {
+                    impactMatch = (item.impact || '').toLowerCase().includes(fImpact.toLowerCase().split(' ')[0]);
                 }
-            }
+                
+                const regionMatch = fRegion === 'all' || item.category1 === fRegion;
+                const marketMatch = fMarket === 'all' || item.category2 === fMarket;
+
+                return textMatch && impactMatch && regionMatch && marketMatch;
+            });
+        }
+
+        // --- RENDER LOGIC ---
+        function renderFeed() {
+            const filtered = getFilteredData();
             
-            function init() {
-                showStatusMessage('Loading Catalyst...');
-                
-                // Tambahkan event listener ke semua filter
-                [searchInput, impactFilter, category1Filter, category2Filter].forEach(el => {
-                    el.addEventListener('input', handleFilterChange);
-                    el.addEventListener('change', handleFilterChange);
-                });
-
-                // Tambahkan event listener untuk scroll
-                newsContainer.addEventListener('scroll', handleScroll);
-                
-                fetchNewsData(); // Ambil data pertama kali
-                setInterval(fetchNewsData, REFRESH_INTERVAL_MS); // Set interval untuk refresh
+            if (filtered.length === 0) {
+                showStatus("No intelligence found.");
+                return;
             }
 
-            init();
-        });
-    </script>
+            const toShow = filtered.slice(0, currentCount);
+            
+            feedContainer.innerHTML = ''; 
 
+            toShow.forEach(item => {
+                const el = createCard(item);
+                feedContainer.appendChild(el);
+            });
+        }
+
+        function createCard(item) {
+            const card = document.createElement('div');
+            
+            // Determine Impact Class for Border
+            let impactClass = 'impact-low';
+            const impactStr = (item.impact || '').toLowerCase();
+            if (impactStr.includes('high')) impactClass = 'impact-high';
+            else if (impactStr.includes('medium')) impactClass = 'impact-medium';
+            
+            // Flash Animation Logic
+            const uniqueKey = item.headline + item.timestamp;
+            const isNew = !displayedIds.has(uniqueKey) && displayedIds.size > 0;
+            if(isNew) displayedIds.add(uniqueKey);
+            else if (displayedIds.size === 0) displayedIds.add(uniqueKey); // Init load
+
+            card.className = `news-card ${impactClass} ${isNew ? 'flash-new' : ''}`;
+
+            // Format Date
+            let dateStr = item.timestamp;
+            try {
+                const dateObj = new Date(item.timestamp);
+                if (!isNaN(dateObj)) {
+                    dateStr = dateObj.toLocaleString('id-ID', { 
+                        day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'
+                    });
+                }
+            } catch(e) {}
+
+            // HTML Construction
+            card.innerHTML = `
+                <div class="card-header" onclick="toggleCard(this)">
+                    <div class="header-top">
+                        <div class="headline">${item.headline}</div>
+                        <div class="timestamp">${dateStr}</div>
+                    </div>
+                    <div class="header-meta">
+                        <span class="tag impact ${impactStr.split(' ')[0] ? impactStr.split(' ')[0].charAt(0).toUpperCase() + impactStr.split(' ')[0].slice(1) : ''}">${item.impact.replace(' Impact', '').toUpperCase()}</span>
+                        ${item.category1 ? `<span class="tag region">${item.category1}</span>` : ''}
+                        ${item.category2 ? `<span class="tag category">${item.category2}</span>` : ''}
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- DEEP DIVE CONTENT -->
+                    <div class="detail-section-title">EXECUTIVE SUMMARY & ANALYSIS</div>
+                    <div class="analysis-text">
+                        ${item.whatHappen}
+                    </div>
+
+                    <div class="impact-grid">
+                        <div class="grid-item">
+                            <h4>Economic Impact</h4>
+                            <p>${item.economicImpact}</p>
+                        </div>
+                        <div class="grid-item">
+                            <h4>Policy / Geopolitics</h4>
+                            <p>${item.policyImpact}</p>
+                            <div style="margin-top:10px; opacity:0.7; font-size:11px;">GEO: ${item.geopolitics}</div>
+                        </div>
+                        <div class="grid-item">
+                            <h4>Market Reaction</h4>
+                            <p>${item.marketImpact}</p>
+                        </div>
+                    </div>
+
+                    <div class="risk-container">
+                        <div class="risk-box upside">
+                            <h5>UPSIDE SCENARIO</h5>
+                            <p>${item.upsideRisk}</p>
+                        </div>
+                        <div class="risk-box downside">
+                            <h5>DOWNSIDE SCENARIO</h5>
+                            <p>${item.downsideRisk}</p>
+                        </div>
+                    </div>
+
+                    <div class="original-preview">
+                        <strong>RAW SOURCE:</strong><br/>
+                        "${item.summary}"
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // --- INTERACTION ---
+        window.toggleCard = function(headerElement) {
+            const card = headerElement.parentElement;
+            const wasActive = card.classList.contains('active');
+            
+            document.querySelectorAll('.news-card.active').forEach(c => c.classList.remove('active'));
+
+            if(!wasActive) {
+                card.classList.add('active');
+                setTimeout(() => {
+                    const rect = card.getBoundingClientRect();
+                    if(rect.top < 100 || rect.bottom > window.innerHeight) {
+                        card.scrollIntoView({behavior: "smooth", block: "nearest"});
+                    }
+                }, 200);
+            }
+        };
+
+        function handleInfiniteScroll() {
+            if(isLoading) return;
+            const { scrollTop, scrollHeight, clientHeight } = feedContainer;
+            if (scrollTop + clientHeight >= scrollHeight - 100) {
+                currentCount += SCROLL_LOAD_COUNT;
+                renderFeed();
+            }
+        }
+
+        function showStatus(msg) {
+            feedContainer.innerHTML = `<div class="status-message">${msg}</div>`;
+        }
+
+        // Start
+        initApp();
+
+    </script>
 </body>
 </html>
