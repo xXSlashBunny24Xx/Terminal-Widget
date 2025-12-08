@@ -45,11 +45,15 @@
         
         /* Animasi Transisi Halus */
         .fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        .meter-fill {
+            transition: width 1s ease-out;
         }
     </style>
 </head>
@@ -60,13 +64,13 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        const JSON_SOURCE_URL = "https://script.google.com/macros/s/AKfycbz2PCylbvw36U9Cr-4UD6Eq93dnPCR8nI1gcY39IZDNS30NSc4nedtSYwgbFXxuK8vK/exec"; 
+        const JSON_SOURCE_URL = "https://script.google.com/macros/s/AKfycbze1EI7iUewyGj66msGGdwAA4n5Aj0l-Qq2NhxKj_BWaCMlzr7AA8nTRoxgpFXGnFVL/exec"; 
         
         const CATEGORY_MAP = {
-            'FX': ['FOREX', 'CURRENCY', 'FX'],
-            'EQUITY': ['EQUITY', 'TECH', 'STOCKS'],
-            'BOND': ['BONDS', 'GOV BOND', 'RATES'],
-            'COMMODITY': ['COMMODITY', 'OIL', 'GOLD', 'ENERGY', 'PRECIOUS METALS']
+            'FX': ['FOREX', 'CURRENCY', 'FX', 'Currency'],
+            'EQUITY': ['EQUITY', 'TECH', 'STOCKS', 'Equity'],
+            'BOND': ['BONDS', 'GOV BOND', 'RATES', 'Gov Bond'],
+            'COMMODITY': ['COMMODITY', 'OIL', 'GOLD', 'ENERGY', 'PRECIOUS METALS', 'Commodity']
         };
 
         const Icons = {
@@ -84,12 +88,16 @@
             Loader: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>`,
             FileText: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`,
             Calendar: `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
-            Activity: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`
+            Activity: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
+            Brain: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>`,
+            CheckCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+            XCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
+            List: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`
         };
 
         const state = {
             viewMode: 'latest', 
-            activeTab: 'FX', 
+            activeTab: 'TRADES', // DEFAULT TAB IS NOW TRADES
             latestBatch: null,
             historyList: [],
             selectedHistoryItem: null,
@@ -106,18 +114,12 @@
 
             setActiveTab: function(tab) {
                 state.activeTab = tab;
-                // Jika sedang di arsip, kita tidak pindah ke latest, tapi hanya ganti konten di reader arsip
-                if (state.viewMode === 'latest') {
-                    // Default behavior for live mode
-                } 
                 this.render();
             },
 
             setViewMode: function(mode) {
                 state.viewMode = mode;
-                if (mode === 'latest') {
-                    state.selectedHistoryItem = null;
-                }
+                if (mode === 'latest') state.selectedHistoryItem = null;
                 this.render();
             },
 
@@ -169,22 +171,39 @@
 
             getActiveNewsletter: function(batchData) {
                 if (!batchData || !batchData.newsletters) return null;
+                
+                // FIX: Get tags safely
                 const validTags = CATEGORY_MAP[state.activeTab];
-                return batchData.newsletters.find(n => validTags.includes(n.dataTag?.toUpperCase())) || null;
+                
+                // If current tab is 'TRADES' (which isn't in CATEGORY_MAP), validTags will be undefined.
+                // In that case, we return null immediately to avoid the .some() crash.
+                if (!validTags) return null;
+
+                // Case insensitive matching
+                return batchData.newsletters.find(n => validTags.some(tag => tag.toUpperCase() === n.dataTag?.toUpperCase())) || null;
             },
 
+            // --- RENDER HELPERS ---
+
             renderHeader: function() {
-                // LOGIKA UTAMA: Jika mode bukan 'latest', sembunyikan tab instrumen di header utama
                 const isLiveMode = state.viewMode === 'latest';
-                
                 let leftContent = '';
+                
                 if (isLiveMode) {
-                    const tabs = ['FX', 'EQUITY', 'BOND', 'COMMODITY'];
+                    const tabs = ['TRADES', 'FX', 'EQUITY', 'BOND', 'COMMODITY']; // ADDED TRADES TAB
                     const tabButtons = tabs.map(tab => {
                         const isActive = state.activeTab === tab;
-                        const activeClass = isActive 
-                            ? 'border-amber-500 text-amber-500 bg-[#161b22]' 
-                            : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/30';
+                        
+                        let activeClass = '';
+                        if (tab === 'TRADES') {
+                             activeClass = isActive 
+                                ? 'border-purple-500 text-purple-400 bg-[#161b22]' 
+                                : 'border-transparent text-purple-500/60 hover:text-purple-400 hover:bg-purple-900/10';
+                        } else {
+                             activeClass = isActive 
+                                ? 'border-amber-500 text-amber-500 bg-[#161b22]' 
+                                : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/30';
+                        }
                         
                         return `<button onclick="App.setActiveTab('${tab}')" 
                             class="px-4 h-full text-[10px] font-bold uppercase tracking-wide transition-all border-t-2 ${activeClass}">
@@ -193,7 +212,6 @@
                     }).join('');
                     leftContent = tabButtons;
                 } else {
-                    // Jika di Archive, tampilkan label statis atau kosong
                     leftContent = `<div class="px-4 h-full flex items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-t-2 border-transparent">
                         Newsletter Archive
                     </div>`;
@@ -222,6 +240,255 @@
                 `;
             },
 
+            // --- GLOBAL TRADES DASHBOARD RENDERER ---
+            
+            renderGlobalTradesDashboard: function() {
+                const allTrades = state.latestBatch?.runningTrades || [];
+                const sortedTrades = [...allTrades].sort((a, b) => b.conviction - a.conviction);
+                
+                // Summary Stats
+                const totalTrades = allTrades.length;
+                const highConviction = allTrades.filter(t => t.conviction >= 8).length;
+                const avgScore = totalTrades > 0 
+                    ? (allTrades.reduce((acc, curr) => acc + parseInt(curr.conviction), 0) / totalTrades).toFixed(1) 
+                    : '0.0';
+
+                return `
+                <div class="w-full bg-[#0d1117] min-h-full p-6 fade-in">
+                    
+                    <!-- DASHBOARD HEADER -->
+                    <div class="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-slate-800 pb-6 gap-4">
+                        <div>
+                            <div class="text-purple-500 text-[10px] font-bold tracking-[0.2em] uppercase mb-2 flex items-center gap-2">
+                                ${Icons.Brain} AI Portfolio Manager
+                            </div>
+                            <h1 class="text-3xl font-serif text-white leading-tight">Active Trade Positions</h1>
+                            <p class="text-slate-400 text-sm font-light mt-1">Real-time consolidated view of all open strategies.</p>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="bg-[#161b22] border border-slate-800 rounded px-4 py-2 text-center">
+                                <div class="text-[10px] text-slate-500 uppercase font-bold">Total Open</div>
+                                <div class="text-xl font-mono font-bold text-white">${totalTrades}<span class="text-slate-600 text-sm">/5</span></div>
+                            </div>
+                            <div class="bg-[#161b22] border border-slate-800 rounded px-4 py-2 text-center">
+                                <div class="text-[10px] text-slate-500 uppercase font-bold">Avg. Score</div>
+                                <div class="text-xl font-mono font-bold text-amber-500">${avgScore}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${totalTrades === 0 ? `
+                        <div class="flex flex-col items-center justify-center py-20 text-slate-600 border border-dashed border-slate-800 rounded-lg">
+                            <div class="opacity-30 mb-4">${Icons.List}</div>
+                            <p class="text-sm">No active trades running.</p>
+                        </div>
+                    ` : `
+                        <div class="grid grid-cols-1 gap-4">
+                            ${sortedTrades.map(t => {
+                                const meterWidth = (t.conviction / 10) * 100;
+                                const meterColor = t.conviction >= 9 ? 'bg-purple-500' : (t.conviction >= 8 ? 'bg-green-500' : 'bg-amber-500');
+                                const typeColor = t.type === 'LONG' ? 'text-green-400 bg-green-500/10 border-green-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20';
+
+                                return `
+                                <div class="bg-[#161b22] border border-slate-800 rounded-lg p-5 hover:border-purple-500/30 transition-all group relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 w-1 h-full ${meterColor}"></div>
+                                    <div class="flex flex-col md:flex-row justify-between gap-6">
+                                        
+                                        <!-- LEFT: Instrument Info -->
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-800 px-2 py-0.5 rounded">${t.category}</span>
+                                                <span class="text-[10px] text-slate-600 font-mono">${t.dateOpened}</span>
+                                            </div>
+                                            <div class="flex items-center gap-3 mb-3">
+                                                <h3 class="text-2xl font-bold text-white font-mono">${t.instrument}</h3>
+                                                <span class="text-xs font-bold px-2 py-0.5 rounded border ${typeColor}">${t.type}</span>
+                                            </div>
+                                            <p class="text-sm text-slate-400 italic border-l-2 border-slate-700 pl-3 leading-relaxed mb-4">
+                                                "${t.rationale}"
+                                            </p>
+                                            
+                                            <!-- NEW: TRADE DETAILS GRID -->
+                                            <div class="grid grid-cols-3 gap-2 text-xs font-mono bg-slate-800/30 p-3 rounded border border-slate-800">
+                                                <div>
+                                                    <span class="text-slate-500 block text-[9px] uppercase">Entry</span>
+                                                    <span class="text-white">${t.entry}</span>
+                                                </div>
+                                                <div>
+                                                    <span class="text-slate-500 block text-[9px] uppercase">Target</span>
+                                                    <span class="text-green-400">${t.target}</span>
+                                                </div>
+                                                <div>
+                                                    <span class="text-slate-500 block text-[9px] uppercase">Stop</span>
+                                                    <span class="text-red-400">${t.stop}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- RIGHT: Conviction Stats -->
+                                        <div class="w-full md:w-48 shrink-0 flex flex-col justify-center">
+                                            <div class="flex justify-between items-end mb-2">
+                                                <span class="text-[10px] text-slate-500 uppercase font-bold">Conviction</span>
+                                                <span class="text-xl font-mono font-bold text-white">${t.conviction}<span class="text-sm text-slate-600">/10</span></span>
+                                            </div>
+                                            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                                <div class="h-full ${meterColor}" style="width: ${meterWidth}%"></div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `}
+                </div>
+                `;
+            },
+
+            // --- TRADE WIDGETS (Keep for Newsletter View) ---
+
+            renderActivePositions: function() {
+                // Get all running trades from global state, filtered by active tab
+                const allTrades = state.latestBatch?.runningTrades || [];
+                const validTags = CATEGORY_MAP[state.activeTab];
+                
+                // If TRADES is active, return nothing here (handled by global dashboard)
+                // If validTags is undefined (unlikely here but possible), return empty
+                if (!validTags) return '';
+
+                // Filter trades that match current category tags
+                const activePositions = allTrades.filter(t => validTags.some(tag => tag.toUpperCase() === t.category.toUpperCase()));
+
+                if (activePositions.length === 0) return '';
+
+                return `
+                <div class="mb-6 bg-[#0e1116] border border-slate-800 rounded-lg overflow-hidden">
+                    <div class="bg-slate-800/30 px-3 py-2 border-b border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Positions (${state.activeTab})</span>
+                        </div>
+                    </div>
+                    <div class="divide-y divide-slate-800">
+                        ${activePositions.map(t => `
+                            <div class="px-4 py-3 flex items-center justify-between hover:bg-slate-800/20 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold text-white font-mono">${t.instrument}</span>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded ${t.type === 'LONG' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'} border border-white/5 font-bold uppercase">${t.type}</span>
+                                </div>
+                                <div class="text-right flex items-center gap-4">
+                                    <div class="hidden sm:block text-[10px] text-slate-500 font-mono">Entry: ${t.dateOpened}</div>
+                                    <div class="text-[10px] font-mono text-slate-400">Score: <span class="text-amber-500">${t.conviction}/10</span></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+            },
+
+            renderTradeStrategy: function(strategy) {
+                if (!strategy) return '';
+
+                // 1. New Signal Card
+                let newSignalHtml = '';
+                if (strategy.newSignal && strategy.newSignal.generated && strategy.newSignal.convictionScore >= 7) {
+                    const signal = strategy.newSignal;
+                    const details = signal.details;
+                    const score = signal.convictionScore;
+                    const meterWidth = (score / 10) * 100;
+                    const meterColor = score >= 9 ? 'bg-purple-500' : (score >= 8 ? 'bg-green-500' : 'bg-amber-500');
+
+                    newSignalHtml = `
+                    <div class="mb-6 bg-gradient-to-br from-[#161b22] to-[#0d1117] border border-amber-500/30 rounded-lg overflow-hidden relative group">
+                        <div class="absolute top-0 left-0 w-1 h-full ${meterColor}"></div>
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <span class="inline-block px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[10px] font-bold uppercase tracking-widest border border-amber-500/20 mb-2">New Trade Idea</span>
+                                    <div class="flex items-baseline gap-2">
+                                        <h3 class="text-2xl font-bold text-white font-mono">${details.instrument}</h3>
+                                        <span class="text-sm font-bold ${details.type === 'LONG' ? 'text-green-400' : 'text-red-400'} uppercase">${details.type}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-[10px] text-slate-500 uppercase font-bold mb-1">Conviction</div>
+                                    <div class="text-2xl font-mono font-bold text-white">${score}<span class="text-slate-600 text-sm">/10</span></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Conviction Meter -->
+                            <div class="w-full h-1.5 bg-slate-800 rounded-full mb-4 overflow-hidden">
+                                <div class="h-full ${meterColor} meter-fill" style="width: ${meterWidth}%"></div>
+                            </div>
+
+                            <p class="text-sm text-slate-300 italic mb-4 leading-relaxed border-l-2 border-slate-700 pl-3">
+                                "${signal.rationale || details.rationale}"
+                            </p>
+
+                            <div class="grid grid-cols-3 gap-2 text-xs font-mono bg-slate-800/30 p-3 rounded border border-slate-800">
+                                <div>
+                                    <span class="text-slate-500 block text-[9px] uppercase">Entry Zone</span>
+                                    <span class="text-white">${details.entryZone || "Market"}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 block text-[9px] uppercase">Target</span>
+                                    <span class="text-green-400">${details.target}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 block text-[9px] uppercase">Invalidation</span>
+                                    <span class="text-red-400">${details.stopLoss}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+
+                // 2. Portfolio Updates
+                let updatesHtml = '';
+                if (strategy.portfolioUpdates && strategy.portfolioUpdates.length > 0) {
+                    updatesHtml = `
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            ${Icons.Activity} Portfolio Updates
+                        </h4>
+                        ${strategy.portfolioUpdates.map(update => {
+                            let actionColor = 'text-slate-400';
+                            let actionIcon = Icons.CheckCircle;
+                            if (update.action.includes('PROFIT')) { actionColor = 'text-green-400'; actionIcon = Icons.TrendingUpSmall; }
+                            else if (update.action.includes('LOSS')) { actionColor = 'text-red-400'; actionIcon = Icons.XCircle; }
+                            
+                            return `
+                            <div class="bg-[#111418] border border-slate-800 p-3 rounded hover:border-slate-700 transition-colors">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-mono font-bold text-slate-300">${update.instrument || update.tradeId}</span>
+                                        <span class="text-[9px] font-bold uppercase px-1.5 rounded bg-slate-800 border border-slate-700 ${actionColor}">${update.action.replace('_', ' ')}</span>
+                                    </div>
+                                    <span class="text-slate-600">${actionIcon}</span>
+                                </div>
+                                <p class="text-xs text-slate-400 leading-snug">"${update.comment || update.closingComment}"</p>
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>`;
+                }
+
+                if (!newSignalHtml && !updatesHtml) return '';
+
+                return `
+                <section class="mb-12 border-t border-slate-800 pt-8 mt-8">
+                    <h2 class="text-2xl font-bold text-white mb-6 font-sans flex items-center gap-3">
+                        <span class="text-purple-500">${Icons.Brain}</span> AI Trade Desk
+                    </h2>
+                    ${newSignalHtml}
+                    ${updatesHtml}
+                </section>
+                `;
+            },
+
+            // --- MAIN RENDERER ---
+
             renderNewsletterReader: function(data) {
                 if (!data) {
                     return `
@@ -234,6 +501,10 @@
 
                 const timeNow = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) + " WIB";
                 const displayTime = data.meta?.time || timeNow;
+
+                // --- SECTIONS GENERATION ---
+                const activePositionsHtml = state.viewMode === 'latest' ? this.renderActivePositions() : '';
+                const tradeStrategyHtml = this.renderTradeStrategy(data.tradeStrategy);
 
                 const insightsHtml = data.quickInsights ? `
                     <div class="mb-8 bg-[#161b22] border border-amber-500/30 rounded-lg overflow-hidden">
@@ -253,7 +524,11 @@
 
                 const catalystsHtml = data.catalysts ? data.catalysts.map(cat => {
                     let scenariosHtml = '';
-                    if (cat.scenarios) {
+                    // SAFETY CHECK: Ensure scenarios object and its children exist before accessing
+                    if (cat.scenarios && 
+                        cat.scenarios.upside && Array.isArray(cat.scenarios.upside.catalysts) &&
+                        cat.scenarios.downside && Array.isArray(cat.scenarios.downside.catalysts)) {
+                        
                         const upsideCats = cat.scenarios.upside.catalysts.map(c => 
                             `<li class="flex gap-2 text-xs text-slate-300 font-mono leading-tight"><span class="text-[#10b981] mt-0.5">•</span>${c}</li>`
                         ).join('');
@@ -299,6 +574,11 @@
                         </div>`;
                     }
 
+                    // SAFETY CHECK for Impact Analysis
+                    const impactCause = cat.impactAnalysis?.cause || "N/A";
+                    const impactEffect = cat.impactAnalysis?.effect || "N/A";
+                    const impactImp = cat.impactAnalysis?.implication || "N/A";
+
                     return `
                     <div class="mb-8 border-l-2 border-slate-700 pl-6 relative">
                         <div class="absolute top-0 left-[-5px] w-2.5 h-2.5 rounded-full bg-slate-800 border-2 border-slate-600"></div>
@@ -313,11 +593,11 @@
                         <div class="bg-[#0e1116] border border-slate-800 p-4 rounded-md relative overflow-hidden group hover:border-amber-500/30 transition-colors mb-6">
                             <div class="absolute top-0 left-0 w-1 h-full bg-amber-500/50"></div>
                             <div class="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 text-xs font-mono">
-                                <div class="flex-1"><span class="text-[9px] text-slate-500 uppercase block mb-1">Trigger / Cause</span><span class="text-white block leading-snug">${cat.impactAnalysis.cause}</span></div>
+                                <div class="flex-1"><span class="text-[9px] text-slate-500 uppercase block mb-1">Trigger / Cause</span><span class="text-white block leading-snug">${impactCause}</span></div>
                                 <div class="hidden md:block text-slate-600">${Icons.ArrowRight}</div>
-                                <div class="flex-1"><span class="text-[9px] text-slate-500 uppercase block mb-1">Direct Effect</span><span class="text-amber-500 font-bold block leading-snug">${cat.impactAnalysis.effect}</span></div>
+                                <div class="flex-1"><span class="text-[9px] text-slate-500 uppercase block mb-1">Direct Effect</span><span class="text-amber-500 font-bold block leading-snug">${impactEffect}</span></div>
                                 <div class="hidden md:block text-slate-600">${Icons.ArrowRight}</div>
-                                <div class="flex-1"><span class="text-[9px] text-slate-500 uppercase block mb-1">Strategic Implication</span><span class="text-slate-300 block leading-snug">${cat.impactAnalysis.implication}</span></div>
+                                <div class="flex-1"><span class="text-[9px] text-slate-500 uppercase block mb-1">Strategic Implication</span><span class="text-slate-300 block leading-snug">${impactImp}</span></div>
                             </div>
                         </div>
                         ${scenariosHtml}
@@ -349,17 +629,25 @@
                         </div>
                     </header>
                     <div class="flex-1 px-8 py-8 bg-[#111418]">
+                        
+                        ${activePositionsHtml}
+
                         ${insightsHtml}
+                        
                         <section class="mb-12">
                             <h2 class="text-2xl font-bold text-white mb-6 font-sans flex items-center gap-3 border-b border-slate-800 pb-3"><span class="text-amber-500">${Icons.TrendingUp}</span>${data.marketCommentary.heading}</h2>
                             <div class="text-slate-300 font-serif text-lg leading-8 text-justify columns-1 md:columns-2 gap-12">
                                 <p class="first-letter:text-5xl first-letter:font-bold first-letter:text-white first-letter:float-left first-letter:mr-3">${data.marketCommentary.content}</p>
                             </div>
                         </section>
+                        
                         <section class="mb-8">
                             <h2 class="text-2xl font-bold text-white mb-8 font-sans flex items-center gap-3 border-b border-slate-800 pb-3"><span class="text-amber-500">${Icons.Target}</span>Instrument Deep Dive</h2>
                             <div class="flex flex-col gap-12">${catalystsHtml}</div>
                         </section>
+
+                        ${tradeStrategyHtml}
+
                     </div>
                     <footer class="bg-[#0e1116] border-t border-slate-800 px-8 py-10 mt-auto">
                         <div class="mb-8">
@@ -422,6 +710,8 @@
                             <p class="text-xs text-red-400/80">Connection Error.</p>
                             <button onclick="App.retryFetch()" class="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded text-xs font-bold">Retry</button>
                         </div>`;
+                    } else if (state.activeTab === 'TRADES') {
+                        contentHtml = this.renderGlobalTradesDashboard();
                     } else {
                         const data = this.getActiveNewsletter(state.latestBatch);
                         contentHtml = this.renderNewsletterReader(data);
@@ -457,4 +747,3 @@
     </script>
 </body>
 </html>
-
