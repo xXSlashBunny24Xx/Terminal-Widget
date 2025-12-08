@@ -64,12 +64,12 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        const JSON_SOURCE_URL = "https://script.google.com/macros/s/AKfycbze1EI7iUewyGj66msGGdwAA4n5Aj0l-Qq2NhxKj_BWaCMlzr7AA8nTRoxgpFXGnFVL/exec"; 
+        const JSON_SOURCE_URL = "https://script.google.com/macros/s/AKfycbxcDmHOU7S2dhwFZnRCe8JLB8TpmGMAWKclo8HDyv5vwLKB7q6JvZQpr1pQDAOTCcF8/exec"; 
         
         const CATEGORY_MAP = {
-            'FX': ['FOREX', 'CURRENCY', 'FX', 'Currency'],
-            'EQUITY': ['EQUITY', 'TECH', 'STOCKS', 'Equity'],
-            'BOND': ['BONDS', 'GOV BOND', 'RATES', 'Gov Bond'],
+            'FX': ['FOREX', 'CURRENCY', 'FX', 'Currency', 'USD'],
+            'EQUITY': ['EQUITY', 'TECH', 'STOCKS', 'Equity', 'Market'],
+            'BOND': ['BONDS', 'GOV BOND', 'RATES', 'Gov Bond', 'Yield'],
             'COMMODITY': ['COMMODITY', 'OIL', 'GOLD', 'ENERGY', 'PRECIOUS METALS', 'Commodity']
         };
 
@@ -172,15 +172,26 @@
             getActiveNewsletter: function(batchData) {
                 if (!batchData || !batchData.newsletters) return null;
                 
-                // FIX: Get tags safely
+                // 1. Get valid keywords for the current tab
                 const validTags = CATEGORY_MAP[state.activeTab];
                 
-                // If current tab is 'TRADES' (which isn't in CATEGORY_MAP), validTags will be undefined.
-                // In that case, we return null immediately to avoid the .some() crash.
+                // If we are in "TRADES" mode, validTags is undefined, so return null immediately
                 if (!validTags) return null;
 
-                // Case insensitive matching
-                return batchData.newsletters.find(n => validTags.some(tag => tag.toUpperCase() === n.dataTag?.toUpperCase())) || null;
+                // 2. Find matching newsletter using Inclusion Logic (Contains) + ID Fallback
+                return batchData.newsletters.find(n => {
+                    // Normalize tags from JSON (handle missing dataTag safely)
+                    const dataTagStr = (n.dataTag || "").toUpperCase();
+                    const idStr = (n.meta?.id || "").toUpperCase();
+
+                    // Check A: Does dataTag contain any of our keywords? (e.g., "USD, EUR..." contains "USD")
+                    const tagMatch = validTags.some(tag => dataTagStr.includes(tag.toUpperCase()));
+
+                    // Check B: Does ID contain any of our keywords? (e.g., "Currency-123" contains "CURRENCY")
+                    const idMatch = validTags.some(tag => idStr.includes(tag.toUpperCase()));
+
+                    return tagMatch || idMatch;
+                }) || null;
             },
 
             // --- RENDER HELPERS ---
